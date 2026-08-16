@@ -102,4 +102,8 @@ export class ProjectsListComponent {
   openPattern(patternId: string): void {
     this.router.navigate(['/editor', patternId]);
   }
+
+  openConverter(projectId: string): void {
+    this.router.navigate(['/converter', projectId]);
+  }
 }

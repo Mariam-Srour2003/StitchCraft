@@ -101,4 +101,9 @@ describe('ProjectsListComponent', () => {
     fixture.componentInstance.openPattern('pattern-1');
     expect(router.navigate).toHaveBeenCalledWith(['/editor', 'pattern-1']);
   });
+
+  it('opening the converter navigates to /converter/:projectId', () => {
+    fixture.componentInstance.openConverter('proj-1');
+    expect(router.navigate).toHaveBeenCalledWith(['/converter', 'proj-1']);
+  });
 });

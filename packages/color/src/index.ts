@@ -3,5 +3,6 @@ export * from './difference/ciede2000';
 export * from './quantize/median-cut';
 export * from './quantize/k-means';
 export * from './match/nearest-dmc';
+export * from './match/nearest-color-index';
 export * from './symbols/symbol-assign';
 export * from './dmc';

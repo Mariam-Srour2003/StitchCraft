@@ -30,6 +30,7 @@
             </button>
             <span class="projects-page__count">{{ project.patternIds.length }} pattern(s)</span>
             <sc-button variant="secondary" (pressed)="openNewPattern(project.id)">New pattern</sc-button>
+            <sc-button variant="secondary" (pressed)="openConverter(project.id)">Convert image</sc-button>
             <sc-button variant="ghost" (pressed)="deleteProject(project.id)">Delete</sc-button>
           </div>
 

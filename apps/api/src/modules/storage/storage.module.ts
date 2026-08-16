@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LocalStorageAdapter } from './local-storage.adapter';
 import { STORAGE_ADAPTER } from './storage-adapter';
 
+/** Global like PrismaModule: STORAGE_ADAPTER is cross-cutting infrastructure every feature module may need. */
+@Global()
 @Module({
   providers: [
     {

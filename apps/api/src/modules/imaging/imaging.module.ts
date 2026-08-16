@@ -1,9 +1,15 @@
 import { Module } from '@nestjs/common';
+import { AI_PROVIDER } from './ai-provider';
+import { ImagingService } from './imaging.service';
+import { NullAiProvider } from './null-ai-provider';
 
 /**
- * Deterministic image processing (resize, quantize, DMC-match, chart/symbol
- * generation via `sharp` + `@stitchcraft/color`). No routes of its own -
- * consumed by the `conversion` and `export` modules starting in M2/M4.
+ * Deterministic image processing (resize, quantize, DMC-match, symbol
+ * assignment via `sharp` + `@stitchcraft/color`), plus the `AiProvider` seam
+ * for optional AI-assisted steps. Consumed by the `conversion` module.
  */
-@Module({})
+@Module({
+  providers: [ImagingService, { provide: AI_PROVIDER, useClass: NullAiProvider }],
+  exports: [ImagingService],
+})
 export class ImagingModule {}
