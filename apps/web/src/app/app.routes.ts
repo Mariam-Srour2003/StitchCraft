@@ -27,12 +27,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
-    path: 'converter',
+    path: 'converter/:projectId',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/converter/converter-placeholder.component').then(
-        (m) => m.ConverterPlaceholderComponent,
-      ),
+    loadComponent: () => import('./features/converter/converter.component').then((m) => m.ConverterComponent),
   },
   {
     path: 'patterns/:id',
