@@ -1,16 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ExportResponse } from '@stitchcraft/types';
+import { firstValueFrom } from 'rxjs';
 import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
 import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
 import { Button } from '../../shared/ui/button/button';
 import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
 import { IconButton } from '../../shared/ui/icon-button/icon-button';
 import { Legend } from '../../shared/ui/legend/legend';
+import { Modal } from '../../shared/ui/modal/modal';
 import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
 import { SegmentedToggle, SegmentedToggleOption } from '../../shared/ui/segmented-toggle/segmented-toggle';
 import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
 import { Slider } from '../../shared/ui/slider/slider';
 import { Toolbar } from '../../shared/ui/toolbar/toolbar';
 import { EditorStore } from './editor.store';
+import { ExportApiService } from './export-api.service';
 
 const TOOL_OPTIONS: SegmentedToggleOption<GridCanvasTool>[] = [
   { value: 'paint', label: 'Paint' },
@@ -37,6 +41,7 @@ const DEFAULT_DRILL_SIZE_MM = 2.8;
     GridCanvas,
     IconButton,
     Legend,
+    Modal,
     PaletteGrid,
     SegmentedToggle,
     SizeReadout,
@@ -53,6 +58,8 @@ export class EditorComponent {
   readonly id = input.required<string>();
 
   protected readonly store = inject(EditorStore);
+  private readonly exportApi = inject(ExportApiService);
+
   protected readonly toolOptions = TOOL_OPTIONS;
   protected readonly modeOptions = MODE_OPTIONS;
 
@@ -61,6 +68,10 @@ export class EditorComponent {
       ? (this.store.meta().drillSizeMm ?? DEFAULT_DRILL_SIZE_MM)
       : (this.store.meta().fabricCount ?? DEFAULT_FABRIC_COUNT),
   );
+
+  protected readonly exporting = signal(false);
+  protected readonly exportResult = signal<ExportResponse | null>(null);
+  protected readonly exportError = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -83,5 +94,26 @@ export class EditorComponent {
 
   save(): void {
     this.store.save();
+  }
+
+  async exportPattern(): Promise<void> {
+    const patternId = this.store.patternId();
+    if (!patternId) return;
+
+    this.exporting.set(true);
+    this.exportError.set(null);
+    try {
+      const result = await firstValueFrom(this.exportApi.create(patternId));
+      this.exportResult.set(result);
+    } catch {
+      this.exportError.set('Could not generate the export. Please try again.');
+    } finally {
+      this.exporting.set(false);
+    }
+  }
+
+  closeExport(): void {
+    this.exportResult.set(null);
+    this.exportError.set(null);
   }
 }

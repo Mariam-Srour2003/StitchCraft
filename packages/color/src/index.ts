@@ -1,4 +1,5 @@
 export * from './space/srgb-lab';
+export * from './contrast/contrast-text-color';
 export * from './difference/ciede2000';
 export * from './quantize/median-cut';
 export * from './quantize/k-means';

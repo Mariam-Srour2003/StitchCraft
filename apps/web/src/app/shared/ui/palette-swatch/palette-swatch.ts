@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { contrastTextColor } from '@stitchcraft/color';
 import { isDmcColor, PaletteEntry } from '@stitchcraft/types';
 
 @Component({
@@ -18,10 +19,5 @@ export class PaletteSwatch {
     return isDmcColor(color) ? `DMC ${color.code} — ${color.name}` : (color.label ?? color.hex);
   });
 
-  /** Chooses black or white glyph text for contrast against the swatch's fill color (WCAG-ish luminance heuristic). */
-  protected readonly glyphColor = computed(() => {
-    const { r, g, b } = this.entry().color.rgb;
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.6 ? '#000000' : '#ffffff';
-  });
+  protected readonly glyphColor = computed(() => contrastTextColor(this.entry().color.rgb));
 }

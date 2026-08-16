@@ -74,4 +74,18 @@
       color: var(--sc-color-text);
     }
   }
+
+  &__export-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sc-space-2);
+
+    a {
+      color: var(--sc-color-primary);
+      font-weight: 600;
+    }
+  }
 }

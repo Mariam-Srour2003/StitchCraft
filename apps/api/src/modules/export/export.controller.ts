@@ -1,12 +1,17 @@
-import { Controller, NotImplementedException, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { ExportResponse } from '@stitchcraft/types';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ExportService } from './export.service';
 
-/** Stub for M0; tiled PDF/PNG/SVG/materials-list export ships in M4 (see PLAN.md). */
 @Controller('exports')
 @UseGuards(JwtAuthGuard)
 export class ExportController {
+  constructor(private readonly exportService: ExportService) {}
+
   @Post(':patternId')
-  create(@Param('patternId') _patternId: string): never {
-    throw new NotImplementedException('Pattern export ships in milestone M4');
+  create(@CurrentUser() user: RequestUser, @Param('patternId') patternId: string): Promise<ExportResponse> {
+    return this.exportService.generate(user.id, patternId);
   }
 }

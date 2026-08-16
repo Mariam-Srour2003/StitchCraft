@@ -63,6 +63,14 @@ Proceeding with these; flag if any should change:
     in-place with grid cells re-pointed at the new entry); the frontend uses polling rather than
     the WS gateway it could subscribe to (the gateway is real and running - wiring a
     socket.io-client subscription instead of polling is a drop-in enhancement, not a rebuild).
+12. **Export scope cuts, to revisit in a later milestone**: PDF cells are individual vector+text
+    objects with no run-length merging of same-color neighbors, so a large pattern (e.g. 200x200)
+    produces a large, slow-to-generate multi-page PDF - fine at typical/demo sizes, worth
+    revisiting if large patterns turn out to be common; PDF cell glyphs are always the 1-based
+    palette number rather than the pattern's actual symbol (pdfkit's bundled standard fonts don't
+    reliably cover the Unicode shape glyphs in `assignSymbols`' extended alphabet), though the
+    legend page does spell out each entry's real symbol character; exports regenerate from scratch
+    on every request rather than being cached/invalidated against the pattern's last-modified time.
 
 ---
 
@@ -261,7 +269,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | POST | `/conversions` | ✅ | multipart upload + params → `{ jobId }` |
 | GET | `/conversions/:id` | ✅ | job status/progress |
 | WS | `/ws/conversions` (room per job, `subscribe` → `{jobId}`) | ✅ | progress push; the actual frontend uses polling instead (see M2 scope cuts) |
-| POST | `/exports/:patternId` | stub (M4) | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }` |
+| POST | `/exports/:patternId` | ✅ | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }` |
 
 M0 wires every route above marked ✅ end-to-end (controller → service → Prisma → Postgres),
 with the stub modules registered but returning `501 Not Implemented` so the routes exist and are
@@ -291,7 +299,14 @@ typed against `packages/types`, but do no real work yet.
   every save); `legend`'s count column reads "Drills" instead of "Stitches" for diamond patterns.
   Drill palette continues to reuse the DMC set (assumption #3) - real diamond-painting drills are
   commonly DMC-numbered. Export remains M4's job, covering all three pattern types.
-- **M4 — Exports**: tiled printable PDF chart, legend, floss/drill shopping list, PNG/SVG.
+- **M4 — Exports** *(done)*: `POST /exports/:patternId` generates all four artifacts synchronously
+  (small enough grids that a job queue isn't warranted) - a tiled, printable PDF (one page per
+  ~36x46-cell tile, row/col rulers, grid guides bold every 10, a legend/materials page), a
+  standalone SVG chart, a PNG rasterized from that SVG via `sharp`, and a CSV shopping list sorted
+  by how much of each color you'll need. Fixed a real gap along the way: `LocalStorageAdapter`
+  wrote files but nothing served them back — `main.ts` now mounts `/api/storage` as a static root
+  matching `StorageAdapter.urlFor()`'s URLs. Extracted `contrastTextColor` into `packages/color`
+  so the frontend swatch and the server-side chart pick text contrast the same way.
 - **M5 — AI service**: Python FastAPI (`services/ai`) with background removal + upscale behind
   `AiProvider`; feature-flagged; `NullAiProvider` remains the default with zero config.
 - **M6 — Polish**: projects dashboard, custom palettes UI, fuller test coverage, docs,
