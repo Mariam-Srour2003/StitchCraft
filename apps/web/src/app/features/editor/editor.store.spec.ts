@@ -51,6 +51,29 @@ describe('EditorStore', () => {
       expect(Array.from(store.grid()[0])).toEqual([EMPTY_CELL, EMPTY_CELL, EMPTY_CELL]);
       expect(store.dirty()).toBe(false);
     });
+
+    it('defaults the render mode to diamond for a diamond pattern', async () => {
+      api.get.mockReturnValueOnce(of(makePattern({ type: 'diamond' })));
+      await store.load('pattern-1');
+      expect(store.renderMode()).toBe('diamond');
+    });
+
+    it('defaults the render mode to block for a non-diamond pattern', async () => {
+      api.get.mockReturnValueOnce(of(makePattern({ type: 'cross_stitch' })));
+      await store.load('pattern-1');
+      expect(store.renderMode()).toBe('block');
+    });
+
+    it('does not reset a user-chosen render mode when save() re-applies the pattern', async () => {
+      api.get.mockReturnValueOnce(of(makePattern({ type: 'cross_stitch' })));
+      await store.load('pattern-1');
+      store.setRenderMode('symbol');
+
+      api.update.mockReturnValueOnce(of(makePattern({ type: 'cross_stitch' })));
+      await store.save();
+
+      expect(store.renderMode()).toBe('symbol');
+    });
   });
 
   describe('paintCell', () => {

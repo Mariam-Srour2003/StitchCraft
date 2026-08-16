@@ -43,9 +43,10 @@ Proceeding with these; flag if any should change:
 6. **Branch model**: `main` (always releasable) + `develop` (integration) + short-lived `feature/*` branches merged into `develop` via PR. M0 lands on `feature/m0-foundation` → `develop`; the first PR from `develop` → `main` happens once M0 is verified running.
 7. **Node 22 / pnpm** (via Corepack, already bundled with Node 22) — no separate pnpm install needed. Nx 20.x targets Angular 18 and Nest 10, both current as of this workspace's creation.
 8. **Package manager for the optional Python service**: `pip` + `requirements.txt` (not Poetry) — keeps `services/ai` approachable without a second Python tooling decision; revisit if the service grows.
-9. M0, M1, and M2 are done, per the spec's "checkpoint after M0" instruction followed by the
-   user's go-ahead to keep going each time. M3 (diamond painting mode) and everything after remain
-   out of scope until reviewed.
+9. M0-M3 are done, per the spec's "checkpoint after M0" instruction followed by the user's
+   go-ahead to keep going each time (and, from M3 onward, an explicit instruction to proceed
+   through all remaining milestones without stopping to ask). M4 (exports) onward follow in this
+   same session.
 10. **Editor scope cuts, to revisit in a later milestone**: resize clears undo/redo history rather
     than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet
     (only the freeform color-picker) even though DMC browsing exists as its own page; pan is native
@@ -283,8 +284,13 @@ typed against `packages/types`, but do no real work yet.
   `WorkerHost` processor does the work off the request thread) with both a WS gateway and
   frontend polling for progress. `AiProvider` seam in place (`NullAiProvider` default) so
   background-removal/upscale flags degrade gracefully with no AI service configured.
-- **M3 — Diamond painting mode**: drill palette + shapes, physical drill sizing, drill counts,
-  diamond-specific legend/export.
+- **M3 — Diamond painting mode** *(done)*: a `diamond` render mode (a filled rhombus "gem" per
+  cell, distinct from block/x-stitch) in `GridRenderingService`/`grid-canvas`; drill size (mm) is
+  settable at pattern creation and drives `size-readout`'s physical-size math; the editor defaults
+  to diamond view on first opening a diamond pattern (without resetting a user's chosen view on
+  every save); `legend`'s count column reads "Drills" instead of "Stitches" for diamond patterns.
+  Drill palette continues to reuse the DMC set (assumption #3) - real diamond-painting drills are
+  commonly DMC-numbered. Export remains M4's job, covering all three pattern types.
 - **M4 — Exports**: tiled printable PDF chart, legend, floss/drill shopping list, PNG/SVG.
 - **M5 — AI service**: Python FastAPI (`services/ai`) with background removal + upscale behind
   `AiProvider`; feature-flagged; `NullAiProvider` remains the default with zero config.

@@ -20,6 +20,7 @@ function createMockCtx() {
   const clearRectCalls: Array<{ x: number; y: number; w: number; h: number }> = [];
   const fillTextCalls: Array<{ text: string; fillStyle: string }> = [];
   const strokeCalls: Array<{ strokeStyle: string; lineWidth: number }> = [];
+  const fillPathCalls: Array<{ fillStyle: string }> = [];
 
   const ctx = {
     fillStyle: '',
@@ -36,10 +37,19 @@ function createMockCtx() {
     beginPath: jest.fn(),
     moveTo: jest.fn(),
     lineTo: jest.fn(),
+    closePath: jest.fn(),
     stroke: jest.fn(() => strokeCalls.push({ strokeStyle: ctx.strokeStyle, lineWidth: ctx.lineWidth })),
+    fill: jest.fn(() => fillPathCalls.push({ fillStyle: ctx.fillStyle })),
   };
 
-  return { ctx: ctx as unknown as CanvasRenderingContext2D, fillRectCalls, clearRectCalls, fillTextCalls, strokeCalls };
+  return {
+    ctx: ctx as unknown as CanvasRenderingContext2D,
+    fillRectCalls,
+    clearRectCalls,
+    fillTextCalls,
+    strokeCalls,
+    fillPathCalls,
+  };
 }
 
 function baseParams(overrides: Partial<GridRenderParams> = {}): GridRenderParams {
@@ -84,6 +94,15 @@ describe('GridRenderingService', () => {
 
     const cellStroke = strokeCalls.find((c) => c.strokeStyle === '#FF0000');
     expect(cellStroke).toBeDefined();
+  });
+
+  it('renderAll fills a rhombus path with the palette hex in diamond mode, on a neutral backing', () => {
+    const { ctx, fillRectCalls, fillPathCalls } = createMockCtx();
+    service.renderAll(ctx, baseParams({ mode: 'diamond', grid: [Int16Array.from([0])], width: 1 }));
+
+    const backing = fillRectCalls.find((c) => c.x === 0 && c.y === 0);
+    expect(backing?.fillStyle).toBe(theme.paintedCellFill);
+    expect(fillPathCalls).toContainEqual({ fillStyle: '#FF0000' });
   });
 
   it('renderAll draws the palette symbol glyph in symbol mode', () => {

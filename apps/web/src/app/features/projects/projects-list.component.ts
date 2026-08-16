@@ -40,6 +40,10 @@ export class ProjectsListComponent {
     type: new FormControl<PatternType>('cross_stitch', { nonNullable: true }),
     width: new FormControl(40, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
     height: new FormControl(40, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    // Physical sizing: fabric count applies to cross-stitch/color-by-number,
+    // drill size (mm) to diamond - only one is relevant per pattern type, see template.
+    fabricCount: new FormControl(14, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    drillSizeMm: new FormControl(2.8, { nonNullable: true, validators: [Validators.required, Validators.min(0.1)] }),
   });
 
   constructor() {
@@ -93,8 +97,9 @@ export class ProjectsListComponent {
     const projectId = this.newPatternProjectId();
     if (!projectId || this.newPatternForm.invalid) return;
 
-    const { name, type, width, height } = this.newPatternForm.getRawValue();
-    const pattern = await firstValueFrom(this.patternsApi.create({ projectId, name, type, width, height }));
+    const { name, type, width, height, fabricCount, drillSizeMm } = this.newPatternForm.getRawValue();
+    const meta = type === 'diamond' ? { drillSizeMm } : { fabricCount };
+    const pattern = await firstValueFrom(this.patternsApi.create({ projectId, name, type, width, height, meta }));
     this.closeNewPattern();
     await this.router.navigate(['/editor', pattern.id]);
   }

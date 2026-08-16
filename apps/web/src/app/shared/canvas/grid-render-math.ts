@@ -1,6 +1,6 @@
 import { PaletteEntry } from '@stitchcraft/types';
 
-export type RenderMode = 'x-stitch' | 'block' | 'symbol' | 'number';
+export type RenderMode = 'x-stitch' | 'block' | 'symbol' | 'number' | 'diamond';
 
 export interface GridTheme {
   /** Background painted behind an empty (unpainted) cell. */

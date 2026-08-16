@@ -70,10 +70,16 @@ describe('ProjectsListComponent', () => {
     expect(patternsApi.listForProject).toHaveBeenCalledTimes(1); // still cached, not refetched
   });
 
-  it('creates a pattern and navigates to its editor route', async () => {
+  it('creates a diamond pattern with a drillSizeMm meta field and navigates to its editor route', async () => {
     patternsApi.create.mockReturnValueOnce(of(pattern));
     fixture.componentInstance.openNewPattern('proj-1');
-    fixture.componentInstance.newPatternForm.patchValue({ name: 'Cat', type: 'diamond', width: 50, height: 60 });
+    fixture.componentInstance.newPatternForm.patchValue({
+      name: 'Cat',
+      type: 'diamond',
+      width: 50,
+      height: 60,
+      drillSizeMm: 2.5,
+    });
 
     await fixture.componentInstance.createPattern();
 
@@ -83,9 +89,28 @@ describe('ProjectsListComponent', () => {
       type: 'diamond',
       width: 50,
       height: 60,
+      meta: { drillSizeMm: 2.5 },
     });
     expect(router.navigate).toHaveBeenCalledWith(['/editor', 'pattern-1']);
     expect(fixture.componentInstance.newPatternProjectId()).toBeNull();
+  });
+
+  it('creates a cross-stitch pattern with a fabricCount meta field', async () => {
+    patternsApi.create.mockReturnValueOnce(of(pattern));
+    fixture.componentInstance.openNewPattern('proj-1');
+    fixture.componentInstance.newPatternForm.patchValue({
+      name: 'Sampler',
+      type: 'cross_stitch',
+      width: 40,
+      height: 40,
+      fabricCount: 18,
+    });
+
+    await fixture.componentInstance.createPattern();
+
+    expect(patternsApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'cross_stitch', meta: { fabricCount: 18 } }),
+    );
   });
 
   it('does not create a pattern when the form is invalid', async () => {

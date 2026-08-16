@@ -15,6 +15,8 @@ export interface LegendRow {
 })
 export class Legend {
   readonly rows = input.required<readonly LegendRow[]>();
+  /** "Stitches" for cross-stitch/color-by-number, "Drills" for diamond - see PLAN.md M3. */
+  readonly countLabel = input('Stitches');
 
   protected labelFor(row: LegendRow): string {
     const { color } = row.entry;

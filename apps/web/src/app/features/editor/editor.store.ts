@@ -92,6 +92,11 @@ export class EditorStore {
     try {
       const pattern = await firstValueFrom(this.patternsApi.get(patternId));
       this.applyPattern(pattern);
+      // Default the view to the mode that best represents this pattern type
+      // on first open; save() re-applies the (possibly updated) pattern too,
+      // but must never do this or it would reset the user's chosen view on
+      // every save.
+      this.renderModeSignal.set(pattern.type === 'diamond' ? 'diamond' : 'block');
     } finally {
       this.loadingSignal.set(false);
     }

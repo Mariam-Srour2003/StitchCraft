@@ -46,4 +46,17 @@ describe('Legend', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Sky');
   });
+
+  it('defaults the count column header to "Stitches"', () => {
+    fixture.componentRef.setInput('rows', []);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('thead').textContent).toContain('Stitches');
+  });
+
+  it('shows a custom count label for diamond patterns ("Drills")', () => {
+    fixture.componentRef.setInput('rows', []);
+    fixture.componentRef.setInput('countLabel', 'Drills');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('thead').textContent).toContain('Drills');
+  });
 });

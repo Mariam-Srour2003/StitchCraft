@@ -20,6 +20,7 @@ const TOOL_OPTIONS: SegmentedToggleOption<GridCanvasTool>[] = [
 const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
   { value: 'x-stitch', label: 'X-Stitch' },
   { value: 'block', label: 'Block' },
+  { value: 'diamond', label: 'Diamond' },
   { value: 'symbol', label: 'Symbol' },
   { value: 'number', label: 'Number' },
 ];
