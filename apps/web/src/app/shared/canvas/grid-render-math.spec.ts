@@ -74,9 +74,10 @@ describe('glyphForMode', () => {
     expect(glyphForMode('number', 1, palette)).toBe('2');
   });
 
-  it('returns null for block and x-stitch modes', () => {
+  it('returns null for block, x-stitch, and diamond modes', () => {
     expect(glyphForMode('block', 0, palette)).toBeNull();
     expect(glyphForMode('x-stitch', 0, palette)).toBeNull();
+    expect(glyphForMode('diamond', 0, palette)).toBeNull();
   });
 
   it('returns null for an out-of-range palette index', () => {

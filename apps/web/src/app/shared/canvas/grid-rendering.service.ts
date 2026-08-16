@@ -77,6 +77,26 @@ export class GridRenderingService {
       return;
     }
 
+    if (mode === 'diamond') {
+      // A faceted resin "drill" is a small gem rather than a flat square -
+      // approximate that with a rotated square (rhombus) on a neutral
+      // backing, distinct from block mode's flush-filled cell.
+      ctx.fillStyle = theme.paintedCellFill;
+      ctx.fillRect(left, top, cellSize, cellSize);
+      const cx = left + cellSize / 2;
+      const cy = top + cellSize / 2;
+      const r = cellSize * 0.42;
+      ctx.fillStyle = hex;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx + r, cy);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r, cy);
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
+
     // symbol | number
     ctx.fillStyle = theme.paintedCellFill;
     ctx.fillRect(left, top, cellSize, cellSize);

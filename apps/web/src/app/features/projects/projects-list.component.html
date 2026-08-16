@@ -77,6 +77,17 @@
             <input type="number" min="1" max="500" formControlName="height" />
           </label>
         </div>
+        @if (newPatternForm.controls.type.value === 'diamond') {
+          <label>
+            Drill size (mm)
+            <input type="number" step="0.1" min="0.1" formControlName="drillSizeMm" />
+          </label>
+        } @else {
+          <label>
+            Fabric count (Aida)
+            <input type="number" min="1" formControlName="fabricCount" />
+          </label>
+        }
         <sc-button type="submit" [disabled]="newPatternForm.invalid">Create & open</sc-button>
       </form>
     </sc-modal>
