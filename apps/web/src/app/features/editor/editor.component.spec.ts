@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Pattern } from '@stitchcraft/types';
-import { of } from 'rxjs';
+import { ExportResponse, Pattern } from '@stitchcraft/types';
+import { of, throwError } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { EditorComponent } from './editor.component';
+import { ExportApiService } from './export-api.service';
 
 function makePattern(): Pattern {
   return {
@@ -28,16 +29,21 @@ function makePattern(): Pattern {
 describe('EditorComponent', () => {
   let fixture: ComponentFixture<EditorComponent>;
   let patternsApi: { get: jest.Mock; update: jest.Mock };
+  let exportApi: { create: jest.Mock };
 
   beforeEach(async () => {
     HTMLCanvasElement.prototype.getContext = jest.fn(() => null);
     HTMLCanvasElement.prototype.setPointerCapture = jest.fn();
 
     patternsApi = { get: jest.fn().mockReturnValue(of(makePattern())), update: jest.fn() };
+    exportApi = { create: jest.fn() };
 
     await TestBed.configureTestingModule({
       imports: [EditorComponent],
-      providers: [{ provide: PatternsApiService, useValue: patternsApi }],
+      providers: [
+        { provide: PatternsApiService, useValue: patternsApi },
+        { provide: ExportApiService, useValue: exportApi },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(EditorComponent);
@@ -77,5 +83,43 @@ describe('EditorComponent', () => {
     fixture.componentInstance.save();
     await fixture.whenStable();
     expect(patternsApi.update).toHaveBeenCalledWith('pattern-1', expect.any(Object));
+  });
+
+  describe('export', () => {
+    const result: ExportResponse = {
+      pdfUrl: 'https://storage.local/chart.pdf',
+      pngUrl: 'https://storage.local/chart.png',
+      svgUrl: 'https://storage.local/chart.svg',
+      materialsListUrl: 'https://storage.local/materials.csv',
+    };
+
+    it('requests an export for the current pattern and exposes the resulting URLs', async () => {
+      exportApi.create.mockReturnValueOnce(of(result));
+
+      await fixture.componentInstance.exportPattern();
+
+      expect(exportApi.create).toHaveBeenCalledWith('pattern-1');
+      expect(fixture.componentInstance['exportResult']()).toEqual(result);
+      expect(fixture.componentInstance['exporting']()).toBe(false);
+    });
+
+    it('sets an error message and clears it on close if the export request fails', async () => {
+      exportApi.create.mockReturnValueOnce(throwError(() => new Error('boom')));
+
+      await fixture.componentInstance.exportPattern();
+      expect(fixture.componentInstance['exportError']()).toContain('try again');
+      expect(fixture.componentInstance['exportResult']()).toBeNull();
+
+      fixture.componentInstance.closeExport();
+      expect(fixture.componentInstance['exportError']()).toBeNull();
+    });
+
+    it('closeExport() clears a successful result too', async () => {
+      exportApi.create.mockReturnValueOnce(of(result));
+      await fixture.componentInstance.exportPattern();
+
+      fixture.componentInstance.closeExport();
+      expect(fixture.componentInstance['exportResult']()).toBeNull();
+    });
   });
 });
