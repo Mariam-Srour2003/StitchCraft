@@ -1,0 +1,5 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [{ "files": ["*.ts"], "parserOptions": { "project": ["packages/color/tsconfig.*?.json"] } }]
+}

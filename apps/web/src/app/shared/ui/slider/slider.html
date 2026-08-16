@@ -1,0 +1,16 @@
+<label class="sc-slider">
+  <span class="sc-slider__label">{{ label() }}</span>
+  <input
+    type="range"
+    class="sc-slider__input"
+    [min]="min()"
+    [max]="max()"
+    [step]="step()"
+    [value]="value()"
+    [attr.aria-valuenow]="value()"
+    [attr.aria-valuemin]="min()"
+    [attr.aria-valuemax]="max()"
+    (input)="onInput($event)"
+  />
+  <span class="sc-slider__value">{{ value() }}</span>
+</label>

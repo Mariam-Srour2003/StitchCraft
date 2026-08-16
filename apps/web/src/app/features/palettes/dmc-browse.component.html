@@ -1,0 +1,28 @@
+<div class="dmc-browse">
+  <header class="dmc-browse__header">
+    <h1>DMC thread reference</h1>
+    <input
+      class="dmc-browse__search"
+      type="search"
+      placeholder="Search by name or code…"
+      [ngModel]="search()"
+      (ngModelChange)="onSearchChange($event)"
+      aria-label="Search DMC colors"
+    />
+  </header>
+
+  @if (loading()) {
+    <p>Loading…</p>
+  } @else {
+    <p class="dmc-browse__count">{{ total() }} color(s)</p>
+    <ul class="dmc-browse__grid">
+      @for (color of colors(); track color.code) {
+        <li class="dmc-browse__swatch">
+          <span class="dmc-browse__chip" [style.background]="color.hex"></span>
+          <span class="dmc-browse__code">{{ color.code }}</span>
+          <span class="dmc-browse__name">{{ color.name }}</span>
+        </li>
+      }
+    </ul>
+  }
+</div>

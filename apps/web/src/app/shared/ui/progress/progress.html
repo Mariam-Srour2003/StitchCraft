@@ -1,0 +1,10 @@
+<div
+  class="sc-progress"
+  role="progressbar"
+  [attr.aria-label]="label()"
+  [attr.aria-valuenow]="clamped()"
+  aria-valuemin="0"
+  aria-valuemax="100"
+>
+  <div class="sc-progress__fill" [style.width.%]="clamped()"></div>
+</div>

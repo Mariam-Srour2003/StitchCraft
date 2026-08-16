@@ -1,0 +1,45 @@
+{
+  "name": "stitchcraft",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "affected:build": "nx affected -t build",
+    "affected:test": "nx affected -t test",
+    "affected:lint": "nx affected -t lint",
+    "dev:web": "nx run web:serve",
+    "dev:api": "nx run api:serve",
+    "prisma:generate": "nx run api:prisma-generate",
+    "prisma:migrate": "nx run api:prisma-migrate",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "nx": "^19.5.0",
+    "@nx/eslint": "^19.5.0",
+    "@nx/eslint-plugin": "^19.5.0",
+    "@nx/jest": "^19.5.0",
+    "@nx/js": "^19.5.0",
+    "@nx/workspace": "^19.5.0",
+    "typescript": "~5.5.0",
+    "prettier": "^3.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "@types/node": "^20.14.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "*.{ts,html}": ["prettier --write"],
+    "*.{js,jsx,json,scss,md}": ["prettier --write"]
+  }
+}

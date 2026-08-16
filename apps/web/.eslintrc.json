@@ -1,0 +1,19 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": { "project": ["apps/web/tsconfig.*?.json"] },
+      "extends": ["plugin:@angular-eslint/recommended", "plugin:@angular-eslint/template/process-inline-templates"],
+      "rules": {
+        "@angular-eslint/component-selector": ["error", { "type": "element", "prefix": "sc", "style": "kebab-case" }],
+        "@angular-eslint/directive-selector": ["error", { "type": "attribute", "prefix": "sc", "style": "camelCase" }]
+      }
+    },
+    {
+      "files": ["*.html"],
+      "extends": ["plugin:@angular-eslint/template/recommended", "plugin:@angular-eslint/template/accessibility"]
+    }
+  ]
+}

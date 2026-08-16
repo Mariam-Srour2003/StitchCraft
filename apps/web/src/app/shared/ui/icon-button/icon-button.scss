@@ -1,0 +1,27 @@
+.sc-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--sc-radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sc-color-text);
+  cursor: pointer;
+  transition: background-color var(--sc-motion-fast) var(--sc-motion-easing);
+
+  &:hover:not(:disabled) {
+    background: var(--sc-color-border);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &--toggled {
+    background: var(--sc-color-primary);
+    color: var(--sc-color-primary-contrast);
+  }
+}

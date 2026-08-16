@@ -1,0 +1,73 @@
+// Design tokens as CSS custom properties (not just SCSS variables) so runtime
+// theming - print stylesheet, high-contrast mode - never needs a rebuild.
+// See PLAN.md "Styling" for the rationale.
+:root {
+  // Color - neutrals
+  --sc-color-bg: #faf9f7;
+  --sc-color-surface: #ffffff;
+  --sc-color-border: #e2ddd5;
+  --sc-color-text: #2b2622;
+  --sc-color-text-muted: #6b6259;
+
+  // Color - brand / accents
+  --sc-color-primary: #a8433a;
+  --sc-color-primary-hover: #8f362e;
+  --sc-color-primary-contrast: #ffffff;
+  --sc-color-accent: #3a6b58;
+  --sc-color-danger: #c0392b;
+  --sc-color-focus-ring: #2d6cdf;
+
+  // Grid canvas guides (bold every 10 per the spec)
+  --sc-color-grid-line: #d8d2c8;
+  --sc-color-grid-line-bold: #a39a8c;
+
+  // Spacing scale (4px base)
+  --sc-space-1: 0.25rem;
+  --sc-space-2: 0.5rem;
+  --sc-space-3: 0.75rem;
+  --sc-space-4: 1rem;
+  --sc-space-5: 1.5rem;
+  --sc-space-6: 2rem;
+  --sc-space-8: 3rem;
+
+  // Typography
+  --sc-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sc-font-size-sm: 0.8125rem;
+  --sc-font-size-base: 0.9375rem;
+  --sc-font-size-lg: 1.125rem;
+  --sc-font-size-xl: 1.5rem;
+  --sc-line-height-base: 1.5;
+
+  // Radii / elevation
+  --sc-radius-sm: 4px;
+  --sc-radius-md: 8px;
+  --sc-radius-lg: 12px;
+  --sc-shadow-sm: 0 1px 2px rgba(43, 38, 34, 0.08);
+  --sc-shadow-md: 0 4px 12px rgba(43, 38, 34, 0.12);
+
+  // Motion
+  --sc-motion-fast: 120ms;
+  --sc-motion-base: 200ms;
+  --sc-motion-easing: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sc-motion-fast: 0ms;
+    --sc-motion-base: 0ms;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sc-color-bg: #1c1a18;
+    --sc-color-surface: #262320;
+    --sc-color-border: #3a352f;
+    --sc-color-text: #f2ede6;
+    --sc-color-text-muted: #b6ab9d;
+    --sc-color-grid-line: #3a352f;
+    --sc-color-grid-line-bold: #5c5348;
+    --sc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --sc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}

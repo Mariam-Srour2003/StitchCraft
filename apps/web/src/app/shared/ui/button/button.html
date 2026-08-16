@@ -1,0 +1,9 @@
+<button
+  class="sc-button"
+  [class]="'sc-button--' + variant()"
+  [type]="type()"
+  [disabled]="disabled()"
+  (click)="onClick()"
+>
+  <ng-content />
+</button>

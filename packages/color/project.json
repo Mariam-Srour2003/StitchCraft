@@ -1,0 +1,31 @@
+{
+  "name": "color",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/color/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:color"],
+  "implicitDependencies": ["types"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/color",
+        "main": "packages/color/src/index.ts",
+        "tsConfig": "packages/color/tsconfig.json",
+        "assets": ["packages/color/src/dmc/README.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/packages/color"],
+      "options": {
+        "jestConfig": "packages/color/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+<div
+  #dialog
+  class="sc-modal-backdrop"
+  (click)="onBackdropClick($event)"
+  (keydown)="onKeydown($event)"
+>
+  <div class="sc-modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="'sc-modal-heading'">
+    <header class="sc-modal__header">
+      <h2 id="sc-modal-heading" class="sc-modal__heading">{{ heading() }}</h2>
+      <button type="button" class="sc-modal__close" aria-label="Close dialog" (click)="close()">✕</button>
+    </header>
+    <div class="sc-modal__body">
+      <ng-content />
+    </div>
+  </div>
+</div>

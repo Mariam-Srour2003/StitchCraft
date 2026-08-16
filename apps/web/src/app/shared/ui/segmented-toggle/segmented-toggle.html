@@ -1,0 +1,16 @@
+<div class="sc-segmented-toggle" role="radiogroup" [attr.aria-label]="ariaLabel()">
+  @for (option of options(); track option.value; let i = $index) {
+    <button
+      type="button"
+      role="radio"
+      class="sc-segmented-toggle__option"
+      [class.sc-segmented-toggle__option--selected]="option.value === value()"
+      [attr.aria-checked]="option.value === value()"
+      [tabindex]="option.value === value() ? 0 : -1"
+      (click)="select(option.value)"
+      (keydown)="onKeydown($event, i)"
+    >
+      {{ option.label }}
+    </button>
+  }
+</div>

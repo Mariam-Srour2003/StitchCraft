@@ -1,0 +1,26 @@
+.sc-segmented-toggle {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--sc-color-border);
+  border-radius: var(--sc-radius-md);
+  gap: 2px;
+
+  &__option {
+    border: none;
+    background: transparent;
+    color: var(--sc-color-text-muted);
+    font-family: inherit;
+    font-size: var(--sc-font-size-sm);
+    font-weight: 600;
+    padding: var(--sc-space-2) var(--sc-space-3);
+    border-radius: calc(var(--sc-radius-md) - 2px);
+    cursor: pointer;
+    transition: background-color var(--sc-motion-fast) var(--sc-motion-easing);
+
+    &--selected {
+      background: var(--sc-color-surface);
+      color: var(--sc-color-text);
+      box-shadow: var(--sc-shadow-sm);
+    }
+  }
+}

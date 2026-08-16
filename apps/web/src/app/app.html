@@ -1,0 +1,23 @@
+<div class="app-shell">
+  <header class="app-shell__header">
+    <span class="app-shell__brand">StitchCraft</span>
+    <sc-toolbar ariaLabel="Main navigation">
+      <a routerLink="/projects">Projects</a>
+      <a routerLink="/palettes">DMC palette</a>
+      <a routerLink="/editor">Editor</a>
+      <a routerLink="/converter">Converter</a>
+    </sc-toolbar>
+    <div class="app-shell__account">
+      @if (authStore.isAuthenticated()) {
+        <span>{{ authStore.currentUser()?.name }}</span>
+        <sc-button variant="ghost" (pressed)="signOut()">Sign out</sc-button>
+      } @else {
+        <a routerLink="/sign-in">Sign in</a>
+      }
+    </div>
+  </header>
+
+  <main class="app-shell__main">
+    <router-outlet />
+  </main>
+</div>

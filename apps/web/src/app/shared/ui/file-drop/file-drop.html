@@ -1,0 +1,23 @@
+<div
+  class="sc-file-drop"
+  [class.sc-file-drop--over]="isDragOver()"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Upload an image, ' + hint()"
+  (click)="openPicker()"
+  (keydown.enter)="openPicker()"
+  (keydown.space)="openPicker()"
+  (drop)="onDrop($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+>
+  <p class="sc-file-drop__title">Drop an image here, or click to browse</p>
+  <p class="sc-file-drop__hint">{{ hint() }}</p>
+  <input
+    #fileInput
+    type="file"
+    class="sc-file-drop__input"
+    [accept]="accept()"
+    (change)="onInputChange($event)"
+  />
+</div>

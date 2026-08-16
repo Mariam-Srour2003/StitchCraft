@@ -1,0 +1,11 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+/.nx/workspace-data
+.nx/self-healing
+pnpm-lock.yaml
+
+# Generated - regenerate via tools/generate-dmc-colors.js instead of hand-formatting
+packages/color/src/dmc/dmc-colors.json
+packages/color/src/dmc/source.csv

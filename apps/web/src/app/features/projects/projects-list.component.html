@@ -1,0 +1,34 @@
+<div class="projects-page">
+  <header class="projects-page__header">
+    <h1>Projects</h1>
+    <form class="projects-page__create" [formGroup]="createForm" (ngSubmit)="createProject()">
+      <input
+        class="projects-page__input"
+        type="text"
+        placeholder="New project name"
+        formControlName="name"
+        aria-label="New project name"
+      />
+      <sc-button type="submit" [disabled]="createForm.invalid">Create project</sc-button>
+    </form>
+  </header>
+
+  @if (loading()) {
+    <p>Loading projects…</p>
+  } @else if (projects().length === 0) {
+    <sc-empty-state
+      title="No projects yet"
+      description="Create your first project to start a pattern from scratch or by converting an image."
+    />
+  } @else {
+    <ul class="projects-page__list">
+      @for (project of projects(); track project.id) {
+        <li class="projects-page__item">
+          <span class="projects-page__name">{{ project.name }}</span>
+          <span class="projects-page__count">{{ project.patternIds.length }} pattern(s)</span>
+          <sc-button variant="ghost" (pressed)="deleteProject(project.id)">Delete</sc-button>
+        </li>
+      }
+    </ul>
+  }
+</div>

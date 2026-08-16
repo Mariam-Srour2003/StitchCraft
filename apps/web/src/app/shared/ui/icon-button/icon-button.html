@@ -1,0 +1,11 @@
+<button
+  class="sc-icon-button"
+  type="button"
+  [attr.aria-label]="label()"
+  [attr.aria-pressed]="toggled()"
+  [class.sc-icon-button--toggled]="toggled()"
+  [disabled]="disabled()"
+  (click)="onClick()"
+>
+  <ng-content />
+</button>

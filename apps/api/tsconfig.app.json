@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/api",
+    "emitDecoratorMetadata": true,
+    "types": ["node"]
+  },
+  "exclude": ["**/*.spec.ts", "test", "jest.config.ts"],
+  "include": ["src/**/*.ts", "prisma/seed.ts"]
+}
