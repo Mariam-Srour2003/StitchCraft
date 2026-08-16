@@ -14,6 +14,18 @@ export class PatternsService {
     return toPatternDto(pattern);
   }
 
+  async findAllForProject(userId: string, projectId: string): Promise<Pattern[]> {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+
+    const patterns = await this.prisma.pattern.findMany({
+      where: { projectId },
+      orderBy: { updatedAt: 'desc' },
+    });
+    return patterns.map(toPatternDto);
+  }
+
   async create(userId: string, dto: CreatePatternDto): Promise<Pattern> {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException('Project not found');

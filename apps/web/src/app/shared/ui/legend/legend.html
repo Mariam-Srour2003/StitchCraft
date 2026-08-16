@@ -1,0 +1,23 @@
+<table class="sc-legend">
+  <caption class="sc-legend__caption">Floss/drill legend</caption>
+  <thead>
+    <tr>
+      <th scope="col">Symbol</th>
+      <th scope="col">Color</th>
+      <th scope="col">Stitches</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.entry.index) {
+      <tr>
+        <td class="sc-legend__symbol" [style.background]="row.entry.color.hex">{{ row.entry.symbol }}</td>
+        <td>{{ labelFor(row) }}</td>
+        <td class="sc-legend__count">{{ row.count }}</td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="3" class="sc-legend__empty">No stitches placed yet.</td>
+      </tr>
+    }
+  </tbody>
+</table>

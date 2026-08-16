@@ -1,0 +1,11 @@
+.sc-palette-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sc-space-2);
+
+  &__empty {
+    color: var(--sc-color-text-muted);
+    font-size: var(--sc-font-size-sm);
+    margin: 0;
+  }
+}

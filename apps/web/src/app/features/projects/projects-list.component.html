@@ -24,11 +24,60 @@
     <ul class="projects-page__list">
       @for (project of projects(); track project.id) {
         <li class="projects-page__item">
-          <span class="projects-page__name">{{ project.name }}</span>
-          <span class="projects-page__count">{{ project.patternIds.length }} pattern(s)</span>
-          <sc-button variant="ghost" (pressed)="deleteProject(project.id)">Delete</sc-button>
+          <div class="projects-page__row">
+            <button type="button" class="projects-page__name" (click)="toggleExpand(project.id)">
+              {{ project.name }}
+            </button>
+            <span class="projects-page__count">{{ project.patternIds.length }} pattern(s)</span>
+            <sc-button variant="secondary" (pressed)="openNewPattern(project.id)">New pattern</sc-button>
+            <sc-button variant="ghost" (pressed)="deleteProject(project.id)">Delete</sc-button>
+          </div>
+
+          @if (expandedProjectId() === project.id) {
+            <ul class="projects-page__patterns">
+              @for (pattern of patternsByProject()[project.id]; track pattern.id) {
+                <li>
+                  <button type="button" (click)="openPattern(pattern.id)">
+                    {{ pattern.name }} ({{ pattern.width }}×{{ pattern.height }})
+                  </button>
+                </li>
+              } @empty {
+                <li class="projects-page__patterns-empty">No patterns yet.</li>
+              }
+            </ul>
+          }
         </li>
       }
     </ul>
+  }
+
+  @if (newPatternProjectId()) {
+    <sc-modal heading="New pattern" (closed)="closeNewPattern()">
+      <form class="projects-page__new-pattern" [formGroup]="newPatternForm" (ngSubmit)="createPattern()">
+        <label>
+          Name
+          <input type="text" formControlName="name" />
+        </label>
+        <label>
+          Type
+          <select formControlName="type">
+            @for (type of patternTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </label>
+        <div class="projects-page__dimensions">
+          <label>
+            Width
+            <input type="number" min="1" max="500" formControlName="width" />
+          </label>
+          <label>
+            Height
+            <input type="number" min="1" max="500" formControlName="height" />
+          </label>
+        </div>
+        <sc-button type="submit" [disabled]="newPatternForm.invalid">Create & open</sc-button>
+      </form>
+    </sc-modal>
   }
 </div>

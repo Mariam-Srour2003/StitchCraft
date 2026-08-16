@@ -1,0 +1,9 @@
+<div class="sc-size-readout">
+  <span class="sc-size-readout__grid">{{ width() }} × {{ height() }} stitches</span>
+  @if (size(); as s) {
+    <span class="sc-size-readout__physical">
+      {{ s.inches.width | number: '1.1-1' }}" × {{ s.inches.height | number: '1.1-1' }}"
+      ({{ s.cm.width | number: '1.1-1' }} × {{ s.cm.height | number: '1.1-1' }} cm) at {{ unitLabel() }}
+    </span>
+  }
+</div>

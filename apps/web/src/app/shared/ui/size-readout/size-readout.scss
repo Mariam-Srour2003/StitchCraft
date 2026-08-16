@@ -1,0 +1,11 @@
+.sc-size-readout {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--sc-font-size-sm);
+  color: var(--sc-color-text-muted);
+
+  &__grid {
+    font-weight: 600;
+    color: var(--sc-color-text);
+  }
+}

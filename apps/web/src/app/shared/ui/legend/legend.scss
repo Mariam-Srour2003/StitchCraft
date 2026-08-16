@@ -1,0 +1,43 @@
+.sc-legend {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--sc-font-size-sm);
+
+  &__caption {
+    text-align: left;
+    font-weight: 600;
+    padding-bottom: var(--sc-space-2);
+  }
+
+  th {
+    text-align: left;
+    color: var(--sc-color-text-muted);
+    font-weight: 600;
+    padding: var(--sc-space-1) var(--sc-space-2);
+    border-bottom: 1px solid var(--sc-color-border);
+  }
+
+  td {
+    padding: var(--sc-space-1) var(--sc-space-2);
+    border-bottom: 1px solid var(--sc-color-border);
+  }
+
+  &__symbol {
+    width: 1.75rem;
+    height: 1.75rem;
+    text-align: center;
+    font-weight: 700;
+    border-radius: var(--sc-radius-sm);
+  }
+
+  &__count {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  &__empty {
+    color: var(--sc-color-text-muted);
+    text-align: center;
+    padding: var(--sc-space-3);
+  }
+}

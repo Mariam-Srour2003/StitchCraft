@@ -1,0 +1,13 @@
+<button
+  type="button"
+  class="sc-palette-swatch"
+  [class.sc-palette-swatch--selected]="selected()"
+  [style.background]="entry().color.hex"
+  [style.color]="glyphColor()"
+  [attr.aria-pressed]="selected()"
+  [title]="tooltip()"
+  [attr.aria-label]="tooltip()"
+  (click)="pressed.emit()"
+>
+  {{ entry().symbol }}
+</button>
