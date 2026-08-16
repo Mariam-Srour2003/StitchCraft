@@ -22,10 +22,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
   },
   {
-    path: 'editor',
+    path: 'editor/:id',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/editor/editor-placeholder.component').then((m) => m.EditorPlaceholderComponent),
+    loadComponent: () => import('./features/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
     path: 'converter',

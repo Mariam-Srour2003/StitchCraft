@@ -43,7 +43,17 @@ Proceeding with these; flag if any should change:
 6. **Branch model**: `main` (always releasable) + `develop` (integration) + short-lived `feature/*` branches merged into `develop` via PR. M0 lands on `feature/m0-foundation` → `develop`; the first PR from `develop` → `main` happens once M0 is verified running.
 7. **Node 22 / pnpm** (via Corepack, already bundled with Node 22) — no separate pnpm install needed. Nx 20.x targets Angular 18 and Nest 10, both current as of this workspace's creation.
 8. **Package manager for the optional Python service**: `pip` + `requirements.txt` (not Poetry) — keeps `services/ai` approachable without a second Python tooling decision; revisit if the service grows.
-9. This turn builds **M0 only** (per the spec's own "checkpoint after M0" instruction, confirmed with the user): monorepo tooling, shared packages, Nest skeleton + Postgres + auth, Angular shell + routing + design tokens + core UI components. The grid-canvas editor (M1) and everything after are out of scope until reviewed.
+9. M0 (monorepo tooling, shared packages, Nest skeleton + Postgres + auth, Angular shell) and M1
+   (the pattern editor) are both done, per the spec's "checkpoint after M0" instruction followed by
+   the user's go-ahead to continue. M2 (image conversion) and everything after remain out of scope
+   until reviewed.
+10. **Editor scope cuts, to revisit in a later milestone**: resize clears undo/redo history rather
+    than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet
+    (only the freeform color-picker) even though DMC browsing exists as its own page; pan is native
+    browser scroll rather than a custom space-drag gesture; devicePixelRatio scaling isn't applied
+    to the canvas bitmap; `grid-canvas`'s theme colors are a static JS constant rather than read
+    from the CSS custom properties at render time, so the canvas doesn't follow dark mode the way
+    the rest of the UI does yet. None of these block the milestone's stated scope.
 
 ---
 
@@ -231,6 +241,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | GET | `/projects/:id` | ✅ | |
 | PATCH | `/projects/:id` | ✅ | rename etc. |
 | DELETE | `/projects/:id` | ✅ | |
+| GET | `/patterns?projectId=` | ✅ | list a project's patterns (added in M1 for the editor's project view) |
 | GET | `/patterns/:id` | ✅ | |
 | POST | `/patterns` | ✅ | create blank pattern within a project |
 | PATCH | `/patterns/:id` | ✅ | save grid/palette edits |
@@ -255,9 +266,10 @@ typed against `packages/types`, but do no real work yet.
   tested CIEDE2000, quantizer, DMC dataset+matcher); NestJS skeleton + Postgres via Prisma +
   JWT auth + projects/patterns/palettes CRUD; Angular shell + routing + design tokens + core
   `shared/ui` components; Docker Compose; CI (lint+test on PR).
-- **M1 — Editor**: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools, palette panel,
-  render modes (x-stitch/block/symbol/number), zoom, undo/redo, resize, save/load via API,
-  stitch-count + size readouts.
+- **M1 — Editor** *(done)*: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools,
+  palette panel (`palette-grid`/`palette-swatch`/`color-picker`), render modes
+  (x-stitch/block/symbol/number), zoom, undo/redo (grouped per drag stroke), resize, save/load
+  via API, `legend` + `size-readout`. Project → "New pattern" → editor flow wired end to end.
 - **M2 — Converter (classic)**: upload → resize → quantize → DMC-match → grid+symbols → preview
   → open in editor; real `conversion`/`imaging` modules; BullMQ job + progress polling/WS.
 - **M3 — Diamond painting mode**: drill palette + shapes, physical drill sizing, drill counts,

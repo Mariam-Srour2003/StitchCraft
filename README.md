@@ -4,12 +4,13 @@ Cross-stitch, color-by-number & diamond-painting studio: draw patterns by
 hand, or convert a photo into one, then export a printable chart with a
 materials list.
 
-This is milestone **M0 — Foundation**: monorepo tooling, shared type/color
-packages, a NestJS API with working auth + projects/patterns/palettes CRUD,
-and an Angular shell with a shared UI component library. See
-[PLAN.md](./PLAN.md) for the full architecture, data model, API contract,
-and milestone breakdown, and [CONTRIBUTING.md](./CONTRIBUTING.md) for
-day-to-day workspace conventions.
+M0 (foundation) and M1 (the pattern editor) are done: monorepo tooling,
+shared type/color packages, a NestJS API with working auth +
+projects/patterns/palettes CRUD, and a full Angular pattern editor - draw,
+erase, undo/redo, resize, zoom, four render modes, and a palette panel - on
+top of a shared UI component library. See [PLAN.md](./PLAN.md) for the full
+architecture, data model, API contract, and milestone breakdown, and
+[CONTRIBUTING.md](./CONTRIBUTING.md) for day-to-day workspace conventions.
 
 ## Stack
 
@@ -101,28 +102,49 @@ secrets, CORS origin, local storage path). `docker-compose.yml` sets these
 directly for containerized services; `.env` is only read when running
 `apps/api` on the host.
 
-## What's implemented in M0
+## What's implemented (M0 + M1)
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
   password hashing, refresh-token revocation via a stored hash.
 - **Projects & patterns**: full CRUD, ownership-checked on every mutation,
   grid stored as run-length-encoded rows (`packages/types`) so a blank
-  200×200 pattern doesn't cost 40,000 numbers.
+  200×200 pattern doesn't cost 40,000 numbers. Projects list can create a
+  pattern (name/type/size) and jumps straight into the editor.
 - **Palettes**: browse the seeded 454-color DMC reference set
   (paginated/searchable) and create custom palettes.
 - **Color math** (`packages/color`): sRGB<->CIELAB conversion, CIEDE2000
   perceptual color difference, k-means and median-cut quantization, nearest-
   DMC-color matching, and a readable symbol/glyph alphabet for
   color-by-number and diamond charts — all unit-tested.
-- **Angular shell**: routing, design tokens as CSS custom properties (with a
-  dark-mode media query and `prefers-reduced-motion` support), a signal-based
-  `AuthStore`, HTTP interceptors for auth + 401 handling, and a 10-component
-  `shared/ui` library (button, icon-button, segmented-toggle, slider, modal,
-  toolbar, file-drop, badge, empty-state, progress), each with its own test.
+- **Pattern editor** (`apps/web/src/app/features/editor` +
+  `shared/canvas`): a canvas `grid-canvas` component driven by a
+  framework-free `GridRenderingService`, paint/erase tools, four render
+  modes (x-stitch/block/symbol/number with grid guides bold every 10 cells),
+  zoom, per-drag-stroke undo/redo, resize (preserves overlapping cells),
+  and a palette panel (`palette-grid`, `palette-swatch`, `color-picker`) plus
+  a live `legend` (stitch counts per color) and `size-readout` (finished
+  dimensions by Aida count or diamond drill size). All state lives in a
+  component-scoped `EditorStore`; `grid-canvas` itself owns no business
+  rules, only rendering and pointer input, per PLAN.md's architecture split.
+- **Angular shell**: routing (with route-param → component-input binding),
+  design tokens as CSS custom properties (dark-mode + reduced-motion aware),
+  a signal-based `AuthStore`, HTTP interceptors for auth + 401 handling, and
+  a shared UI library (button, icon-button, segmented-toggle, slider, modal,
+  toolbar, file-drop, badge, empty-state, progress, palette-swatch,
+  palette-grid, color-picker, legend, size-readout), each with its own test.
 - **Conversion/imaging/export routes** exist and are typed against the API
   contract but return `501 Not Implemented` — real implementations land in
   M2 and M4.
 
-Not yet built (by design — see PLAN.md milestones): the grid-canvas pattern
-editor (M1), the image conversion pipeline (M2), diamond-painting mode (M3),
-real exports (M4), and the optional AI service (M5).
+Known scope cuts in the editor (see PLAN.md assumption #10): resize isn't
+itself undoable (it clears history); adding a color to a pattern's palette
+is limited to the custom color-picker (no DMC-search-and-add flow inside the
+editor yet, though DMC browsing exists as its own page); pan is native
+browser scroll rather than a custom drag gesture; the canvas bitmap doesn't
+scale for devicePixelRatio; and the canvas's grid theme colors are a static
+JS constant rather than read from CSS custom properties, so it doesn't
+follow dark mode yet the way the rest of the UI does.
+
+Not yet built (by design — see PLAN.md milestones): the image conversion
+pipeline (M2), diamond-painting mode (M3), real exports (M4), and the
+optional AI service (M5).

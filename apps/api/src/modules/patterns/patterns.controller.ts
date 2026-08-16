@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Pattern } from '@stitchcraft/types';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreatePatternDto } from './dto/create-pattern.dto';
+import { ListPatternsDto } from './dto/list-patterns.dto';
 import { UpdatePatternDto } from './dto/update-pattern.dto';
 import { PatternsService } from './patterns.service';
 
@@ -11,6 +12,11 @@ import { PatternsService } from './patterns.service';
 @UseGuards(JwtAuthGuard)
 export class PatternsController {
   constructor(private readonly patterns: PatternsService) {}
+
+  @Get()
+  findAllForProject(@CurrentUser() user: RequestUser, @Query() query: ListPatternsDto): Promise<Pattern[]> {
+    return this.patterns.findAllForProject(user.id, query.projectId);
+  }
 
   @Get(':id')
   findOne(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<Pattern> {

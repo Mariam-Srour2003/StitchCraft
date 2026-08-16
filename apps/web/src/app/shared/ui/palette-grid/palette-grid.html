@@ -1,0 +1,12 @@
+<div class="sc-palette-grid" role="listbox" aria-label="Pattern palette">
+  @for (entry of entries(); track entry.index) {
+    <sc-palette-swatch
+      role="option"
+      [entry]="entry"
+      [selected]="entry.index === selectedIndex()"
+      (pressed)="selectIndex.emit(entry.index)"
+    />
+  } @empty {
+    <p class="sc-palette-grid__empty">No colors yet — add one below.</p>
+  }
+</div>
