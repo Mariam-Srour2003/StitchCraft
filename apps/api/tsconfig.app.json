@@ -1,15 +1,19 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/apps/api",
+    // nest-cli's webpack mode (see nest-cli.json) writes its bundle to
+    // apps/api/dist/main.js regardless of this outDir - it does not follow
+    // it. outDir still needs to point there anyway: nest start --watch's
+    // launcher (unlike one-shot `nest build`) computes where to require()
+    // the compiled entry from THIS value, so if it disagreed with webpack's
+    // real output location, watch mode would crash looking for a file that
+    // was never written.
+    "outDir": "./dist",
     // Cross-package imports (@stitchcraft/types, @stitchcraft/color resolve
     // to sibling packages' src/) pull files outside apps/api into this
-    // compilation, so tsc's rootDir inference lands on the repo root
-    // regardless; pinning it here just makes that explicit. Note this alone
-    // doesn't make the build runnable - plain tsc leaves those path-mapped
-    // imports as unresolved bare specifiers, which Node then resolves via
-    // the pnpm workspace symlink straight to their .ts source. nest-cli.json
-    // enables webpack mode instead, which bundles the real import graph.
+    // compilation, so tsc's rootDir inference would otherwise land on the
+    // repo root; harmless either way since webpack bundles rather than
+    // mirrors, but pinned for deterministic ts-loader behavior.
     "rootDir": "../..",
     "emitDecoratorMetadata": true,
     "types": ["node"]
