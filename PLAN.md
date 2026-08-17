@@ -412,9 +412,59 @@ real gaps, both fixed:
   `ngAfterViewInit`, with its default focus ring suppressed (it's focused programmatically, not by
   tabbing, so a visible ring would be a visual regression rather than a wayfinding aid).
 
-**Not verified in this pass**: a live PostgreSQL connection — Postgres 18 is running locally but
-this session has no known credentials and no admin rights to reset them (explicitly not pursued
-further, since credential-guessing/bypassing auth on someone else's real machine is out of scope
-regardless of task pressure); so the Nest API's actual DB-backed request handling, and therefore
-the _real_ (non-mocked) end-to-end flow, remains unexercised here. Flagged as an open item, not
-silently assumed working.
+**Live PostgreSQL connection**, initially not verified for the reason above — resolved once real
+credentials were supplied in `.env`. That unblocked the single biggest finding of this whole
+verification pass:
+
+- **The compiled API had never actually been runnable, in dev or in Docker.** Two independent bugs,
+  both invisible until something actually tried to execute `apps/api`'s build output for the first
+  time:
+  1. `apps/api/tsconfig.app.json` had no explicit `rootDir`. Because `@stitchcraft/types` and
+     `@stitchcraft/color` are imported by path-mapped bare specifiers that resolve to sibling
+     packages' `src/`, TypeScript's rootDir inference span the whole repo, so `nest build`'s plain
+     `tsc` output landed at `dist/apps/api/apps/api/src/main.js`, not the
+     `dist/apps/api/main.js` every tool (nest-cli's launcher, the Dockerfile) assumed.
+  2. Even pointed at the right file, it still crashed: plain `tsc` leaves path-mapped imports as
+     unresolved bare specifiers (`require('@stitchcraft/color')`) rather than rewriting them, so
+     Node fell back to resolving that specifier the normal way — through the pnpm workspace symlink
+     in `node_modules/@stitchcraft/color`, straight to that package's **TypeScript source**, which a
+     plain Node process can't execute (`ERR_MODULE_NOT_FOUND`).
+
+  Fixed by switching `apps/api`'s build to NestJS's built-in webpack mode
+  (`nest-cli.json`'s `"webpack": true`), which traces the real import graph and bundles first-party
+  workspace code into one flat file instead of mirroring source directories. That alone wasn't
+  enough either: the default webpack config's `webpack-node-externals` treats _any_ package
+  resolved through `node_modules` as external, which in a pnpm workspace includes symlinked local
+  packages — so `@stitchcraft/color` was still being left as an unbundled bare `require`. A custom
+  `apps/api/webpack.config.js` allowlists the `@stitchcraft/*` scope so those specifically get
+  bundled while genuine third-party deps (`@nestjs/*`, `bcrypt`, `sharp`, ...) still don't (correctly
+  — those need to stay real `node_modules` installs, not bundled, since several have native
+  bindings). `ts-loader` was added as the one new dependency this required. `pinned rootDir` stays
+  in `tsconfig.app.json` too, now just for deterministic dev-mode (`nest start --watch`) behavior.
+  The Dockerfile turned out to already assume the _correct_ final path
+  (`apps/api/dist/main.js`) — it was right all along; the build underneath it just never actually
+  produced a working file there. (Not verified against real Docker in this pass — no `docker` CLI is
+  installed in this environment — but confirmed by literally running the produced
+  `apps/api/dist/main.js` with plain `node` against the real database, which is the part Docker
+  would otherwise be hiding.)
+
+- **`.env` loading was cwd-dependent and silently wrong.** `apps/api:serve` (`nest start --watch`)
+  always runs with `cwd: apps/api`, but `ConfigModule.forRoot()` had no `envFilePath`, so it only
+  ever looked for `apps/api/.env` (never existed) — the repo-root `.env` was never actually being
+  read by a locally-run API. Fixed by setting `envFilePath: ['.env', '../../.env']`. In the same
+  vein, `.env`/`.env.example`'s `STORAGE_LOCAL_DIR=./apps/api/storage` only made sense resolved from
+  the repo root, not from the API's actual cwd — fixed to `./storage`.
+- **Migration files never existed.** `apps/api/prisma/migrations/` was empty — despite the schema
+  being built out since M0, `prisma migrate dev` had never successfully run against a reachable
+  database before now. Generated and applied the real initial migration (`20260817101645_init`);
+  ran the seed script; then smoke-tested over real HTTP against the live database — register →
+  login (JWT) → create project — and confirmed the row actually landed in Postgres via `psql`, not
+  just a 2xx response. Along the way, found and cleared several orphaned `prisma migrate dev`
+  sessions from earlier stuck attempts that were deadlocked on Postgres's migration advisory lock
+  (user-approved before terminating those backend connections).
+
+This is the one part of the stack that had **never been run at all** before this pass — not "run
+with bugs," genuinely never executed past `tsc` type-checking. Everything above it in this
+document describes code that was reviewed and unit/integration-tested with a mocked/in-memory
+Prisma where applicable, but the actual "does `node dist/apps/api/main.js` boot and serve a real
+request against a real Postgres" question had no answer until now.

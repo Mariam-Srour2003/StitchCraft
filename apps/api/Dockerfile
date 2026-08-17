@@ -19,7 +19,6 @@ RUN pnpm --filter @stitchcraft/api run build
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /workspace/node_modules ./node_modules
-COPY --from=build /workspace/packages ./packages
 COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /workspace/apps/api/dist ./apps/api/dist
 COPY --from=build /workspace/apps/api/prisma ./apps/api/prisma
