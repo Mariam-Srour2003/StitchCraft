@@ -14,7 +14,11 @@ import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // apps/api:serve (nest start --watch) always runs with cwd=apps/api, but
+    // .env lives at the repo root (single source, shared with docker-compose's
+    // own var list) - '../../.env' is the one that actually resolves there;
+    // '.env' stays first so a direct repo-root invocation still works too.
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
