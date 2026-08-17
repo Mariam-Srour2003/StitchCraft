@@ -1,8 +1,8 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../prisma/prisma.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -47,9 +47,18 @@ describe('AuthService', () => {
       });
       prisma.user.update.mockResolvedValueOnce({});
 
-      const result = await service.register({ email: 'a@b.com', password: 'password123', name: 'Ada' });
+      const result = await service.register({
+        email: 'a@b.com',
+        password: 'password123',
+        name: 'Ada',
+      });
 
-      expect(result.user).toEqual({ id: 'user-1', email: 'a@b.com', name: 'Ada', createdAt: '2026-01-01T00:00:00.000Z' });
+      expect(result.user).toEqual({
+        id: 'user-1',
+        email: 'a@b.com',
+        name: 'Ada',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
       expect(result.accessToken).toEqual(expect.any(String));
       expect(result.refreshToken).toEqual(expect.any(String));
 
@@ -83,9 +92,9 @@ describe('AuthService', () => {
         passwordHash: await bcrypt.hash('correct-password', 4),
       });
 
-      await expect(service.login({ email: 'a@b.com', password: 'wrong-password' })).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.login({ email: 'a@b.com', password: 'wrong-password' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
     it('issues tokens on a correct password', async () => {
@@ -105,7 +114,9 @@ describe('AuthService', () => {
 
   describe('refresh', () => {
     it('rejects a refresh token that fails verification', async () => {
-      await expect(service.refresh('not-a-real-token')).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(service.refresh('not-a-real-token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
     });
 
     it('rejects a syntactically valid token whose hash no longer matches (revoked)', async () => {

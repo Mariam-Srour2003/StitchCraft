@@ -1,4 +1,4 @@
-import { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@stitchcraft/types';
 
 export type RenderMode = 'x-stitch' | 'block' | 'symbol' | 'number' | 'diamond';
 

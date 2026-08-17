@@ -1,5 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Legend, LegendRow } from './legend';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import type { LegendRow } from './legend';
+import { Legend } from './legend';
 
 describe('Legend', () => {
   let fixture: ComponentFixture<Legend>;
@@ -21,7 +23,13 @@ describe('Legend', () => {
         entry: {
           index: 0,
           symbol: 'A',
-          color: { code: '310', name: 'Black', hex: '#000000', rgb: { r: 0, g: 0, b: 0 }, lab: { l: 0, a: 0, b: 0 } },
+          color: {
+            code: '310',
+            name: 'Black',
+            hex: '#000000',
+            rgb: { r: 0, g: 0, b: 0 },
+            lab: { l: 0, a: 0, b: 0 },
+          },
         },
         count: 42,
       },
@@ -38,7 +46,11 @@ describe('Legend', () => {
   it('falls back to a custom color label when not a DMC color', () => {
     const rows: LegendRow[] = [
       {
-        entry: { index: 0, symbol: 'Z', color: { hex: '#123456', rgb: { r: 18, g: 52, b: 86 }, label: 'Sky' } },
+        entry: {
+          index: 0,
+          symbol: 'Z',
+          color: { hex: '#123456', rgb: { r: 18, g: 52, b: 86 }, label: 'Sky' },
+        },
         count: 3,
       },
     ];

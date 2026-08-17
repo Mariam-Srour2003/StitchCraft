@@ -6,7 +6,8 @@ import {
   nearestDmc,
   srgbToLab,
 } from '@stitchcraft/color';
-import { DmcColor, EncodedRow, PaletteEntry, Rgb, encodeGrid } from '@stitchcraft/types';
+import type { DmcColor, EncodedRow, PaletteEntry, Rgb } from '@stitchcraft/types';
+import { encodeGrid } from '@stitchcraft/types';
 
 export interface BuildGridResult {
   palette: PaletteEntry[];
@@ -49,7 +50,11 @@ export function buildGridFromPixels(
   });
 
   const symbols = assignSymbols(finalColors.length);
-  const palette: PaletteEntry[] = finalColors.map((color, index) => ({ index, symbol: symbols[index], color }));
+  const palette: PaletteEntry[] = finalColors.map((color, index) => ({
+    index,
+    symbol: symbols[index],
+    color,
+  }));
 
   const rows: Array<Array<number | null>> = [];
   for (let y = 0; y < height; y++) {

@@ -1,5 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 import { ProjectsService } from './projects.service';
 
 describe('ProjectsService', () => {
@@ -56,7 +56,9 @@ describe('ProjectsService', () => {
 
   it('refuses to update a project owned by another user without ever calling update', async () => {
     prisma.project.findUnique.mockResolvedValueOnce(ownedProject);
-    await expect(service.update('someone-else', 'p1', { name: 'x' })).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.update('someone-else', 'p1', { name: 'x' })).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(prisma.project.update).not.toHaveBeenCalled();
   });
 

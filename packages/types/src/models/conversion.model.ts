@@ -1,4 +1,4 @@
-import { PatternType } from './pattern.model';
+import type { PatternType } from './pattern.model';
 
 export type ConversionJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 

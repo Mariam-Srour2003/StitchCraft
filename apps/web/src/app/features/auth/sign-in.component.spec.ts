@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
@@ -49,7 +50,9 @@ describe('SignInComponent', () => {
 
     expect(fixture.componentInstance['error']()).toContain('Invalid email or password');
     expect(navigateSpy).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Invalid email or password');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
+      'Invalid email or password',
+    );
   });
 
   it('disables the submit button while submitting', async () => {

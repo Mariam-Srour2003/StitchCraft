@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { EMPTY_CELL, encodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { EMPTY_CELL, encodeGrid } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { EditorStore } from './editor.store';

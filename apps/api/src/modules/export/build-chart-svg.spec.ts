@@ -1,4 +1,5 @@
-import { encodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { encodeGrid } from '@stitchcraft/types';
 import { buildChartSvg } from './build-chart-svg';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {
@@ -41,7 +42,16 @@ describe('buildChartSvg', () => {
   });
 
   it('draws (width+1) vertical and (height+1) horizontal grid lines', () => {
-    const svg = buildChartSvg(makePattern({ width: 3, height: 2, grid: encodeGrid([[null, null, null], [null, null, null]]) }));
+    const svg = buildChartSvg(
+      makePattern({
+        width: 3,
+        height: 2,
+        grid: encodeGrid([
+          [null, null, null],
+          [null, null, null],
+        ]),
+      }),
+    );
     const lines = svg.match(/<line/g) ?? [];
     expect(lines).toHaveLength(4 + 3); // (3+1) vertical + (2+1) horizontal
   });
@@ -49,7 +59,9 @@ describe('buildChartSvg', () => {
   it('escapes XML-special characters in a symbol glyph', () => {
     const svg = buildChartSvg(
       makePattern({
-        palette: [{ index: 0, symbol: '<', color: { hex: '#00FF00', rgb: { r: 0, g: 255, b: 0 } } }],
+        palette: [
+          { index: 0, symbol: '<', color: { hex: '#00FF00', rgb: { r: 0, g: 255, b: 0 } } },
+        ],
       }),
     );
     expect(svg).not.toContain('>|<<'); // never an unescaped bare "<" inside text content

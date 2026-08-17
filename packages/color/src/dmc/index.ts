@@ -1,4 +1,4 @@
-import { DmcColor } from '@stitchcraft/types';
+import type { DmcColor } from '@stitchcraft/types';
 import raw from './dmc-colors.json';
 
 /** The full seeded DMC thread color reference set (454 colors). See README.md for provenance. */

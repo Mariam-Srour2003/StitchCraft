@@ -1,4 +1,4 @@
-import { Lab } from '@stitchcraft/types';
+import type { Lab } from '@stitchcraft/types';
 import { ciede2000 } from '../difference/ciede2000';
 
 /**

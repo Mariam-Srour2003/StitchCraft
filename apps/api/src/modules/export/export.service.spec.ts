@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { StorageAdapter } from '../storage/storage-adapter';
+import type { PrismaService } from '../../prisma/prisma.service';
+import type { StorageAdapter } from '../storage/storage-adapter';
 import { ExportService } from './export.service';
 
 jest.mock('sharp', () =>
@@ -23,7 +23,10 @@ describe('ExportService', () => {
     height: 2,
     palette: [{ index: 0, symbol: 'A', color: { hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } } }],
     grid: [
-      [[0, 1], [null, 1]],
+      [
+        [0, 1],
+        [null, 1],
+      ],
       [[null, 2]],
     ],
     meta: { createdFrom: 'blank' },
@@ -38,7 +41,10 @@ describe('ExportService', () => {
       put: jest.fn((key: string) => Promise.resolve(key)),
       urlFor: jest.fn((key: string) => `https://storage.local/${key}`),
     };
-    service = new ExportService(prisma as unknown as PrismaService, storage as unknown as StorageAdapter);
+    service = new ExportService(
+      prisma as unknown as PrismaService,
+      storage as unknown as StorageAdapter,
+    );
   });
 
   it('throws NotFoundException for a missing pattern', async () => {
@@ -47,8 +53,13 @@ describe('ExportService', () => {
   });
 
   it('throws ForbiddenException for a pattern owned by another user', async () => {
-    prisma.pattern.findUnique.mockResolvedValueOnce({ ...ownedPattern, project: { userId: 'someone-else' } });
-    await expect(service.generate('user-1', 'pattern-1')).rejects.toBeInstanceOf(ForbiddenException);
+    prisma.pattern.findUnique.mockResolvedValueOnce({
+      ...ownedPattern,
+      project: { userId: 'someone-else' },
+    });
+    await expect(service.generate('user-1', 'pattern-1')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(storage.put).not.toHaveBeenCalled();
   });
 

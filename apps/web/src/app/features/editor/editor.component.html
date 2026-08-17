@@ -10,8 +10,12 @@
           (valueChange)="store.setTool($event)"
           ariaLabel="Tool"
         />
-        <sc-icon-button label="Undo" [disabled]="!store.canUndo()" (pressed)="store.undo()">↶</sc-icon-button>
-        <sc-icon-button label="Redo" [disabled]="!store.canRedo()" (pressed)="store.redo()">↷</sc-icon-button>
+        <sc-icon-button label="Undo" [disabled]="!store.canUndo()" (pressed)="store.undo()"
+          >↶</sc-icon-button
+        >
+        <sc-icon-button label="Redo" [disabled]="!store.canRedo()" (pressed)="store.redo()"
+          >↷</sc-icon-button
+        >
         <sc-segmented-toggle
           [options]="modeOptions"
           [value]="store.renderMode()"
@@ -68,7 +72,10 @@
 
         <section class="editor-page__panel">
           <h2>Resize</h2>
-          <form class="editor-page__resize" (ngSubmit)="applyResize(widthInput.value, heightInput.value)">
+          <form
+            class="editor-page__resize"
+            (ngSubmit)="applyResize(widthInput.value, heightInput.value)"
+          >
             <label>
               W
               <input #widthInput type="number" min="1" max="500" [value]="store.width()" />
@@ -82,7 +89,10 @@
         </section>
 
         <section class="editor-page__panel">
-          <sc-legend [rows]="store.legendRows()" [countLabel]="store.type() === 'diamond' ? 'Drills' : 'Stitches'" />
+          <sc-legend
+            [rows]="store.legendRows()"
+            [countLabel]="store.type() === 'diamond' ? 'Drills' : 'Stitches'"
+          />
         </section>
       </aside>
     </div>
@@ -94,12 +104,16 @@
         <li><a [href]="result.pdfUrl" target="_blank" rel="noopener">Printable PDF chart</a></li>
         <li><a [href]="result.pngUrl" target="_blank" rel="noopener">PNG preview</a></li>
         <li><a [href]="result.svgUrl" target="_blank" rel="noopener">SVG preview</a></li>
-        <li><a [href]="result.materialsListUrl" target="_blank" rel="noopener">Floss/drill shopping list (CSV)</a></li>
+        <li>
+          <a [href]="result.materialsListUrl" target="_blank" rel="noopener"
+            >Floss/drill shopping list (CSV)</a
+          >
+        </li>
       </ul>
     </sc-modal>
-  } @else if (exportError(); as error) {
+  } @else if (exportError()) {
     <sc-modal heading="Export failed" (closed)="closeExport()">
-      <p role="alert">{{ error }}</p>
+      <p role="alert">{{ exportError() }}</p>
     </sc-modal>
   }
 }

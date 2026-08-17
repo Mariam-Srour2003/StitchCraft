@@ -5,15 +5,33 @@
     {
       "files": ["*.ts"],
       "parserOptions": { "project": ["apps/web/tsconfig.*?.json"] },
-      "extends": ["plugin:@angular-eslint/recommended", "plugin:@angular-eslint/template/process-inline-templates"],
+      "extends": [
+        "plugin:@angular-eslint/recommended",
+        "plugin:@angular-eslint/template/process-inline-templates"
+      ],
       "rules": {
-        "@angular-eslint/component-selector": ["error", { "type": "element", "prefix": "sc", "style": "kebab-case" }],
-        "@angular-eslint/directive-selector": ["error", { "type": "attribute", "prefix": "sc", "style": "camelCase" }]
+        "@angular-eslint/component-selector": [
+          "error",
+          { "type": "element", "prefix": "sc", "style": "kebab-case" }
+        ],
+        "@angular-eslint/directive-selector": [
+          "error",
+          { "type": "attribute", "prefix": "sc", "style": "camelCase" }
+        ],
+        // This codebase deliberately names component classes without a
+        // "Component" suffix (Button, not ButtonComponent) - standalone
+        // components already disambiguate via the `sc-` selector prefix and
+        // file path, and the suffix reads as redundant noise at every call
+        // site. Applied consistently across all ~15 shared/ui components.
+        "@angular-eslint/component-class-suffix": "off"
       }
     },
     {
       "files": ["*.html"],
-      "extends": ["plugin:@angular-eslint/template/recommended", "plugin:@angular-eslint/template/accessibility"]
+      "extends": [
+        "plugin:@angular-eslint/template/recommended",
+        "plugin:@angular-eslint/template/accessibility"
+      ]
     }
   ]
 }

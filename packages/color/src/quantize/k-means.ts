@@ -1,4 +1,4 @@
-import { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@stitchcraft/types';
 import { labToSrgb, srgbToLab } from '../space/srgb-lab';
 
 export interface KMeansOptions {
@@ -34,20 +34,41 @@ export function kMeansQuantize(
       clusters[nearestCentroidIndex(point, centroids)].push(point);
     }
 
-    const next = clusters.map((cluster, i) => (cluster.length > 0 ? meanLab(cluster) : centroids[i]));
+    const next = clusters.map((cluster, i) =>
+      cluster.length > 0 ? meanLab(cluster) : centroids[i],
+    );
 
     const maxShift = Math.max(...next.map((c, i) => labDistance(c, centroids[i])));
     centroids = next;
     if (maxShift < tolerance) break;
   }
 
-  return centroids.map(labToSrgb);
+  // Centroids can converge on (near-)identical points - e.g. every seed
+  // starts at the same spot when the input has fewer distinct colors than
+  // requested, and empty clusters simply keep their frozen starting
+  // position. Collapse those rather than returning duplicate colors.
+  return dedupeByLabDistance(centroids).map(labToSrgb);
+}
+
+const DEDUPE_DISTANCE = 1e-6;
+
+function dedupeByLabDistance(points: readonly Lab[]): Lab[] {
+  const deduped: Lab[] = [];
+  for (const point of points) {
+    if (!deduped.some((existing) => labDistance(existing, point) < DEDUPE_DISTANCE)) {
+      deduped.push(point);
+    }
+  }
+  return deduped;
 }
 
 function seedCentroids(points: readonly Lab[], k: number): Lab[] {
   const sorted = [...points].sort((a, b) => a.l - b.l || a.a - b.a || a.b - b.b);
   const step = sorted.length / k;
-  return Array.from({ length: k }, (_, i) => sorted[Math.min(sorted.length - 1, Math.floor(i * step))]);
+  return Array.from(
+    { length: k },
+    (_, i) => sorted[Math.min(sorted.length - 1, Math.floor(i * step))],
+  );
 }
 
 function nearestCentroidIndex(point: Lab, centroids: readonly Lab[]): number {
@@ -68,9 +89,10 @@ function labDistance(a: Lab, b: Lab): number {
 }
 
 function meanLab(points: readonly Lab[]): Lab {
-  const sum = points.reduce(
-    (acc, p) => ({ l: acc.l + p.l, a: acc.a + p.a, b: acc.b + p.b }),
-    { l: 0, a: 0, b: 0 },
-  );
+  const sum = points.reduce((acc, p) => ({ l: acc.l + p.l, a: acc.a + p.a, b: acc.b + p.b }), {
+    l: 0,
+    a: 0,
+    b: 0,
+  });
   return { l: sum.l / points.length, a: sum.a / points.length, b: sum.b / points.length };
 }

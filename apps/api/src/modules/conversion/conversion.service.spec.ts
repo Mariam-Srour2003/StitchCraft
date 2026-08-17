@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { StorageAdapter } from '../storage/storage-adapter';
+import type { PrismaService } from '../../prisma/prisma.service';
+import type { StorageAdapter } from '../storage/storage-adapter';
 import { ConversionsService } from './conversion.service';
 
 describe('ConversionsService', () => {
@@ -12,7 +12,11 @@ describe('ConversionsService', () => {
   let storage: { put: jest.Mock };
   let queue: { add: jest.Mock };
 
-  const file = { buffer: Buffer.from('fake-image-bytes'), originalname: 'cat.png', mimetype: 'image/png' };
+  const file = {
+    buffer: Buffer.from('fake-image-bytes'),
+    originalname: 'cat.png',
+    mimetype: 'image/png',
+  };
 
   beforeEach(() => {
     prisma = {
@@ -56,12 +60,18 @@ describe('ConversionsService', () => {
       const result = await service.create('user-1', dto, file);
 
       expect(result).toEqual({ jobId: 'job-1' });
-      expect(storage.put).toHaveBeenCalledWith(expect.stringContaining('uploads/user-1/'), file.buffer, 'image/png');
+      expect(storage.put).toHaveBeenCalledWith(
+        expect.stringContaining('uploads/user-1/'),
+        file.buffer,
+        'image/png',
+      );
 
       const [createArgs] = prisma.conversionJob.create.mock.calls[0];
       expect(createArgs.data.status).toBe('queued');
       expect(createArgs.data.progress).toBe(0);
-      expect(createArgs.data.params.sourceImageRef).toEqual(expect.stringContaining('uploads/user-1/'));
+      expect(createArgs.data.params.sourceImageRef).toEqual(
+        expect.stringContaining('uploads/user-1/'),
+      );
 
       const [, jobPayload, jobOptions] = queue.add.mock.calls[0];
       expect(jobPayload.conversionJobId).toBe('job-1');
@@ -87,7 +97,10 @@ describe('ConversionsService', () => {
     });
 
     it('throws ForbiddenException for a job owned by another user', async () => {
-      prisma.conversionJob.findUnique.mockResolvedValueOnce({ id: 'job-1', userId: 'someone-else' });
+      prisma.conversionJob.findUnique.mockResolvedValueOnce({
+        id: 'job-1',
+        userId: 'someone-else',
+      });
       await expect(service.findOne('user-1', 'job-1')).rejects.toBeInstanceOf(ForbiddenException);
     });
 
@@ -97,7 +110,13 @@ describe('ConversionsService', () => {
         userId: 'user-1',
         status: 'processing',
         progress: 42,
-        params: { sourceImageRef: 'x', targetType: 'cross_stitch', width: 40, height: 40, colorCount: 12 },
+        params: {
+          sourceImageRef: 'x',
+          targetType: 'cross_stitch',
+          width: 40,
+          height: 40,
+          colorCount: 12,
+        },
         resultPatternId: null,
         error: null,
         createdAt: new Date('2026-01-01'),

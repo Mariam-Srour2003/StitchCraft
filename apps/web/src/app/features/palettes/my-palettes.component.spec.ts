@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Palette } from '@stitchcraft/types';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import type { Palette } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { MyPalettesComponent } from './my-palettes.component';
 import { PalettesApiService } from './palettes-api.service';
@@ -84,18 +85,24 @@ describe('MyPalettesComponent', () => {
 
     expect(api.create).toHaveBeenCalledWith({
       name: 'Sunset',
-      entries: [{ color: { hex: '#FF8800', rgb: { r: 255, g: 136, b: 0 } }, symbol: expect.any(String) }],
+      entries: [
+        { color: { hex: '#FF8800', rgb: { r: 255, g: 136, b: 0 } }, symbol: expect.any(String) },
+      ],
     });
     expect(fixture.componentInstance['creating']()).toBe(false);
   });
 
   it('deletes a palette and refreshes the list', async () => {
-    api.list.mockReturnValueOnce(of([savedPalette])).mockReturnValueOnce(of([]));
-    await fixture.componentInstance.refresh();
+    // The constructor already triggered one refresh() call during
+    // fixture creation (in beforeEach); deletePalette() should trigger
+    // exactly one more, not replace or skip it.
+    const callsBeforeDelete = api.list.mock.calls.length;
+    api.list.mockReturnValueOnce(of([]));
+    api.remove.mockReturnValueOnce(of(undefined));
 
     await fixture.componentInstance.deletePalette('pal-1');
 
     expect(api.remove).toHaveBeenCalledWith('pal-1');
-    expect(api.list).toHaveBeenCalledTimes(2);
+    expect(api.list).toHaveBeenCalledTimes(callsBeforeDelete + 1);
   });
 });

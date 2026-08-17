@@ -1,4 +1,5 @@
-import { encodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { encodeGrid } from '@stitchcraft/types';
 import { buildMaterialsListCsv } from './build-materials-list';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {
@@ -10,8 +11,22 @@ function makePattern(overrides: Partial<Pattern> = {}): Pattern {
     width: 3,
     height: 1,
     palette: [
-      { index: 0, symbol: 'A', color: { code: '310', name: 'Black', hex: '#000000', rgb: { r: 0, g: 0, b: 0 }, lab: { l: 0, a: 0, b: 0 } } },
-      { index: 1, symbol: 'B', color: { hex: '#123456', rgb: { r: 18, g: 52, b: 86 }, label: 'Sky, Custom' } },
+      {
+        index: 0,
+        symbol: 'A',
+        color: {
+          code: '310',
+          name: 'Black',
+          hex: '#000000',
+          rgb: { r: 0, g: 0, b: 0 },
+          lab: { l: 0, a: 0, b: 0 },
+        },
+      },
+      {
+        index: 1,
+        symbol: 'B',
+        color: { hex: '#123456', rgb: { r: 18, g: 52, b: 86 }, label: 'Sky, Custom' },
+      },
     ],
     grid: encodeGrid([[0, 0, 1]]),
     meta: { createdFrom: 'blank' },
@@ -46,7 +61,9 @@ describe('buildMaterialsListCsv', () => {
   });
 
   it('produces just the header for an empty palette', () => {
-    const csv = buildMaterialsListCsv(makePattern({ palette: [], grid: encodeGrid([[null, null, null]]) }));
+    const csv = buildMaterialsListCsv(
+      makePattern({ palette: [], grid: encodeGrid([[null, null, null]]) }),
+    );
     expect(csv.trim()).toBe('Symbol,DMC Code,Name,Hex,Count');
   });
 });

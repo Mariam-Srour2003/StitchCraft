@@ -1,5 +1,5 @@
-import { Project as PrismaProject, Pattern as PrismaPattern } from '@prisma/client';
-import { Project } from '@stitchcraft/types';
+import type { Project as PrismaProject, Pattern as PrismaPattern } from '@prisma/client';
+import type { Project } from '@stitchcraft/types';
 
 type ProjectWithPatterns = PrismaProject & { patterns: PrismaPattern[] };
 
