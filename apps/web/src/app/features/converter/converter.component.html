@@ -13,7 +13,7 @@
         }
 
         <div class="converter-page__settings">
-          <label class="converter-page__field">
+          <div class="converter-page__field">
             <span>Pattern type</span>
             <sc-segmented-toggle
               [options]="targetTypeOptions"
@@ -21,7 +21,7 @@
               (valueChange)="targetType.set($event)"
               ariaLabel="Pattern type"
             />
-          </label>
+          </div>
 
           <div class="converter-page__dimensions">
             <label class="converter-page__field">

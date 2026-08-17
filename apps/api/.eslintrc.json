@@ -1,5 +1,8 @@
 {
+  "root": true,
   "extends": ["../../.eslintrc.json"],
-  "ignorePatterns": ["!**/*"],
-  "overrides": [{ "files": ["*.ts"], "parserOptions": { "project": ["apps/api/tsconfig.*?.json"] } }]
+  "ignorePatterns": ["!**/*", "**/node_modules/**"],
+  "overrides": [
+    { "files": ["*.ts"], "parserOptions": { "project": ["apps/api/tsconfig.*?.json"] } }
+  ]
 }

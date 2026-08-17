@@ -6,6 +6,10 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
+
+  // Focused programmatically on open (see ngAfterViewInit) purely so Escape
+  // bubbles reliably - not a user-tabbing target, so no visible ring.
+  outline: none;
 }
 
 .sc-modal {

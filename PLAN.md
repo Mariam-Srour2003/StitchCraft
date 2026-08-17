@@ -10,24 +10,24 @@ feature code and will be kept current as milestones land.
 
 ## 1. Stack, and why
 
-| Layer | Choice | Why |
-|---|---|---|
-| Monorepo | **Nx (integrated monorepo, pnpm package manager)** | Nx has first-class generators for both Angular and NestJS in one workspace, a dependency graph that enforces module boundaries (`@nx/enforce-module-boundaries`), affected-only test/lint/build in CI, and a build cache. A bare pnpm workspace would need all of that hand-rolled. |
-| Frontend framework | **Angular 18+, standalone components, signals, `@if`/`@for`** | The spec's reference editor prototype is a canvas-driven, stateful single page — Angular's DI + RxJS/signals combo suits a tool with many interacting stateful panels (tools, palette, undo stack, zoom) better than a leaner framework would without extra structure. Standalone components remove NgModule boilerplate; signals give fine-grained reactivity for a canvas that repaints on every cell edit without the overhead of full change detection. |
-| Frontend state | **Signal-based `*Store` services per feature** (no NgRx) | Editor state (grid, selected color, tool, undo stack) is local to one feature and doesn't need to be observed app-wide or replayed. A `computed()`-driven store service is less ceremony than NgRx actions/reducers/effects for this. Revisit only if cross-feature state sharing or time-travel debugging becomes a real requirement — not speculative in M0. |
-| Rendering | **HTML Canvas behind a `GridRenderingService`, dirty-rect redraw** | Canvas is the only realistic choice for a paintable 200×200 grid at interactive frame rates; the DOM (one element per cell) falls over well before that size. Isolating drawing in a service (not the component) keeps the component a thin input/output adapter, and lets `packages/color`-driven glyph/symbol logic be unit-tested without a browser. |
-| Styling | **SCSS + CSS custom properties as design tokens, component-scoped styles, no UI kit** | The component list in the spec (button, swatch, segmented-toggle, grid-canvas...) is small and highly specific to pattern-craft UI (thread swatches, symbol legends) — a general-purpose kit (Material, PrimeNG) would fight the domain more than it'd save. Tokens as CSS custom properties (not just SCSS variables) so runtime theming (e.g. print stylesheet, high-contrast mode) doesn't require a rebuild. |
-| Backend | **NestJS (TypeScript)** | One language across the stack; shared types package works without a codegen step. Nest's module system maps directly onto the feature boundaries in the spec (auth, projects, patterns, palettes, conversion, imaging, export, storage), and its DI makes the `StorageAdapter`/`AiProvider` interfaces (local disk vs S3, classic vs AI-backed) trivial to swap via provider tokens. |
-| Deterministic image work | **`sharp` + `packages/color` inside a NestJS `imaging` module** | Resize, palette quantization, and DMC matching are pure/deterministic — they don't need a model runtime, so they stay in-process for lower latency and no extra service to run in dev. |
-| Optional AI work | **Separate Python FastAPI service (`services/ai`), called over HTTP via an `AiProvider` interface** | Background removal / super-resolution / segmentation are best served by the Python ML ecosystem (rembg, OpenCV, ONNX runtime). Keeping it a separate, optional HTTP service means the Node stack never depends on Python being installed, and `AiProvider` has a `NullAiProvider` fallback so the app is fully functional with zero AI configured — required by the spec, not optional. |
-| Persistence | **PostgreSQL via Prisma** | Prisma's schema-first models map cleanly onto the spec's data model, migrations are trackable in git, and its generated client is fully typed — consistent with "everything typed." Postgres (not SQLite) because `ConversionJob` status and pattern grids benefit from JSONB and because production deploys need a real server DB anyway; using it from day one avoids a later migration. |
-| Object storage | **`StorageAdapter` interface; local-disk adapter in dev, S3-compatible adapter for prod** | Spec requires source images and generated exports to be stored somewhere pluggable. Local disk means `docker-compose up` needs no cloud credentials to develop. |
-| Job queue | **BullMQ + Redis** | Conversions and exports are the two genuinely slow operations (image processing, PDF tiling). BullMQ gives retries, progress events, and a dashboard-friendly job model with minimal code; progress is pushed to the client over a NestJS WebSocket gateway that subscribes to job progress events. |
-| Shared types | **`packages/types`, plain TS, no runtime dependency** | Both apps import the same `Pattern`, `DmcColor`, DTO, etc. definitions so a shape change fails the build on both sides instead of silently drifting. |
-| Color math | **`packages/color`, framework-free** | sRGB↔Lab conversion, CIEDE2000, and quantization are pure math — isolating them lets them be unit-tested exhaustively (this is where correctness matters most: a wrong nearest-thread match ships a wrong shopping list to a paying user) and reused identically by the Nest `imaging` module and any future CLI/script. |
-| Lint/format | **ESLint (`@nx/eslint`) + Prettier, strict TypeScript everywhere** | Nx wires project-aware ESLint (module-boundary rules) out of the box; Prettier removes formatting bikeshedding. `strict: true` in the base `tsconfig` catches null-safety bugs before they reach the canvas renderer, where they're hardest to debug visually. |
-| Testing | **Jest (unit, both apps + packages), Playwright (e2e)** | Nx's default Jest setup needs no extra wiring versus Karma, runs faster, and is what `packages/types`/`packages/color` unit tests use too — one test runner for non-Angular-specific code. Playwright covers the two cross-cutting flows the spec calls out (draw-and-export, convert-and-save) at the browser level, which is the only level that actually exercises the canvas. |
-| Local dev / CI | **Docker Compose (postgres, redis, api, web, optional ai) + GitHub Actions (lint, test, build on PR)** | Compose gives one-command dev per the spec. CI runs Nx's `affected` commands so PRs only rebuild/retest what changed. |
+| Layer                    | Choice                                                                                                 | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo                 | **Nx (integrated monorepo, pnpm package manager)**                                                     | Nx has first-class generators for both Angular and NestJS in one workspace, a dependency graph that enforces module boundaries (`@nx/enforce-module-boundaries`), affected-only test/lint/build in CI, and a build cache. A bare pnpm workspace would need all of that hand-rolled.                                                                                                                                                                         |
+| Frontend framework       | **Angular 18+, standalone components, signals, `@if`/`@for`**                                          | The spec's reference editor prototype is a canvas-driven, stateful single page — Angular's DI + RxJS/signals combo suits a tool with many interacting stateful panels (tools, palette, undo stack, zoom) better than a leaner framework would without extra structure. Standalone components remove NgModule boilerplate; signals give fine-grained reactivity for a canvas that repaints on every cell edit without the overhead of full change detection. |
+| Frontend state           | **Signal-based `*Store` services per feature** (no NgRx)                                               | Editor state (grid, selected color, tool, undo stack) is local to one feature and doesn't need to be observed app-wide or replayed. A `computed()`-driven store service is less ceremony than NgRx actions/reducers/effects for this. Revisit only if cross-feature state sharing or time-travel debugging becomes a real requirement — not speculative in M0.                                                                                              |
+| Rendering                | **HTML Canvas behind a `GridRenderingService`, dirty-rect redraw**                                     | Canvas is the only realistic choice for a paintable 200×200 grid at interactive frame rates; the DOM (one element per cell) falls over well before that size. Isolating drawing in a service (not the component) keeps the component a thin input/output adapter, and lets `packages/color`-driven glyph/symbol logic be unit-tested without a browser.                                                                                                     |
+| Styling                  | **SCSS + CSS custom properties as design tokens, component-scoped styles, no UI kit**                  | The component list in the spec (button, swatch, segmented-toggle, grid-canvas...) is small and highly specific to pattern-craft UI (thread swatches, symbol legends) — a general-purpose kit (Material, PrimeNG) would fight the domain more than it'd save. Tokens as CSS custom properties (not just SCSS variables) so runtime theming (e.g. print stylesheet, high-contrast mode) doesn't require a rebuild.                                            |
+| Backend                  | **NestJS (TypeScript)**                                                                                | One language across the stack; shared types package works without a codegen step. Nest's module system maps directly onto the feature boundaries in the spec (auth, projects, patterns, palettes, conversion, imaging, export, storage), and its DI makes the `StorageAdapter`/`AiProvider` interfaces (local disk vs S3, classic vs AI-backed) trivial to swap via provider tokens.                                                                        |
+| Deterministic image work | **`sharp` + `packages/color` inside a NestJS `imaging` module**                                        | Resize, palette quantization, and DMC matching are pure/deterministic — they don't need a model runtime, so they stay in-process for lower latency and no extra service to run in dev.                                                                                                                                                                                                                                                                      |
+| Optional AI work         | **Separate Python FastAPI service (`services/ai`), called over HTTP via an `AiProvider` interface**    | Background removal / super-resolution / segmentation are best served by the Python ML ecosystem (rembg, OpenCV, ONNX runtime). Keeping it a separate, optional HTTP service means the Node stack never depends on Python being installed, and `AiProvider` has a `NullAiProvider` fallback so the app is fully functional with zero AI configured — required by the spec, not optional.                                                                     |
+| Persistence              | **PostgreSQL via Prisma**                                                                              | Prisma's schema-first models map cleanly onto the spec's data model, migrations are trackable in git, and its generated client is fully typed — consistent with "everything typed." Postgres (not SQLite) because `ConversionJob` status and pattern grids benefit from JSONB and because production deploys need a real server DB anyway; using it from day one avoids a later migration.                                                                  |
+| Object storage           | **`StorageAdapter` interface; local-disk adapter in dev, S3-compatible adapter for prod**              | Spec requires source images and generated exports to be stored somewhere pluggable. Local disk means `docker-compose up` needs no cloud credentials to develop.                                                                                                                                                                                                                                                                                             |
+| Job queue                | **BullMQ + Redis**                                                                                     | Conversions and exports are the two genuinely slow operations (image processing, PDF tiling). BullMQ gives retries, progress events, and a dashboard-friendly job model with minimal code; progress is pushed to the client over a NestJS WebSocket gateway that subscribes to job progress events.                                                                                                                                                         |
+| Shared types             | **`packages/types`, plain TS, no runtime dependency**                                                  | Both apps import the same `Pattern`, `DmcColor`, DTO, etc. definitions so a shape change fails the build on both sides instead of silently drifting.                                                                                                                                                                                                                                                                                                        |
+| Color math               | **`packages/color`, framework-free**                                                                   | sRGB↔Lab conversion, CIEDE2000, and quantization are pure math — isolating them lets them be unit-tested exhaustively (this is where correctness matters most: a wrong nearest-thread match ships a wrong shopping list to a paying user) and reused identically by the Nest `imaging` module and any future CLI/script.                                                                                                                                    |
+| Lint/format              | **ESLint (`@nx/eslint`) + Prettier, strict TypeScript everywhere**                                     | Nx wires project-aware ESLint (module-boundary rules) out of the box; Prettier removes formatting bikeshedding. `strict: true` in the base `tsconfig` catches null-safety bugs before they reach the canvas renderer, where they're hardest to debug visually.                                                                                                                                                                                              |
+| Testing                  | **Jest (unit, both apps + packages), Playwright (e2e)**                                                | Nx's default Jest setup needs no extra wiring versus Karma, runs faster, and is what `packages/types`/`packages/color` unit tests use too — one test runner for non-Angular-specific code. Playwright covers the two cross-cutting flows the spec calls out (draw-and-export, convert-and-save) at the browser level, which is the only level that actually exercises the canvas.                                                                           |
+| Local dev / CI           | **Docker Compose (postgres, redis, api, web, optional ai) + GitHub Actions (lint, test, build on PR)** | Compose gives one-command dev per the spec. CI runs Nx's `affected` commands so PRs only rebuild/retest what changed.                                                                                                                                                                                                                                                                                                                                       |
 
 ---
 
@@ -166,17 +166,17 @@ stitchcraft/
 
 ```ts
 export interface DmcColor {
-  code: string;        // e.g. "310" or "B5200"
-  name: string;         // e.g. "Black"
-  hex: string;           // "#000000"
+  code: string; // e.g. "310" or "B5200"
+  name: string; // e.g. "Black"
+  hex: string; // "#000000"
   rgb: { r: number; g: number; b: number };
   lab: { l: number; a: number; b: number }; // precomputed at build time for fast matching
 }
 
 export interface PaletteEntry {
-  index: number;         // stable index into a Pattern's palette array; referenced by Cell
+  index: number; // stable index into a Pattern's palette array; referenced by Cell
   color: DmcColor | CustomColor;
-  symbol: string;         // single glyph/character used in symbol & number render modes
+  symbol: string; // single glyph/character used in symbol & number render modes
 }
 
 export interface CustomColor {
@@ -200,10 +200,10 @@ export interface Pattern {
   width: number;
   height: number;
   palette: PaletteEntry[];
-  grid: EncodedRow[];              // length === height
+  grid: EncodedRow[]; // length === height
   meta: {
-    fabricCount?: number;          // aida count, cross-stitch only
-    drillSizeMm?: number;          // diamond only, typically 2.5-2.8
+    fabricCount?: number; // aida count, cross-stitch only
+    drillSizeMm?: number; // diamond only, typically 2.5-2.8
     createdFrom?: 'blank' | 'conversion';
     sourceConversionJobId?: string;
   };
@@ -216,7 +216,7 @@ export interface Project {
   userId: string;
   name: string;
   patternIds: string[];
-  sourceImageRef?: string;         // storage key of the originally uploaded image, if any
+  sourceImageRef?: string; // storage key of the originally uploaded image, if any
   createdAt: string;
   updatedAt: string;
 }
@@ -226,7 +226,7 @@ export type ConversionJobStatus = 'queued' | 'processing' | 'completed' | 'faile
 export interface ConversionJob {
   id: string;
   status: ConversionJobStatus;
-  progress: number;                // 0-100
+  progress: number; // 0-100
   params: ConversionParams;
   resultPatternId?: string;
   error?: string;
@@ -239,7 +239,7 @@ export interface ConversionParams {
   targetType: 'cross_stitch' | 'color_by_number' | 'diamond';
   width: number;
   height: number;
-  colorCount: number;               // N colors to reduce to
+  colorCount: number; // N colors to reduce to
   useAiBackgroundRemoval?: boolean;
   useAiUpscale?: boolean;
 }
@@ -255,30 +255,30 @@ side while the plain interfaces stay dependency-free for the frontend.
 
 Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToken>`.
 
-| Method | Path | M0? | Notes |
-|---|---|---|---|
-| POST | `/auth/register` | ✅ | `{ email, password, name }` → `{ user, accessToken, refreshToken }` |
-| POST | `/auth/login` | ✅ | `{ email, password }` → same shape |
-| POST | `/auth/refresh` | ✅ | `{ refreshToken }` → new token pair |
-| GET | `/users/me` | ✅ | current user profile |
-| GET | `/projects` | ✅ | list current user's projects |
-| POST | `/projects` | ✅ | `{ name }` → `Project` |
-| GET | `/projects/:id` | ✅ | |
-| PATCH | `/projects/:id` | ✅ | rename etc. |
-| DELETE | `/projects/:id` | ✅ | |
-| GET | `/patterns?projectId=` | ✅ | list a project's patterns (added in M1 for the editor's project view) |
-| GET | `/patterns/:id` | ✅ | |
-| POST | `/patterns` | ✅ | create blank pattern within a project |
-| PATCH | `/patterns/:id` | ✅ | save grid/palette edits |
-| DELETE | `/patterns/:id` | ✅ | |
-| GET | `/palettes/dmc` | ✅ | seeded reference data, paginated/filterable by name or code |
-| GET | `/palettes` | ✅ | list current user's custom palettes |
-| POST | `/palettes` | ✅ | create custom palette |
-| DELETE | `/palettes/:id` | ✅ | added in M6 for the "My palettes" page |
-| POST | `/conversions` | ✅ | multipart upload + params → `{ jobId }` |
-| GET | `/conversions/:id` | ✅ | job status/progress |
-| WS | `/ws/conversions` (room per job, `subscribe` → `{jobId}`) | ✅ | progress push; the actual frontend uses polling instead (see M2 scope cuts) |
-| POST | `/exports/:patternId` | ✅ | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }` |
+| Method | Path                                                      | M0? | Notes                                                                       |
+| ------ | --------------------------------------------------------- | --- | --------------------------------------------------------------------------- |
+| POST   | `/auth/register`                                          | ✅  | `{ email, password, name }` → `{ user, accessToken, refreshToken }`         |
+| POST   | `/auth/login`                                             | ✅  | `{ email, password }` → same shape                                          |
+| POST   | `/auth/refresh`                                           | ✅  | `{ refreshToken }` → new token pair                                         |
+| GET    | `/users/me`                                               | ✅  | current user profile                                                        |
+| GET    | `/projects`                                               | ✅  | list current user's projects                                                |
+| POST   | `/projects`                                               | ✅  | `{ name }` → `Project`                                                      |
+| GET    | `/projects/:id`                                           | ✅  |                                                                             |
+| PATCH  | `/projects/:id`                                           | ✅  | rename etc.                                                                 |
+| DELETE | `/projects/:id`                                           | ✅  |                                                                             |
+| GET    | `/patterns?projectId=`                                    | ✅  | list a project's patterns (added in M1 for the editor's project view)       |
+| GET    | `/patterns/:id`                                           | ✅  |                                                                             |
+| POST   | `/patterns`                                               | ✅  | create blank pattern within a project                                       |
+| PATCH  | `/patterns/:id`                                           | ✅  | save grid/palette edits                                                     |
+| DELETE | `/patterns/:id`                                           | ✅  |                                                                             |
+| GET    | `/palettes/dmc`                                           | ✅  | seeded reference data, paginated/filterable by name or code                 |
+| GET    | `/palettes`                                               | ✅  | list current user's custom palettes                                         |
+| POST   | `/palettes`                                               | ✅  | create custom palette                                                       |
+| DELETE | `/palettes/:id`                                           | ✅  | added in M6 for the "My palettes" page                                      |
+| POST   | `/conversions`                                            | ✅  | multipart upload + params → `{ jobId }`                                     |
+| GET    | `/conversions/:id`                                        | ✅  | job status/progress                                                         |
+| WS     | `/ws/conversions` (room per job, `subscribe` → `{jobId}`) | ✅  | progress push; the actual frontend uses polling instead (see M2 scope cuts) |
+| POST   | `/exports/:patternId`                                     | ✅  | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }`                            |
 
 M0 wires every route above marked ✅ end-to-end (controller → service → Prisma → Postgres),
 with the stub modules registered but returning `501 Not Implemented` so the routes exist and are
@@ -288,27 +288,27 @@ typed against `packages/types`, but do no real work yet.
 
 ## 6. Milestones
 
-- **M0 — Foundation** *(done)*: Nx monorepo; `packages/types` + `packages/color` (with
+- **M0 — Foundation** _(done)_: Nx monorepo; `packages/types` + `packages/color` (with
   tested CIEDE2000, quantizer, DMC dataset+matcher); NestJS skeleton + Postgres via Prisma +
   JWT auth + projects/patterns/palettes CRUD; Angular shell + routing + design tokens + core
   `shared/ui` components; Docker Compose; CI (lint+test on PR).
-- **M1 — Editor** *(done)*: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools,
+- **M1 — Editor** _(done)_: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools,
   palette panel (`palette-grid`/`palette-swatch`/`color-picker`), render modes
   (x-stitch/block/symbol/number), zoom, undo/redo (grouped per drag stroke), resize, save/load
   via API, `legend` + `size-readout`. Project → "New pattern" → editor flow wired end to end.
-- **M2 — Converter (classic)** *(done)*: upload → quantize (k-means) → DMC-match → dedupe → assign
+- **M2 — Converter (classic)** _(done)_: upload → quantize (k-means) → DMC-match → dedupe → assign
   symbols → grid → open in editor; real `conversion`/`imaging` modules; BullMQ job queue (a
   `WorkerHost` processor does the work off the request thread) with both a WS gateway and
   frontend polling for progress. `AiProvider` seam in place (`NullAiProvider` default) so
   background-removal/upscale flags degrade gracefully with no AI service configured.
-- **M3 — Diamond painting mode** *(done)*: a `diamond` render mode (a filled rhombus "gem" per
+- **M3 — Diamond painting mode** _(done)_: a `diamond` render mode (a filled rhombus "gem" per
   cell, distinct from block/x-stitch) in `GridRenderingService`/`grid-canvas`; drill size (mm) is
   settable at pattern creation and drives `size-readout`'s physical-size math; the editor defaults
   to diamond view on first opening a diamond pattern (without resetting a user's chosen view on
   every save); `legend`'s count column reads "Drills" instead of "Stitches" for diamond patterns.
   Drill palette continues to reuse the DMC set (assumption #3) - real diamond-painting drills are
   commonly DMC-numbered. Export remains M4's job, covering all three pattern types.
-- **M4 — Exports** *(done)*: `POST /exports/:patternId` generates all four artifacts synchronously
+- **M4 — Exports** _(done)_: `POST /exports/:patternId` generates all four artifacts synchronously
   (small enough grids that a job queue isn't warranted) - a tiled, printable PDF (one page per
   ~36x46-cell tile, row/col rulers, grid guides bold every 10, a legend/materials page), a
   standalone SVG chart, a PNG rasterized from that SVG via `sharp`, and a CSV shopping list sorted
@@ -316,7 +316,7 @@ typed against `packages/types`, but do no real work yet.
   wrote files but nothing served them back — `main.ts` now mounts `/api/storage` as a static root
   matching `StorageAdapter.urlFor()`'s URLs. Extracted `contrastTextColor` into `packages/color`
   so the frontend swatch and the server-side chart pick text contrast the same way.
-- **M5 — AI service** *(done)*: `services/ai` is a FastAPI microservice with `/background-removal`
+- **M5 — AI service** _(done)_: `services/ai` is a FastAPI microservice with `/background-removal`
   (via `rembg`) and `/upscale` (Lanczos resampling - see assumption #13). `apps/api`'s
   `ImagingModule` now resolves `AI_PROVIDER` to a new `HttpAiProvider` (built on Node's native
   `fetch`, no new HTTP client dependency) when `AI_SERVICE_URL` is set, and `NullAiProvider`
@@ -324,7 +324,7 @@ typed against `packages/types`, but do no real work yet.
   by running it in this session: PyPI wasn't throttled the way the npm registry was, so a real
   venv was built, `rembg`/`onnxruntime` installed, `pytest` run, and the service smoke-tested over
   real HTTP (health check + an actual image upload/upscale round-trip with dimensions verified).
-- **M6 — Polish** *(done)*: a "My palettes" page (`DELETE /palettes/:id` added to support it) - build
+- **M6 — Polish** _(done)_: a "My palettes" page (`DELETE /palettes/:id` added to support it) - build
   a named palette from scratch with the color-picker, browse/delete saved ones. Fixed a real,
   previously-shipped bug found in review: the top nav's "Editor" and "Converter" links pointed at
   bare `/editor` and `/converter`, both of which have required a route param (`/editor/:id`,
@@ -338,3 +338,83 @@ typed against `packages/types`, but do no real work yet.
   and the app works fully without it.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
+
+---
+
+## 7. Verification pass (post-M6)
+
+M0-M6 above were built across a stretch where the npm registry was effectively unreachable
+(installs timing out after 17+ minutes), so most of that code had never actually been installed,
+compiled, linted, or run. Once registry conditions recovered, a full verification pass was run:
+real `pnpm install`, `tsc --noEmit`, ESLint, Jest (unit), Angular/Nest production builds, and
+finally Playwright e2e in a real browser against a real dev server. This caught bugs no amount of
+code review would have: two quantizer algorithms that silently produced duplicate/straddling
+color clusters, an Angular template syntax error, a runtime `NG0600` signal-write error, a
+duplicate symbol-alphabet character, tsconfig/ESLint wiring gaps, and two bugs in test code itself
+(not the components under test).
+
+Two more were found once Playwright e2e tests were written to satisfy the spec's explicit
+"draw a small pattern & export" / "convert an image & save" e2e requirement (`e2e/`,
+`playwright.config.ts` — both flows mock the `/api/*` surface via `page.route()` rather than a
+live backend, isolating "does the real browser/canvas/Angular app work" from backend
+availability; see `e2e/support/mock-api.ts`):
+
+- **Real auth race condition**: `App`'s constructor fired `AuthStore.loadCurrentUser()` as
+  fire-and-forget, but `authGuard` reads `isAuthenticated()` synchronously during the router's
+  _initial_ navigation. On a fresh page load with a valid stored token (deep link, bookmark, or a
+  hard refresh on any protected route), the guard could run before the `/users/me` call resolved
+  and incorrectly bounce an already-authenticated user to `/sign-in`. The "convert an image & save"
+  e2e test caught this immediately, since it seeds tokens directly (`signInDirectly`) and navigates
+  straight to a protected route rather than going through the login form. Fixed by moving
+  `loadCurrentUser()` into an `APP_INITIALIZER` (`apps/web/src/app/app.config.ts`), which blocks
+  Angular bootstrap — and therefore the router's initial navigation — until auth state resolves.
+- **`@angular-builders/jest:run` in-process test runner bug**: `apps/web`'s `test` target ran Jest
+  _inside_ the Angular CLI builder process rather than as an independent `jest` process, which
+  corrupted Angular's global `TestBed` environment across files the moment more than one spec file
+  ran in the same invocation (`Cannot set base providers because it has already been called` on
+  every one of the 28 suites). Confirmed as a tooling bug, not a code bug, by running the same
+  config directly via the bare `jest` CLI (155/155 tests passed). Fixed by pointing `apps/web`'s
+  `test` target at `jest --config apps/web/jest.config.ts` directly — the same pattern `apps/api`
+  already used — and dropping the now-unused `@angular-builders/jest` dependency and its
+  `angular.json` builder entry.
+
+Both e2e flows pass. Once the app was actually working end to end, `pnpm nx run-many
+--target=lint --all` was also run for the first time against a real install and turned up two more
+real gaps, both fixed:
+
+- **ESLint's legacy config cascade escaping into `node_modules` via pnpm symlinks**: linting any
+  project could try to load a completely unrelated `.eslintrc.js`/`.json` reached through a pnpm
+  symlink — once for a third-party package's own stale bundled config (`@nestjs/jwt` shipped one
+  referencing an option removed in `eslint-config-prettier` 8.0+, breaking `api:lint`), and once
+  for `packages/color`'s _own_ `.eslintrc.json`, whose relative `extends: "../../.eslintrc.json"`
+  resolved wrong when ESLint reached it through `apps/web/node_modules/@stitchcraft/color` (the
+  pnpm workspace-link symlink) instead of its real path (breaking `web:lint`). Root-caused to each
+  project's `.eslintrc.json` un-ignoring everything (`"ignorePatterns": ["!**/*"]`, needed so the
+  root config's blanket `["**/*"]` ignore doesn't hide the project's own files) without re-excluding
+  `node_modules` afterward. Fixed with `"root": true` plus an explicit
+  `"**/node_modules/**"` ignore in all four project `.eslintrc.json` files (`apps/api`, `apps/web`,
+  `packages/types`, `packages/color`); `apps/web` also needed `.angular/**` ignored once
+  `node_modules` stopped masking it, since its Vite dep-cache is full of pre-bundled, unlintable
+  ESM output. A related, narrower gap surfaced alongside it once typed linting actually ran clean:
+  neither app's `jest.config.ts` was covered by its own `tsconfig.spec.json`, so
+  `@typescript-eslint`'s typed rules couldn't parse it — added `"jest.config.ts"` to the `include`
+  list in all four projects' `tsconfig.spec.json` (the same fix already applied to
+  `packages/types`/`packages/color` earlier in the verification pass, just not yet noticed for
+  `apps/api`/`apps/web`).
+- **Two real accessibility bugs**, both never caught before because lint had never actually run
+  clean: the converter page wrapped `sc-segmented-toggle` (a custom `role="radiogroup"` widget with
+  its own `ariaLabel` input) in a `<label>`, which isn't valid markup for a non-native control — the
+  wrapper is now a plain `<div>`. `Modal`'s Escape-to-close `(keydown)` listener sat on a
+  non-focusable backdrop `<div>`; since `keydown` only fires on (and bubbles from) whatever element
+  currently has focus, Escape would silently do nothing unless focus already happened to be on
+  something inside the modal — a real functional bug, not just a lint nitpick. Fixed per the
+  standard WAI-ARIA dialog pattern: the backdrop is now `tabindex="-1"` and receives focus in
+  `ngAfterViewInit`, with its default focus ring suppressed (it's focused programmatically, not by
+  tabbing, so a visible ring would be a visual regression rather than a wayfinding aid).
+
+**Not verified in this pass**: a live PostgreSQL connection — Postgres 18 is running locally but
+this session has no known credentials and no admin rights to reset them (explicitly not pursued
+further, since credential-guessing/bypassing auth on someone else's real machine is out of scope
+regardless of task pressure); so the Nest API's actual DB-backed request handling, and therefore
+the _real_ (non-mocked) end-to-end flow, remains unexercised here. Flagged as an open item, not
+silently assumed working.
