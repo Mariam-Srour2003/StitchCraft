@@ -27,9 +27,12 @@ apps/api/prisma/*.db
 storage/local/
 
 # Python
-services/ai/__pycache__/
+__pycache__/
+*.pyc
 services/ai/.venv/
+services/ai/.venv-*/
 services/ai/*.egg-info/
+services/ai/.pytest_cache/
 
 # IDEs and editors
 /.idea
