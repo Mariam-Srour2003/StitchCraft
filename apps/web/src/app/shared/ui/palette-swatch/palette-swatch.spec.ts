@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@stitchcraft/types';
 import { PaletteSwatch } from './palette-swatch';
 
 describe('PaletteSwatch', () => {
@@ -9,7 +10,13 @@ describe('PaletteSwatch', () => {
   const dmcEntry: PaletteEntry = {
     index: 0,
     symbol: 'A',
-    color: { code: '310', name: 'Black', hex: '#000000', rgb: { r: 0, g: 0, b: 0 }, lab: { l: 0, a: 0, b: 0 } },
+    color: {
+      code: '310',
+      name: 'Black',
+      hex: '#000000',
+      rgb: { r: 0, g: 0, b: 0 },
+      lab: { l: 0, a: 0, b: 0 },
+    },
   };
 
   beforeEach(async () => {

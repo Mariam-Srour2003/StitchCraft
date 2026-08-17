@@ -19,13 +19,16 @@
     "prisma:migrate": "nx run api:prisma-migrate",
     "prepare": "husky"
   },
+  "dependencies": {
+    "tslib": "^2.6.0"
+  },
   "devDependencies": {
-    "nx": "^19.5.0",
-    "@nx/eslint": "^19.5.0",
-    "@nx/eslint-plugin": "^19.5.0",
-    "@nx/jest": "^19.5.0",
-    "@nx/js": "^19.5.0",
-    "@nx/workspace": "^19.5.0",
+    "nx": "19.8.4",
+    "@nx/eslint": "19.8.4",
+    "@nx/eslint-plugin": "19.8.4",
+    "@nx/jest": "19.8.4",
+    "@nx/js": "19.8.4",
+    "@nx/workspace": "19.8.4",
     "typescript": "~5.5.0",
     "prettier": "^3.3.0",
     "eslint": "^8.57.0",
@@ -39,7 +42,11 @@
     "lint-staged": "^15.2.0"
   },
   "lint-staged": {
-    "*.{ts,html}": ["prettier --write"],
-    "*.{js,jsx,json,scss,md}": ["prettier --write"]
+    "*.{ts,html}": [
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,scss,md}": [
+      "prettier --write"
+    ]
   }
 }

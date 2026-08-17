@@ -1,4 +1,4 @@
-import { User } from '../models/project.model';
+import type { User } from '../models/project.model';
 
 export interface RegisterDto {
   email: string;

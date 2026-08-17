@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SegmentedToggle } from './segmented-toggle';
 
@@ -44,6 +45,13 @@ describe('SegmentedToggle', () => {
   });
 
   it('moves selection with ArrowRight, wrapping to the first option', () => {
+    // Currently-selected value must actually be at index 2 for this to be a
+    // real transition - select() is a no-op when the target already equals
+    // the current value, which index 2 wrapping to index 0 ('x-stitch')
+    // would trivially satisfy if `value` were left at the beforeEach default.
+    fixture.componentRef.setInput('value', 'symbol');
+    fixture.detectChanges();
+
     const spy = jest.fn();
     fixture.componentInstance.valueChange.subscribe(spy);
     fixture.componentInstance.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }), 2);

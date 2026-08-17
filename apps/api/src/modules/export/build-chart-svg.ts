@@ -1,5 +1,6 @@
 import { contrastTextColor } from '@stitchcraft/color';
-import { decodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { decodeGrid } from '@stitchcraft/types';
 
 const EMPTY_CELL_FILL = '#f4f1ec';
 const GRID_LINE = '#d8d2c8';
@@ -38,7 +39,9 @@ export function buildChartSvg(pattern: Pattern, options: BuildChartSvgOptions = 
 
       const left = x * cellSize;
       const top = y * cellSize;
-      parts.push(`<rect x="${left}" y="${top}" width="${cellSize}" height="${cellSize}" fill="${entry.color.hex}" />`);
+      parts.push(
+        `<rect x="${left}" y="${top}" width="${cellSize}" height="${cellSize}" fill="${entry.color.hex}" />`,
+      );
 
       const textColor = contrastTextColor(entry.color.rgb);
       const cx = left + cellSize / 2;

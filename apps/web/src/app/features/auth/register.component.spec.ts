@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { AuthStore } from '../../core/auth/auth.store';
@@ -23,24 +24,40 @@ describe('RegisterComponent', () => {
   });
 
   it('does not submit an invalid form (e.g. password too short)', async () => {
-    fixture.componentInstance['form'].setValue({ name: 'Ada', email: 'a@b.com', password: 'short' });
+    fixture.componentInstance['form'].setValue({
+      name: 'Ada',
+      email: 'a@b.com',
+      password: 'short',
+    });
     await fixture.componentInstance.submit();
     expect(authStore.register).not.toHaveBeenCalled();
   });
 
   it('registers and navigates to /projects on valid submit', async () => {
     authStore.register.mockResolvedValueOnce(undefined);
-    fixture.componentInstance['form'].setValue({ name: 'Ada', email: 'a@b.com', password: 'password123' });
+    fixture.componentInstance['form'].setValue({
+      name: 'Ada',
+      email: 'a@b.com',
+      password: 'password123',
+    });
 
     await fixture.componentInstance.submit();
 
-    expect(authStore.register).toHaveBeenCalledWith({ name: 'Ada', email: 'a@b.com', password: 'password123' });
+    expect(authStore.register).toHaveBeenCalledWith({
+      name: 'Ada',
+      email: 'a@b.com',
+      password: 'password123',
+    });
     expect(navigateSpy).toHaveBeenCalledWith(['/projects']);
   });
 
   it('shows an error message if registration fails (e.g. email already taken)', async () => {
     authStore.register.mockRejectedValueOnce(new Error('409'));
-    fixture.componentInstance['form'].setValue({ name: 'Ada', email: 'a@b.com', password: 'password123' });
+    fixture.componentInstance['form'].setValue({
+      name: 'Ada',
+      email: 'a@b.com',
+      password: 'password123',
+    });
 
     await fixture.componentInstance.submit();
     fixture.detectChanges();

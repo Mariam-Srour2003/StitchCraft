@@ -1,4 +1,4 @@
-import { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@stitchcraft/types';
 
 /** D65 reference white, 2-degree observer. */
 const REF_WHITE = { x: 95.047, y: 100.0, z: 108.883 };
@@ -16,7 +16,10 @@ export function hexToRgb(hex: string): Rgb {
 }
 
 export function rgbToHex({ r, g, b }: Rgb): string {
-  const toHex = (n: number) => Math.round(clamp(n, 0, 255)).toString(16).padStart(2, '0');
+  const toHex = (n: number) =>
+    Math.round(clamp(n, 0, 255))
+      .toString(16)
+      .padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
 }
 

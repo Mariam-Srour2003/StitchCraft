@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@stitchcraft/types';
 import { PaletteGrid } from './palette-grid';
 import { PaletteSwatch } from '../palette-swatch/palette-swatch';
 

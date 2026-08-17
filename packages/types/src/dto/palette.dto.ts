@@ -1,4 +1,4 @@
-import { CustomColor } from '../models/color.model';
+import type { CustomColor } from '../models/color.model';
 
 export interface CreatePaletteDto {
   name: string;

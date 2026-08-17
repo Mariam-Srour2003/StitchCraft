@@ -1,5 +1,6 @@
 import { contrastTextColor } from '@stitchcraft/color';
-import { decodeGrid, isDmcColor, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { decodeGrid, isDmcColor } from '@stitchcraft/types';
 import PDFDocument from 'pdfkit';
 import { countPaletteUsage } from './count-palette-usage';
 
@@ -10,7 +11,9 @@ const RULER_SIZE = 18;
 const TITLE_HEIGHT = 24;
 const CELL_PT = 14;
 const CELLS_PER_TILE_X = Math.floor((PAGE_WIDTH - 2 * PAGE_MARGIN - RULER_SIZE) / CELL_PT);
-const CELLS_PER_TILE_Y = Math.floor((PAGE_HEIGHT - 2 * PAGE_MARGIN - RULER_SIZE - TITLE_HEIGHT) / CELL_PT);
+const CELLS_PER_TILE_Y = Math.floor(
+  (PAGE_HEIGHT - 2 * PAGE_MARGIN - RULER_SIZE - TITLE_HEIGHT) / CELL_PT,
+);
 
 /**
  * Tiled, printable PDF chart: one page per tile (grid + row/col rulers,
@@ -81,9 +84,14 @@ function drawTilePage(doc: PdfDoc, pattern: Pattern, decoded: Int16Array[], tile
   doc
     .fontSize(10)
     .fillColor('#000000')
-    .text(`${pattern.name} — ${pageLabel} (columns ${startX + 1}-${endX}, rows ${startY + 1}-${endY})`, PAGE_MARGIN, PAGE_MARGIN, {
-      width: PAGE_WIDTH - 2 * PAGE_MARGIN,
-    });
+    .text(
+      `${pattern.name} — ${pageLabel} (columns ${startX + 1}-${endX}, rows ${startY + 1}-${endY})`,
+      PAGE_MARGIN,
+      PAGE_MARGIN,
+      {
+        width: PAGE_WIDTH - 2 * PAGE_MARGIN,
+      },
+    );
 
   doc.fontSize(6).fillColor('#666666');
   for (let x = startX; x < endX; x++) {
@@ -150,10 +158,16 @@ function drawLegendPage(doc: PdfDoc, pattern: Pattern, counts: number[]): void {
 
     doc.rect(PAGE_MARGIN, cursorY, 14, 14).fill(entry.color.hex);
     const { color } = entry;
-    const label = isDmcColor(color) ? `DMC ${color.code} — ${color.name}` : (color.label ?? color.hex);
+    const label = isDmcColor(color)
+      ? `DMC ${color.code} — ${color.name}`
+      : (color.label ?? color.hex);
     doc
       .fillColor('#000000')
-      .text(`#${index + 1}  (symbol "${entry.symbol}")  ${label}  —  ${counts[index]}`, PAGE_MARGIN + 20, cursorY + 2);
+      .text(
+        `#${index + 1}  (symbol "${entry.symbol}")  ${label}  —  ${counts[index]}`,
+        PAGE_MARGIN + 20,
+        cursorY + 2,
+      );
     cursorY += 18;
   });
 }

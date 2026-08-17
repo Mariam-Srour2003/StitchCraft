@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { decodeGrid } from '@stitchcraft/types';
-import { PrismaService } from '../../prisma/prisma.service';
+import type { PrismaService } from '../../prisma/prisma.service';
 import { PatternsService } from './patterns.service';
 
 describe('PatternsService', () => {
@@ -35,7 +35,13 @@ describe('PatternsService', () => {
       prisma.project.findUnique.mockResolvedValueOnce({ id: 'proj-1', userId: 'someone-else' });
 
       await expect(
-        service.create('user-1', { projectId: 'proj-1', name: 'New', type: 'cross_stitch', width: 4, height: 4 }),
+        service.create('user-1', {
+          projectId: 'proj-1',
+          name: 'New',
+          type: 'cross_stitch',
+          width: 4,
+          height: 4,
+        }),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.pattern.create).not.toHaveBeenCalled();
     });
@@ -43,7 +49,13 @@ describe('PatternsService', () => {
     it('rejects creating a pattern under a nonexistent project', async () => {
       prisma.project.findUnique.mockResolvedValueOnce(null);
       await expect(
-        service.create('user-1', { projectId: 'missing', name: 'New', type: 'cross_stitch', width: 4, height: 4 }),
+        service.create('user-1', {
+          projectId: 'missing',
+          name: 'New',
+          type: 'cross_stitch',
+          width: 4,
+          height: 4,
+        }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
@@ -85,13 +97,17 @@ describe('PatternsService', () => {
   describe('findAllForProject', () => {
     it('rejects listing patterns for a project owned by another user', async () => {
       prisma.project.findUnique.mockResolvedValueOnce({ id: 'proj-1', userId: 'someone-else' });
-      await expect(service.findAllForProject('user-1', 'proj-1')).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(service.findAllForProject('user-1', 'proj-1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
       expect(prisma.pattern.findMany).not.toHaveBeenCalled();
     });
 
     it('rejects listing patterns for a nonexistent project', async () => {
       prisma.project.findUnique.mockResolvedValueOnce(null);
-      await expect(service.findAllForProject('user-1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findAllForProject('user-1', 'missing')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('returns the owned project patterns', async () => {
@@ -132,7 +148,9 @@ describe('PatternsService', () => {
 
     it('throws ForbiddenException for a pattern owned by another user', async () => {
       prisma.pattern.findUnique.mockResolvedValueOnce(existing);
-      await expect(service.findOne('someone-else', 'pattern-1')).rejects.toBeInstanceOf(ForbiddenException);
+      await expect(service.findOne('someone-else', 'pattern-1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
     });
   });
 });

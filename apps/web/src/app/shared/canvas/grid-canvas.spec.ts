@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PaletteEntry } from '@stitchcraft/types';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import type { PaletteEntry } from '@stitchcraft/types';
 import { GridCanvas } from './grid-canvas';
 
 function fakePointerEvent(clientX: number, clientY: number): PointerEvent {
@@ -25,7 +26,10 @@ describe('GridCanvas', () => {
 
     fixture.componentRef.setInput('width', 5);
     fixture.componentRef.setInput('height', 5);
-    fixture.componentRef.setInput('grid', Array.from({ length: 5 }, () => new Int16Array(5).fill(-1)));
+    fixture.componentRef.setInput(
+      'grid',
+      Array.from({ length: 5 }, () => new Int16Array(5).fill(-1)),
+    );
     fixture.componentRef.setInput('palette', palette);
     fixture.componentRef.setInput('zoomPercent', 100); // cellSize = 20px, canvas = 100x100px
     fixture.detectChanges();

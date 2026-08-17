@@ -1,6 +1,6 @@
-import { EncodedRow } from '../models/grid';
-import { PaletteEntry } from '../models/palette.model';
-import { PatternMeta, PatternType } from '../models/pattern.model';
+import type { EncodedRow } from '../models/grid';
+import type { PaletteEntry } from '../models/palette.model';
+import type { PatternMeta, PatternType } from '../models/pattern.model';
 
 export interface CreatePatternDto {
   projectId: string;

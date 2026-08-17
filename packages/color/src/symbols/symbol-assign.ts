@@ -8,9 +8,36 @@
  */
 const SYMBOL_ALPHABET: readonly string[] = [
   ...'ATVXHNMWKYFEURDCJGLPQ'.split(''),
-  ...'347669'.split(''), // digits with low confusion risk once letters are exhausted
-  '▲', '●', '■', '◆', '▼', '★', '✚', '✳', '◐', '◧', '△', '○', '□', '◇', '▽',
-  '☆', '✛', '✦', '◑', '◨', '▣', '▤', '▥', '▦', '▧', '▨', '◈', '◉', '◎',
+  ...'34769'.split(''), // digits with low confusion risk once letters are exhausted
+  '▲',
+  '●',
+  '■',
+  '◆',
+  '▼',
+  '★',
+  '✚',
+  '✳',
+  '◐',
+  '◧',
+  '△',
+  '○',
+  '□',
+  '◇',
+  '▽',
+  '☆',
+  '✛',
+  '✦',
+  '◑',
+  '◨',
+  '▣',
+  '▤',
+  '▥',
+  '▦',
+  '▧',
+  '▨',
+  '◈',
+  '◉',
+  '◎',
 ];
 
 /**

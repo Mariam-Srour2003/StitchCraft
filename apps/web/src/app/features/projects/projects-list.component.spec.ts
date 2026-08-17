@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { Pattern, Project } from '@stitchcraft/types';
+import type { Pattern, Project } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { ProjectsListComponent } from './projects-list.component';
@@ -36,7 +37,11 @@ describe('ProjectsListComponent', () => {
   let router: { navigate: jest.Mock };
 
   beforeEach(async () => {
-    projectsApi = { list: jest.fn().mockReturnValue(of([project])), create: jest.fn(), remove: jest.fn() };
+    projectsApi = {
+      list: jest.fn().mockReturnValue(of([project])),
+      create: jest.fn(),
+      remove: jest.fn(),
+    };
     patternsApi = { listForProject: jest.fn().mockReturnValue(of([pattern])), create: jest.fn() };
     router = { navigate: jest.fn() };
 
@@ -59,7 +64,7 @@ describe('ProjectsListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('My sampler');
   });
 
-  it('lazily loads a project\'s patterns only on first expand', async () => {
+  it("lazily loads a project's patterns only on first expand", async () => {
     await fixture.componentInstance.toggleExpand('proj-1');
     fixture.detectChanges();
     expect(patternsApi.listForProject).toHaveBeenCalledTimes(1);

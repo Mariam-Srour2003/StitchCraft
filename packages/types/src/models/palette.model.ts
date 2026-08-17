@@ -1,4 +1,4 @@
-import { CustomColor, DmcColor } from './color.model';
+import type { CustomColor, DmcColor } from './color.model';
 
 export interface PaletteEntry {
   /** Stable index into a Pattern's palette array; referenced by Cell/grid data. */

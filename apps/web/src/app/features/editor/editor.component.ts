@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { ExportResponse } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
 import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
@@ -9,7 +17,10 @@ import { IconButton } from '../../shared/ui/icon-button/icon-button';
 import { Legend } from '../../shared/ui/legend/legend';
 import { Modal } from '../../shared/ui/modal/modal';
 import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
-import { SegmentedToggle, SegmentedToggleOption } from '../../shared/ui/segmented-toggle/segmented-toggle';
+import {
+  SegmentedToggle,
+  SegmentedToggleOption,
+} from '../../shared/ui/segmented-toggle/segmented-toggle';
 import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
 import { Slider } from '../../shared/ui/slider/slider';
 import { Toolbar } from '../../shared/ui/toolbar/toolbar';
@@ -74,10 +85,16 @@ export class EditorComponent {
   protected readonly exportError = signal<string | null>(null);
 
   constructor() {
-    effect(() => {
-      const id = this.id();
-      if (id) this.store.load(id);
-    });
+    effect(
+      () => {
+        const id = this.id();
+        if (id) this.store.load(id);
+      },
+      // store.load() writes several signals (loading, pattern data, default
+      // render mode) after its internal await - Angular disallows signal
+      // writes inside an effect by default even across a microtask boundary.
+      { allowSignalWrites: true },
+    );
   }
 
   onCellEdit(cell: CellPosition): void {
