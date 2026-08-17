@@ -1,5 +1,33 @@
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PalettesService } from './palettes.service';
+
+describe('PalettesService.remove', () => {
+  let service: PalettesService;
+  let prisma: { palette: { findUnique: jest.Mock; delete: jest.Mock } };
+
+  beforeEach(() => {
+    prisma = { palette: { findUnique: jest.fn(), delete: jest.fn() } };
+    service = new PalettesService(prisma as unknown as PrismaService);
+  });
+
+  it('throws NotFoundException for a missing palette', async () => {
+    prisma.palette.findUnique.mockResolvedValueOnce(null);
+    await expect(service.remove('user-1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('throws ForbiddenException for a palette owned by another user', async () => {
+    prisma.palette.findUnique.mockResolvedValueOnce({ id: 'p1', ownerId: 'someone-else' });
+    await expect(service.remove('user-1', 'p1')).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.palette.delete).not.toHaveBeenCalled();
+  });
+
+  it('deletes a palette owned by the requesting user', async () => {
+    prisma.palette.findUnique.mockResolvedValueOnce({ id: 'p1', ownerId: 'user-1' });
+    await service.remove('user-1', 'p1');
+    expect(prisma.palette.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
+  });
+});
 
 describe('PalettesService.findDmc', () => {
   const service = new PalettesService({} as PrismaService);

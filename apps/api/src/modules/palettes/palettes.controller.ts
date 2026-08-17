@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
@@ -26,5 +26,11 @@ export class PalettesController {
   @UseGuards(JwtAuthGuard)
   create(@CurrentUser() user: RequestUser, @Body() dto: CreatePaletteDto): Promise<Palette> {
     return this.palettes.create(user.id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<void> {
+    return this.palettes.remove(user.id, id);
   }
 }

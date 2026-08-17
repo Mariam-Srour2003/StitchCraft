@@ -274,6 +274,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | GET | `/palettes/dmc` | ✅ | seeded reference data, paginated/filterable by name or code |
 | GET | `/palettes` | ✅ | list current user's custom palettes |
 | POST | `/palettes` | ✅ | create custom palette |
+| DELETE | `/palettes/:id` | ✅ | added in M6 for the "My palettes" page |
 | POST | `/conversions` | ✅ | multipart upload + params → `{ jobId }` |
 | GET | `/conversions/:id` | ✅ | job status/progress |
 | WS | `/ws/conversions` (room per job, `subscribe` → `{jobId}`) | ✅ | progress push; the actual frontend uses polling instead (see M2 scope cuts) |
@@ -323,7 +324,17 @@ typed against `packages/types`, but do no real work yet.
   by running it in this session: PyPI wasn't throttled the way the npm registry was, so a real
   venv was built, `rembg`/`onnxruntime` installed, `pytest` run, and the service smoke-tested over
   real HTTP (health check + an actual image upload/upscale round-trip with dimensions verified).
-- **M6 — Polish**: projects dashboard, custom palettes UI, fuller test coverage, docs,
-  one-command `docker-compose up` dev loop verified end-to-end.
+- **M6 — Polish** *(done)*: a "My palettes" page (`DELETE /palettes/:id` added to support it) - build
+  a named palette from scratch with the color-picker, browse/delete saved ones. Fixed a real,
+  previously-shipped bug found in review: the top nav's "Editor" and "Converter" links pointed at
+  bare `/editor` and `/converter`, both of which have required a route param (`/editor/:id`,
+  `/converter/:projectId`) since M1/M2 - they silently fell through to the wildcard redirect. Added
+  tests for three components that had shipped without them (`DmcBrowseComponent`,
+  `SignInComponent`, `RegisterComponent`); the auth ones surfaced a second real risk while writing
+  them - a bare `{ navigate: jest.fn() }` Router stub breaks any component whose template uses
+  `routerLink`, since the directive calls `router.createUrlTree()` internally, not just
+  `navigate()`. Wired the optional `ai` service into `docker-compose.yml` behind a Compose profile
+  (`docker compose --profile ai up`), off by default since `onnxruntime` makes for a large image
+  and the app works fully without it.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
