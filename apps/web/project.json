@@ -25,8 +25,7 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/coverage/apps/web"],
       "options": {
-        "command": "ng test",
-        "cwd": "apps/web"
+        "command": "jest --config apps/web/jest.config.ts"
       }
     },
     "lint": {
