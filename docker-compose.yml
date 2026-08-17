@@ -43,6 +43,8 @@ services:
       PORT: 3000
       STORAGE_LOCAL_DIR: /workspace/apps/api/storage
       STORAGE_PUBLIC_BASE_URL: http://localhost:3000/api/storage
+      # Uncomment if also running the optional `ai` profile below:
+      # AI_SERVICE_URL: http://ai:8000
     ports:
       - '3000:3000'
     volumes:
@@ -56,6 +58,18 @@ services:
       - api
     ports:
       - '8080:80'
+
+  # Optional AI microservice (background removal, upscale). Not started by
+  # `docker compose up` by default - onnxruntime makes for a large image and
+  # the whole app works fully without it (see PLAN.md). Bring it up with:
+  #   docker compose --profile ai up --build
+  # ...and uncomment AI_SERVICE_URL above so `api` actually calls it.
+  ai:
+    build:
+      context: ./services/ai
+    profiles: ['ai']
+    ports:
+      - '8000:8000'
 
 volumes:
   db-data:
