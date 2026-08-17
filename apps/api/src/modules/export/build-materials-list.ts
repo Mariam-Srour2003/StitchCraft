@@ -1,4 +1,5 @@
-import { isDmcColor, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { isDmcColor } from '@stitchcraft/types';
 import { countPaletteUsage } from './count-palette-usage';
 
 /**

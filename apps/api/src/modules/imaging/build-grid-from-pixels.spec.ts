@@ -1,4 +1,5 @@
-import { decodeGrid, Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@stitchcraft/types';
+import { decodeGrid } from '@stitchcraft/types';
 import { buildGridFromPixels } from './build-grid-from-pixels';
 
 function solidBlock(color: Rgb, count: number): Rgb[] {
@@ -11,7 +12,10 @@ describe('buildGridFromPixels', () => {
   });
 
   it('produces a palette no larger than the requested color count', () => {
-    const pixels = [...solidBlock({ r: 220, g: 20, b: 20 }, 2), ...solidBlock({ r: 20, g: 20, b: 220 }, 2)];
+    const pixels = [
+      ...solidBlock({ r: 220, g: 20, b: 20 }, 2),
+      ...solidBlock({ r: 20, g: 20, b: 220 }, 2),
+    ];
     const { palette } = buildGridFromPixels(pixels, 2, 2, 2);
     expect(palette.length).toBeLessThanOrEqual(2);
     expect(palette.length).toBeGreaterThan(0);
@@ -63,7 +67,10 @@ describe('buildGridFromPixels', () => {
   });
 
   it('assigns visually distinct regions to different palette entries', () => {
-    const pixels = [...solidBlock({ r: 230, g: 10, b: 10 }, 4), ...solidBlock({ r: 10, g: 10, b: 230 }, 4)];
+    const pixels = [
+      ...solidBlock({ r: 230, g: 10, b: 10 }, 4),
+      ...solidBlock({ r: 10, g: 10, b: 230 }, 4),
+    ];
     const { grid, palette } = buildGridFromPixels(pixels, 4, 2, 2);
     const decoded = decodeGrid(grid, 4);
     if (palette.length > 1) {

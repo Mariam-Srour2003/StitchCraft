@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Badge } from './badge';
 
 describe('Badge', () => {
@@ -11,12 +12,16 @@ describe('Badge', () => {
   });
 
   it('defaults to the neutral tone', () => {
-    expect(fixture.nativeElement.querySelector('.sc-badge').className).toContain('sc-badge--neutral');
+    expect(fixture.nativeElement.querySelector('.sc-badge').className).toContain(
+      'sc-badge--neutral',
+    );
   });
 
   it('reflects the tone input', () => {
     fixture.componentRef.setInput('tone', 'danger');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.sc-badge').className).toContain('sc-badge--danger');
+    expect(fixture.nativeElement.querySelector('.sc-badge').className).toContain(
+      'sc-badge--danger',
+    );
   });
 });

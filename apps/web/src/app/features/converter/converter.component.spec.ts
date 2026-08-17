@@ -1,6 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { ConversionJob } from '@stitchcraft/types';
+import type { ConversionJob } from '@stitchcraft/types';
 import { of, throwError } from 'rxjs';
 import { ConversionsApiService } from './conversions-api.service';
 import { ConverterComponent, POLL_INTERVAL_MS } from './converter.component';
@@ -11,7 +12,13 @@ function makeJob(overrides: Partial<ConversionJob> = {}): ConversionJob {
     userId: 'user-1',
     status: 'processing',
     progress: 10,
-    params: { sourceImageRef: 'x', targetType: 'cross_stitch', width: 60, height: 60, colorCount: 24 },
+    params: {
+      sourceImageRef: 'x',
+      targetType: 'cross_stitch',
+      width: 60,
+      height: 60,
+      colorCount: 24,
+    },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
@@ -85,11 +92,12 @@ describe('ConverterComponent', () => {
     component['colorCount'].set(15);
     component.startConversion();
 
-    expect(conversionsApi.create).toHaveBeenCalledWith(
-      'proj-1',
-      expect.any(File),
-      { targetType: 'diamond', width: 80, height: 90, colorCount: 15 },
-    );
+    expect(conversionsApi.create).toHaveBeenCalledWith('proj-1', expect.any(File), {
+      targetType: 'diamond',
+      width: 80,
+      height: 90,
+      colorCount: 15,
+    });
     expect(component['phase']()).toBe('converting');
   });
 
@@ -105,7 +113,9 @@ describe('ConverterComponent', () => {
 
   it('polls until the job completes, then navigates to the resulting pattern', fakeAsync(() => {
     conversionsApi.create.mockReturnValueOnce(of({ jobId: 'job-1' }));
-    conversionsApi.get.mockReturnValue(of(makeJob({ status: 'completed', progress: 100, resultPatternId: 'pattern-9' })));
+    conversionsApi.get.mockReturnValue(
+      of(makeJob({ status: 'completed', progress: 100, resultPatternId: 'pattern-9' })),
+    );
 
     component.onFilesSelected([new File(['a'], 'a.png', { type: 'image/png' })]);
     component.startConversion();
@@ -117,7 +127,9 @@ describe('ConverterComponent', () => {
 
   it('shows the job error and switches to the failed phase when the job fails', fakeAsync(() => {
     conversionsApi.create.mockReturnValueOnce(of({ jobId: 'job-1' }));
-    conversionsApi.get.mockReturnValue(of(makeJob({ status: 'failed', error: 'Unsupported image' })));
+    conversionsApi.get.mockReturnValue(
+      of(makeJob({ status: 'failed', error: 'Unsupported image' })),
+    );
 
     component.onFilesSelected([new File(['a'], 'a.png', { type: 'image/png' })]);
     component.startConversion();

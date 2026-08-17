@@ -1,5 +1,5 @@
-import { ConversionJob as PrismaConversionJob } from '@prisma/client';
-import { ConversionJob, ConversionParams } from '@stitchcraft/types';
+import type { ConversionJob as PrismaConversionJob } from '@prisma/client';
+import type { ConversionJob, ConversionParams } from '@stitchcraft/types';
 
 export function toConversionJobDto(job: PrismaConversionJob): ConversionJob {
   return {

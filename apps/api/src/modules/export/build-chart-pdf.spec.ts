@@ -1,4 +1,5 @@
-import { encodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { encodeGrid } from '@stitchcraft/types';
 import { buildChartPdf } from './build-chart-pdf';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {
@@ -26,7 +27,10 @@ describe('buildChartPdf', () => {
   });
 
   it('does not throw for an empty palette', async () => {
-    const pattern = makePattern({ palette: [], grid: encodeGrid(Array.from({ length: 4 }, () => [null, null, null, null])) });
+    const pattern = makePattern({
+      palette: [],
+      grid: encodeGrid(Array.from({ length: 4 }, () => [null, null, null, null])),
+    });
     await expect(buildChartPdf(pattern)).resolves.toBeInstanceOf(Buffer);
   });
 

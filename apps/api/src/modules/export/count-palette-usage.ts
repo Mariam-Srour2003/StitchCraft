@@ -1,4 +1,5 @@
-import { decodeGrid, Pattern } from '@stitchcraft/types';
+import type { Pattern } from '@stitchcraft/types';
+import { decodeGrid } from '@stitchcraft/types';
 
 /** Stitch/drill count per palette index, in palette order. Shared by the materials list and PDF legend. */
 export function countPaletteUsage(pattern: Pattern): number[] {

@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import type { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
@@ -9,7 +9,8 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    loadComponent: () => import('./features/auth/register.component').then((m) => m.RegisterComponent),
+    loadComponent: () =>
+      import('./features/auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'projects',
@@ -19,22 +20,26 @@ export const routes: Routes = [
   },
   {
     path: 'palettes',
-    loadComponent: () => import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
+    loadComponent: () =>
+      import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
   },
   {
     path: 'my-palettes',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
+    loadComponent: () =>
+      import('./features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
   },
   {
     path: 'editor/:id',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/editor/editor.component').then((m) => m.EditorComponent),
+    loadComponent: () =>
+      import('./features/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
     path: 'converter/:projectId',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/converter/converter.component').then((m) => m.ConverterComponent),
+    loadComponent: () =>
+      import('./features/converter/converter.component').then((m) => m.ConverterComponent),
   },
   {
     path: 'patterns/:id',

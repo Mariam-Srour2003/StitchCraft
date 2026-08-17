@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExportResponse, Pattern } from '@stitchcraft/types';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import type { ExportResponse, Pattern } from '@stitchcraft/types';
 import { of, throwError } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { EditorComponent } from './editor.component';
@@ -14,12 +15,7 @@ function makePattern(): Pattern {
     width: 4,
     height: 4,
     palette: [{ index: 0, symbol: 'A', color: { hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } } }],
-    grid: [
-      [[null, 4]],
-      [[null, 4]],
-      [[null, 4]],
-      [[null, 4]],
-    ],
+    grid: [[[null, 4]], [[null, 4]], [[null, 4]], [[null, 4]]],
     meta: { createdFrom: 'blank', fabricCount: 14 },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',

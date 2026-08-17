@@ -1,4 +1,4 @@
-import { Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@stitchcraft/types';
 import { kMeansQuantize } from './k-means';
 import { medianCutQuantize } from './median-cut';
 
@@ -44,8 +44,12 @@ describe.each([
 
     // each output color should land reasonably close to one of the three input clusters
     const closeToRed = result.some((c) => Math.abs(c.r - RED.r) < 20 && Math.abs(c.g - RED.g) < 20);
-    const closeToGreen = result.some((c) => Math.abs(c.r - GREEN.r) < 20 && Math.abs(c.g - GREEN.g) < 20);
-    const closeToBlue = result.some((c) => Math.abs(c.b - BLUE.b) < 20 && Math.abs(c.r - BLUE.r) < 20);
+    const closeToGreen = result.some(
+      (c) => Math.abs(c.r - GREEN.r) < 20 && Math.abs(c.g - GREEN.g) < 20,
+    );
+    const closeToBlue = result.some(
+      (c) => Math.abs(c.b - BLUE.b) < 20 && Math.abs(c.r - BLUE.r) < 20,
+    );
     expect(closeToRed).toBe(true);
     expect(closeToGreen).toBe(true);
     expect(closeToBlue).toBe(true);

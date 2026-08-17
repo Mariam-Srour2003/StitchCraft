@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import type { ConfigService } from '@nestjs/config';
 import { HttpAiProvider } from './http-ai-provider';
 
 describe('HttpAiProvider', () => {
@@ -10,7 +10,9 @@ describe('HttpAiProvider', () => {
   });
 
   function makeProvider(aiServiceUrl: string | undefined): HttpAiProvider {
-    const config = { get: (key: string) => (key === 'AI_SERVICE_URL' ? aiServiceUrl : undefined) } as ConfigService;
+    const config = {
+      get: (key: string) => (key === 'AI_SERVICE_URL' ? aiServiceUrl : undefined),
+    } as ConfigService;
     return new HttpAiProvider(config);
   }
 
@@ -44,7 +46,9 @@ describe('HttpAiProvider', () => {
     });
 
     it('strips a trailing slash from AI_SERVICE_URL before building the request URL', async () => {
-      const fetchMock = jest.fn().mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) });
+      const fetchMock = jest
+        .fn()
+        .mockResolvedValue({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)) });
       global.fetch = fetchMock as unknown as typeof fetch;
 
       await makeProvider('http://localhost:8000/').upscale(Buffer.from('x'));
@@ -53,9 +57,13 @@ describe('HttpAiProvider', () => {
     });
 
     it('throws when the AI service responds with a non-ok status', async () => {
-      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as unknown as typeof fetch;
+      global.fetch = jest
+        .fn()
+        .mockResolvedValue({ ok: false, status: 500 }) as unknown as typeof fetch;
 
-      await expect(makeProvider('http://localhost:8000').upscale(Buffer.from('x'))).rejects.toThrow('500');
+      await expect(makeProvider('http://localhost:8000').upscale(Buffer.from('x'))).rejects.toThrow(
+        '500',
+      );
     });
 
     it('returns the input unchanged rather than throwing if called with no AI_SERVICE_URL configured', async () => {

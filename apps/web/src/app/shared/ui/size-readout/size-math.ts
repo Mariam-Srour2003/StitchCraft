@@ -1,4 +1,4 @@
-import { PatternType } from '@stitchcraft/types';
+import type { PatternType } from '@stitchcraft/types';
 
 export interface FinishedSize {
   inches: { width: number; height: number };
@@ -27,7 +27,10 @@ export function computeFinishedSize(
           width: (gridWidth * fabricCountOrDrillSizeMm) / MM_PER_INCH,
           height: (gridHeight * fabricCountOrDrillSizeMm) / MM_PER_INCH,
         }
-      : { width: gridWidth / fabricCountOrDrillSizeMm, height: gridHeight / fabricCountOrDrillSizeMm };
+      : {
+          width: gridWidth / fabricCountOrDrillSizeMm,
+          height: gridHeight / fabricCountOrDrillSizeMm,
+        };
 
   return {
     inches,

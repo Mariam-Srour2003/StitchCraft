@@ -1,4 +1,4 @@
-import { ConversionParams } from '../models/conversion.model';
+import type { ConversionParams } from '../models/conversion.model';
 
 export interface CreateConversionDto extends ConversionParams {
   projectId: string;

@@ -1,5 +1,5 @@
-import { EncodedRow } from './grid';
-import { PaletteEntry } from './palette.model';
+import type { EncodedRow } from './grid';
+import type { PaletteEntry } from './palette.model';
 
 export type PatternType = 'cross_stitch' | 'color_by_number' | 'diamond';
 

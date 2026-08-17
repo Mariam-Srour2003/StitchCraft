@@ -1,4 +1,4 @@
-import { Lab } from '@stitchcraft/types';
+import type { Lab } from '@stitchcraft/types';
 
 /**
  * CIEDE2000 color difference (Sharma, Wu & Dalal, 2005).

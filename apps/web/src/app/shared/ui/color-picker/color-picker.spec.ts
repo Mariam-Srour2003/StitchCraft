@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ColorPicker } from './color-picker';
 
@@ -29,7 +30,11 @@ describe('ColorPicker', () => {
     fixture.componentInstance['label'].set('  Sky accent  ');
     fixture.componentInstance.addToPalette();
 
-    expect(spy).toHaveBeenCalledWith({ hex: '#0000FF', rgb: { r: 0, g: 0, b: 255 }, label: 'Sky accent' });
+    expect(spy).toHaveBeenCalledWith({
+      hex: '#0000FF',
+      rgb: { r: 0, g: 0, b: 255 },
+      label: 'Sky accent',
+    });
   });
 
   it('omits the label field entirely when left blank', () => {
