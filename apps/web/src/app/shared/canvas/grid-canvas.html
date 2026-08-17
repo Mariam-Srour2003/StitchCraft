@@ -1,0 +1,13 @@
+<div class="sc-grid-canvas" [class.sc-grid-canvas--erase]="tool() === 'erase'">
+  <canvas
+    #canvas
+    [width]="canvasWidthPx()"
+    [height]="canvasHeightPx()"
+    [style.width.px]="canvasWidthPx()"
+    [style.height.px]="canvasHeightPx()"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp()"
+    (pointercancel)="onPointerUp()"
+  ></canvas>
+</div>

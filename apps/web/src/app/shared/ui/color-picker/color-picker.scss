@@ -1,0 +1,24 @@
+.sc-color-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--sc-space-2);
+
+  &__swatch {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid var(--sc-color-border);
+    border-radius: var(--sc-radius-sm);
+    background: none;
+    cursor: pointer;
+  }
+
+  &__label {
+    height: 2.25rem;
+    padding: 0 var(--sc-space-3);
+    border: 1px solid var(--sc-color-border);
+    border-radius: var(--sc-radius-md);
+    font: inherit;
+    min-width: 10rem;
+  }
+}

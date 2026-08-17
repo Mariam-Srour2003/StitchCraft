@@ -1,0 +1,20 @@
+<form class="sc-color-picker" (ngSubmit)="addToPalette()">
+  <input
+    type="color"
+    class="sc-color-picker__swatch"
+    [ngModel]="hex()"
+    (ngModelChange)="hex.set($event)"
+    name="hex"
+    aria-label="Custom color"
+  />
+  <input
+    type="text"
+    class="sc-color-picker__label"
+    placeholder="Label (optional)"
+    [ngModel]="label()"
+    (ngModelChange)="label.set($event)"
+    name="label"
+    aria-label="Color label"
+  />
+  <sc-button type="submit">Add to palette</sc-button>
+</form>

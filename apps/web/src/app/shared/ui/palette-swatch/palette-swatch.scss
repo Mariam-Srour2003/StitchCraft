@@ -1,0 +1,21 @@
+.sc-palette-swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--sc-radius-sm);
+  border: 2px solid transparent;
+  font-size: var(--sc-font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--sc-motion-fast) var(--sc-motion-easing);
+
+  &:hover {
+    border-color: var(--sc-color-border);
+  }
+
+  &--selected {
+    border-color: var(--sc-color-focus-ring);
+  }
+}

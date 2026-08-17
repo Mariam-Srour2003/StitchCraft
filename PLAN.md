@@ -43,7 +43,42 @@ Proceeding with these; flag if any should change:
 6. **Branch model**: `main` (always releasable) + `develop` (integration) + short-lived `feature/*` branches merged into `develop` via PR. M0 lands on `feature/m0-foundation` → `develop`; the first PR from `develop` → `main` happens once M0 is verified running.
 7. **Node 22 / pnpm** (via Corepack, already bundled with Node 22) — no separate pnpm install needed. Nx 20.x targets Angular 18 and Nest 10, both current as of this workspace's creation.
 8. **Package manager for the optional Python service**: `pip` + `requirements.txt` (not Poetry) — keeps `services/ai` approachable without a second Python tooling decision; revisit if the service grows.
-9. This turn builds **M0 only** (per the spec's own "checkpoint after M0" instruction, confirmed with the user): monorepo tooling, shared packages, Nest skeleton + Postgres + auth, Angular shell + routing + design tokens + core UI components. The grid-canvas editor (M1) and everything after are out of scope until reviewed.
+9. M0-M3 are done, per the spec's "checkpoint after M0" instruction followed by the user's
+   go-ahead to keep going each time (and, from M3 onward, an explicit instruction to proceed
+   through all remaining milestones without stopping to ask). M4 (exports) onward follow in this
+   same session.
+10. **Editor scope cuts, to revisit in a later milestone**: resize clears undo/redo history rather
+    than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet
+    (only the freeform color-picker) even though DMC browsing exists as its own page; pan is native
+    browser scroll rather than a custom space-drag gesture; devicePixelRatio scaling isn't applied
+    to the canvas bitmap; `grid-canvas`'s theme colors are a static JS constant rather than read
+    from the CSS custom properties at render time, so the canvas doesn't follow dark mode the way
+    the rest of the UI does yet. None of these block the milestone's stated scope.
+11. **Converter scope cuts, to revisit in a later milestone**: no crop/rotate/brightness/contrast
+    adjustment step (the spec lists these as optional; M2 is the "classic" deterministic pipeline
+    per PLAN.md's own M2 description); target sizing is stitch-count only, not physical
+    size+fabric-count (a unit-conversion nicety, not new capability - `size-readout`'s math already
+    supports the reverse conversion); no lock/swap-specific-DMC-match UI after conversion (the
+    result opens in the full editor, where palette entries can be edited, just not swapped
+    in-place with grid cells re-pointed at the new entry); the frontend uses polling rather than
+    the WS gateway it could subscribe to (the gateway is real and running - wiring a
+    socket.io-client subscription instead of polling is a drop-in enhancement, not a rebuild).
+12. **Export scope cuts, to revisit in a later milestone**: PDF cells are individual vector+text
+    objects with no run-length merging of same-color neighbors, so a large pattern (e.g. 200x200)
+    produces a large, slow-to-generate multi-page PDF - fine at typical/demo sizes, worth
+    revisiting if large patterns turn out to be common; PDF cell glyphs are always the 1-based
+    palette number rather than the pattern's actual symbol (pdfkit's bundled standard fonts don't
+    reliably cover the Unicode shape glyphs in `assignSymbols`' extended alphabet), though the
+    legend page does spell out each entry's real symbol character; exports regenerate from scratch
+    on every request rather than being cached/invalidated against the pattern's last-modified time.
+13. **AI service scope cuts, to revisit in a later milestone**: `/upscale` is classical Lanczos
+    resampling (Pillow), not a trained super-resolution model - no pretrained weights are bundled
+    or downloaded anywhere in this repo, since that would mean either committing a large binary or
+    depending on a download at build/run time. Swapping in a real model (e.g. `cv2.dnn_superres`
+    with ESRGAN/EDSR weights) only touches the `upscale` function in `services/ai/app/main.py`;
+    the route contract and the Nest-side `AiProvider` interface stay the same either way.
+    `/background-removal` is real (rembg), but its actual model-download-and-remove path is not
+    exercised by the test suite (only its error-handling paths are) - see services/ai/README.md.
 
 ---
 
@@ -231,6 +266,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | GET | `/projects/:id` | ✅ | |
 | PATCH | `/projects/:id` | ✅ | rename etc. |
 | DELETE | `/projects/:id` | ✅ | |
+| GET | `/patterns?projectId=` | ✅ | list a project's patterns (added in M1 for the editor's project view) |
 | GET | `/patterns/:id` | ✅ | |
 | POST | `/patterns` | ✅ | create blank pattern within a project |
 | PATCH | `/patterns/:id` | ✅ | save grid/palette edits |
@@ -238,10 +274,11 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | GET | `/palettes/dmc` | ✅ | seeded reference data, paginated/filterable by name or code |
 | GET | `/palettes` | ✅ | list current user's custom palettes |
 | POST | `/palettes` | ✅ | create custom palette |
-| POST | `/conversions` | stub (M2) | multipart upload + params → `{ jobId }` |
-| GET | `/conversions/:id` | stub (M2) | job status/progress |
-| WS | `/ws/conversions/:id` | stub (M2) | progress push, falls back to polling `GET` above |
-| POST | `/exports/:patternId` | stub (M4) | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }` |
+| DELETE | `/palettes/:id` | ✅ | added in M6 for the "My palettes" page |
+| POST | `/conversions` | ✅ | multipart upload + params → `{ jobId }` |
+| GET | `/conversions/:id` | ✅ | job status/progress |
+| WS | `/ws/conversions` (room per job, `subscribe` → `{jobId}`) | ✅ | progress push; the actual frontend uses polling instead (see M2 scope cuts) |
+| POST | `/exports/:patternId` | ✅ | → `{ pdfUrl, pngUrl, svgUrl, materialsListUrl }` |
 
 M0 wires every route above marked ✅ end-to-end (controller → service → Prisma → Postgres),
 with the stub modules registered but returning `501 Not Implemented` so the routes exist and are
@@ -251,21 +288,53 @@ typed against `packages/types`, but do no real work yet.
 
 ## 6. Milestones
 
-- **M0 — Foundation** *(this turn)*: Nx monorepo; `packages/types` + `packages/color` (with
+- **M0 — Foundation** *(done)*: Nx monorepo; `packages/types` + `packages/color` (with
   tested CIEDE2000, quantizer, DMC dataset+matcher); NestJS skeleton + Postgres via Prisma +
   JWT auth + projects/patterns/palettes CRUD; Angular shell + routing + design tokens + core
   `shared/ui` components; Docker Compose; CI (lint+test on PR).
-- **M1 — Editor**: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools, palette panel,
-  render modes (x-stitch/block/symbol/number), zoom, undo/redo, resize, save/load via API,
-  stitch-count + size readouts.
-- **M2 — Converter (classic)**: upload → resize → quantize → DMC-match → grid+symbols → preview
-  → open in editor; real `conversion`/`imaging` modules; BullMQ job + progress polling/WS.
-- **M3 — Diamond painting mode**: drill palette + shapes, physical drill sizing, drill counts,
-  diamond-specific legend/export.
-- **M4 — Exports**: tiled printable PDF chart, legend, floss/drill shopping list, PNG/SVG.
-- **M5 — AI service**: Python FastAPI (`services/ai`) with background removal + upscale behind
-  `AiProvider`; feature-flagged; `NullAiProvider` remains the default with zero config.
-- **M6 — Polish**: projects dashboard, custom palettes UI, fuller test coverage, docs,
-  one-command `docker-compose up` dev loop verified end-to-end.
+- **M1 — Editor** *(done)*: `grid-canvas` + `GridRenderingService`, paint/erase/drag tools,
+  palette panel (`palette-grid`/`palette-swatch`/`color-picker`), render modes
+  (x-stitch/block/symbol/number), zoom, undo/redo (grouped per drag stroke), resize, save/load
+  via API, `legend` + `size-readout`. Project → "New pattern" → editor flow wired end to end.
+- **M2 — Converter (classic)** *(done)*: upload → quantize (k-means) → DMC-match → dedupe → assign
+  symbols → grid → open in editor; real `conversion`/`imaging` modules; BullMQ job queue (a
+  `WorkerHost` processor does the work off the request thread) with both a WS gateway and
+  frontend polling for progress. `AiProvider` seam in place (`NullAiProvider` default) so
+  background-removal/upscale flags degrade gracefully with no AI service configured.
+- **M3 — Diamond painting mode** *(done)*: a `diamond` render mode (a filled rhombus "gem" per
+  cell, distinct from block/x-stitch) in `GridRenderingService`/`grid-canvas`; drill size (mm) is
+  settable at pattern creation and drives `size-readout`'s physical-size math; the editor defaults
+  to diamond view on first opening a diamond pattern (without resetting a user's chosen view on
+  every save); `legend`'s count column reads "Drills" instead of "Stitches" for diamond patterns.
+  Drill palette continues to reuse the DMC set (assumption #3) - real diamond-painting drills are
+  commonly DMC-numbered. Export remains M4's job, covering all three pattern types.
+- **M4 — Exports** *(done)*: `POST /exports/:patternId` generates all four artifacts synchronously
+  (small enough grids that a job queue isn't warranted) - a tiled, printable PDF (one page per
+  ~36x46-cell tile, row/col rulers, grid guides bold every 10, a legend/materials page), a
+  standalone SVG chart, a PNG rasterized from that SVG via `sharp`, and a CSV shopping list sorted
+  by how much of each color you'll need. Fixed a real gap along the way: `LocalStorageAdapter`
+  wrote files but nothing served them back — `main.ts` now mounts `/api/storage` as a static root
+  matching `StorageAdapter.urlFor()`'s URLs. Extracted `contrastTextColor` into `packages/color`
+  so the frontend swatch and the server-side chart pick text contrast the same way.
+- **M5 — AI service** *(done)*: `services/ai` is a FastAPI microservice with `/background-removal`
+  (via `rembg`) and `/upscale` (Lanczos resampling - see assumption #13). `apps/api`'s
+  `ImagingModule` now resolves `AI_PROVIDER` to a new `HttpAiProvider` (built on Node's native
+  `fetch`, no new HTTP client dependency) when `AI_SERVICE_URL` is set, and `NullAiProvider`
+  otherwise - zero config still fully works. This is the one part of the stack actually verified
+  by running it in this session: PyPI wasn't throttled the way the npm registry was, so a real
+  venv was built, `rembg`/`onnxruntime` installed, `pytest` run, and the service smoke-tested over
+  real HTTP (health check + an actual image upload/upscale round-trip with dimensions verified).
+- **M6 — Polish** *(done)*: a "My palettes" page (`DELETE /palettes/:id` added to support it) - build
+  a named palette from scratch with the color-picker, browse/delete saved ones. Fixed a real,
+  previously-shipped bug found in review: the top nav's "Editor" and "Converter" links pointed at
+  bare `/editor` and `/converter`, both of which have required a route param (`/editor/:id`,
+  `/converter/:projectId`) since M1/M2 - they silently fell through to the wildcard redirect. Added
+  tests for three components that had shipped without them (`DmcBrowseComponent`,
+  `SignInComponent`, `RegisterComponent`); the auth ones surfaced a second real risk while writing
+  them - a bare `{ navigate: jest.fn() }` Router stub breaks any component whose template uses
+  `routerLink`, since the directive calls `router.createUrlTree()` internally, not just
+  `navigate()`. Wired the optional `ai` service into `docker-compose.yml` behind a Compose profile
+  (`docker compose --profile ai up`), off by default since `onnxruntime` makes for a large image
+  and the app works fully without it.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.

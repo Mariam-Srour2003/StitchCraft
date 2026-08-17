@@ -22,18 +22,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
   },
   {
-    path: 'editor',
+    path: 'my-palettes',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/editor/editor-placeholder.component').then((m) => m.EditorPlaceholderComponent),
+    loadComponent: () => import('./features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
   },
   {
-    path: 'converter',
+    path: 'editor/:id',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/converter/converter-placeholder.component').then(
-        (m) => m.ConverterPlaceholderComponent,
-      ),
+    loadComponent: () => import('./features/editor/editor.component').then((m) => m.EditorComponent),
+  },
+  {
+    path: 'converter/:projectId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/converter/converter.component').then((m) => m.ConverterComponent),
   },
   {
     path: 'patterns/:id',

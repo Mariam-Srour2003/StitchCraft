@@ -1,0 +1,105 @@
+@if (store.loading()) {
+  <p class="editor-page__status">Loading pattern…</p>
+} @else {
+  <div class="editor-page">
+    <header class="editor-page__toolbar">
+      <sc-toolbar ariaLabel="Editing tools">
+        <sc-segmented-toggle
+          [options]="toolOptions"
+          [value]="store.tool()"
+          (valueChange)="store.setTool($event)"
+          ariaLabel="Tool"
+        />
+        <sc-icon-button label="Undo" [disabled]="!store.canUndo()" (pressed)="store.undo()">↶</sc-icon-button>
+        <sc-icon-button label="Redo" [disabled]="!store.canRedo()" (pressed)="store.redo()">↷</sc-icon-button>
+        <sc-segmented-toggle
+          [options]="modeOptions"
+          [value]="store.renderMode()"
+          (valueChange)="store.setRenderMode($event)"
+          ariaLabel="View mode"
+        />
+        <sc-slider
+          label="Zoom"
+          [min]="25"
+          [max]="300"
+          [step]="25"
+          [value]="store.zoomPercent()"
+          (valueChange)="store.setZoomPercent($event)"
+        />
+        <sc-button variant="secondary" [disabled]="store.saving()" (pressed)="save()">
+          {{ store.saving() ? 'Saving…' : store.dirty() ? 'Save' : 'Saved' }}
+        </sc-button>
+        <sc-button variant="secondary" [disabled]="exporting()" (pressed)="exportPattern()">
+          {{ exporting() ? 'Exporting…' : 'Export' }}
+        </sc-button>
+      </sc-toolbar>
+      <sc-size-readout
+        [type]="store.type()"
+        [width]="store.width()"
+        [height]="store.height()"
+        [unitSize]="unitSize()"
+      />
+    </header>
+
+    <div class="editor-page__body">
+      <sc-grid-canvas
+        class="editor-page__canvas"
+        [width]="store.width()"
+        [height]="store.height()"
+        [grid]="store.grid()"
+        [palette]="store.palette()"
+        [mode]="store.renderMode()"
+        [zoomPercent]="store.zoomPercent()"
+        [tool]="store.tool()"
+        (cellEdit)="onCellEdit($event)"
+        (strokeEnd)="store.endStroke()"
+      />
+
+      <aside class="editor-page__sidebar">
+        <section class="editor-page__panel">
+          <h2>Palette</h2>
+          <sc-palette-grid
+            [entries]="store.palette()"
+            [selectedIndex]="store.selectedPaletteIndex()"
+            (selectIndex)="store.setSelectedPaletteIndex($event)"
+          />
+          <sc-color-picker (colorAdded)="store.addColorToPalette($event)" />
+        </section>
+
+        <section class="editor-page__panel">
+          <h2>Resize</h2>
+          <form class="editor-page__resize" (ngSubmit)="applyResize(widthInput.value, heightInput.value)">
+            <label>
+              W
+              <input #widthInput type="number" min="1" max="500" [value]="store.width()" />
+            </label>
+            <label>
+              H
+              <input #heightInput type="number" min="1" max="500" [value]="store.height()" />
+            </label>
+            <sc-button type="submit" variant="secondary">Apply</sc-button>
+          </form>
+        </section>
+
+        <section class="editor-page__panel">
+          <sc-legend [rows]="store.legendRows()" [countLabel]="store.type() === 'diamond' ? 'Drills' : 'Stitches'" />
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  @if (exportResult(); as result) {
+    <sc-modal heading="Export ready" (closed)="closeExport()">
+      <ul class="editor-page__export-links">
+        <li><a [href]="result.pdfUrl" target="_blank" rel="noopener">Printable PDF chart</a></li>
+        <li><a [href]="result.pngUrl" target="_blank" rel="noopener">PNG preview</a></li>
+        <li><a [href]="result.svgUrl" target="_blank" rel="noopener">SVG preview</a></li>
+        <li><a [href]="result.materialsListUrl" target="_blank" rel="noopener">Floss/drill shopping list (CSV)</a></li>
+      </ul>
+    </sc-modal>
+  } @else if (exportError(); as error) {
+    <sc-modal heading="Export failed" (closed)="closeExport()">
+      <p role="alert">{{ error }}</p>
+    </sc-modal>
+  }
+}

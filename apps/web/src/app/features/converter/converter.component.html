@@ -1,0 +1,80 @@
+<div class="converter-page">
+  <h1>Convert an image</h1>
+
+  @switch (phase()) {
+    @case ('select') {
+      <sc-file-drop (filesSelected)="onFilesSelected($event)" />
+    }
+
+    @case ('configure') {
+      <div class="converter-page__configure">
+        @if (previewUrl(); as url) {
+          <img class="converter-page__preview" [src]="url" alt="Selected image preview" />
+        }
+
+        <div class="converter-page__settings">
+          <label class="converter-page__field">
+            <span>Pattern type</span>
+            <sc-segmented-toggle
+              [options]="targetTypeOptions"
+              [value]="targetType()"
+              (valueChange)="targetType.set($event)"
+              ariaLabel="Pattern type"
+            />
+          </label>
+
+          <div class="converter-page__dimensions">
+            <label class="converter-page__field">
+              <span>Width (stitches)</span>
+              <input
+                type="number"
+                min="1"
+                max="500"
+                [value]="width()"
+                (change)="width.set(+$any($event.target).value)"
+              />
+            </label>
+            <label class="converter-page__field">
+              <span>Height (stitches)</span>
+              <input
+                type="number"
+                min="1"
+                max="500"
+                [value]="height()"
+                (change)="height.set(+$any($event.target).value)"
+              />
+            </label>
+          </div>
+
+          <sc-slider
+            label="Colors"
+            [min]="2"
+            [max]="60"
+            [step]="1"
+            [value]="colorCount()"
+            (valueChange)="colorCount.set($event)"
+          />
+
+          <div class="converter-page__actions">
+            <sc-button variant="secondary" (pressed)="reset()">Choose a different image</sc-button>
+            <sc-button (pressed)="startConversion()">Convert</sc-button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @case ('converting') {
+      <div class="converter-page__progress">
+        <p>{{ statusMessage() }}</p>
+        <sc-progress [value]="progress()" label="Conversion progress" />
+      </div>
+    }
+
+    @case ('failed') {
+      <div class="converter-page__error">
+        <p role="alert">{{ errorMessage() }}</p>
+        <sc-button (pressed)="reset()">Try again</sc-button>
+      </div>
+    }
+  }
+</div>

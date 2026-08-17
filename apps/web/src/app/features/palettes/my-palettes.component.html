@@ -1,0 +1,50 @@
+<div class="my-palettes-page">
+  <header class="my-palettes-page__header">
+    <h1>My palettes</h1>
+    <sc-button (pressed)="openCreate()">New palette</sc-button>
+  </header>
+
+  @if (loading()) {
+    <p>Loading…</p>
+  } @else if (palettes().length === 0) {
+    <sc-empty-state
+      title="No custom palettes yet"
+      description="Build a palette from your own colors to reuse across patterns."
+    />
+  } @else {
+    <ul class="my-palettes-page__list">
+      @for (palette of palettes(); track palette.id) {
+        <li class="my-palettes-page__item">
+          <div class="my-palettes-page__item-header">
+            <span class="my-palettes-page__name">{{ palette.name }}</span>
+            <sc-button variant="ghost" (pressed)="deletePalette(palette.id)">Delete</sc-button>
+          </div>
+          <sc-palette-grid [entries]="palette.entries" [selectedIndex]="null" />
+        </li>
+      }
+    </ul>
+  }
+
+  @if (creating()) {
+    <sc-modal heading="New palette" (closed)="closeCreate()">
+      <div class="my-palettes-page__form">
+        <label>
+          Name
+          <input type="text" [value]="newName()" (input)="setName($any($event.target).value)" />
+        </label>
+
+        @if (newEntries().length > 0) {
+          <sc-palette-grid
+            [entries]="newEntries()"
+            [selectedIndex]="null"
+            (selectIndex)="removeColorAt($event)"
+          />
+          <p class="my-palettes-page__hint">Click a swatch to remove it.</p>
+        }
+
+        <sc-color-picker (colorAdded)="addColor($event)" />
+        <sc-button [disabled]="newEntries().length === 0" (pressed)="savePalette()">Save palette</sc-button>
+      </div>
+    </sc-modal>
+  }
+</div>

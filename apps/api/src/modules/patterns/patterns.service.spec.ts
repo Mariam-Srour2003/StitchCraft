@@ -7,13 +7,25 @@ describe('PatternsService', () => {
   let service: PatternsService;
   let prisma: {
     project: { findUnique: jest.Mock };
-    pattern: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock; delete: jest.Mock };
+    pattern: {
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      create: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
   };
 
   beforeEach(() => {
     prisma = {
       project: { findUnique: jest.fn() },
-      pattern: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn(), delete: jest.fn() },
+      pattern: {
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
     };
     service = new PatternsService(prisma as unknown as PrismaService);
   });
@@ -67,6 +79,42 @@ describe('PatternsService', () => {
       for (const row of decoded) {
         expect(Array.from(row)).toEqual([-1, -1, -1, -1, -1]);
       }
+    });
+  });
+
+  describe('findAllForProject', () => {
+    it('rejects listing patterns for a project owned by another user', async () => {
+      prisma.project.findUnique.mockResolvedValueOnce({ id: 'proj-1', userId: 'someone-else' });
+      await expect(service.findAllForProject('user-1', 'proj-1')).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.pattern.findMany).not.toHaveBeenCalled();
+    });
+
+    it('rejects listing patterns for a nonexistent project', async () => {
+      prisma.project.findUnique.mockResolvedValueOnce(null);
+      await expect(service.findAllForProject('user-1', 'missing')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('returns the owned project patterns', async () => {
+      prisma.project.findUnique.mockResolvedValueOnce({ id: 'proj-1', userId: 'user-1' });
+      prisma.pattern.findMany.mockResolvedValueOnce([
+        {
+          id: 'pattern-1',
+          projectId: 'proj-1',
+          name: 'A',
+          type: 'cross_stitch',
+          width: 4,
+          height: 4,
+          palette: [],
+          grid: [],
+          meta: { createdFrom: 'blank' },
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        },
+      ]);
+
+      const patterns = await service.findAllForProject('user-1', 'proj-1');
+      expect(patterns).toHaveLength(1);
+      expect(patterns[0].id).toBe('pattern-1');
     });
   });
 
