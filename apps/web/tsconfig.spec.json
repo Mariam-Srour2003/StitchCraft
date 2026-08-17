@@ -5,5 +5,5 @@
     "module": "commonjs",
     "types": ["jest", "node"]
   },
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "setup-jest.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts", "setup-jest.ts", "jest.config.ts"]
 }

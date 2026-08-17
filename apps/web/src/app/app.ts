@@ -16,10 +16,6 @@ export class App {
   protected readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
 
-  constructor() {
-    this.authStore.loadCurrentUser();
-  }
-
   async signOut(): Promise<void> {
     this.authStore.logout();
     await this.router.navigate(['/sign-in']);
