@@ -71,6 +71,14 @@ Proceeding with these; flag if any should change:
     reliably cover the Unicode shape glyphs in `assignSymbols`' extended alphabet), though the
     legend page does spell out each entry's real symbol character; exports regenerate from scratch
     on every request rather than being cached/invalidated against the pattern's last-modified time.
+13. **AI service scope cuts, to revisit in a later milestone**: `/upscale` is classical Lanczos
+    resampling (Pillow), not a trained super-resolution model - no pretrained weights are bundled
+    or downloaded anywhere in this repo, since that would mean either committing a large binary or
+    depending on a download at build/run time. Swapping in a real model (e.g. `cv2.dnn_superres`
+    with ESRGAN/EDSR weights) only touches the `upscale` function in `services/ai/app/main.py`;
+    the route contract and the Nest-side `AiProvider` interface stay the same either way.
+    `/background-removal` is real (rembg), but its actual model-download-and-remove path is not
+    exercised by the test suite (only its error-handling paths are) - see services/ai/README.md.
 
 ---
 
@@ -307,8 +315,14 @@ typed against `packages/types`, but do no real work yet.
   wrote files but nothing served them back — `main.ts` now mounts `/api/storage` as a static root
   matching `StorageAdapter.urlFor()`'s URLs. Extracted `contrastTextColor` into `packages/color`
   so the frontend swatch and the server-side chart pick text contrast the same way.
-- **M5 — AI service**: Python FastAPI (`services/ai`) with background removal + upscale behind
-  `AiProvider`; feature-flagged; `NullAiProvider` remains the default with zero config.
+- **M5 — AI service** *(done)*: `services/ai` is a FastAPI microservice with `/background-removal`
+  (via `rembg`) and `/upscale` (Lanczos resampling - see assumption #13). `apps/api`'s
+  `ImagingModule` now resolves `AI_PROVIDER` to a new `HttpAiProvider` (built on Node's native
+  `fetch`, no new HTTP client dependency) when `AI_SERVICE_URL` is set, and `NullAiProvider`
+  otherwise - zero config still fully works. This is the one part of the stack actually verified
+  by running it in this session: PyPI wasn't throttled the way the npm registry was, so a real
+  venv was built, `rembg`/`onnxruntime` installed, `pytest` run, and the service smoke-tested over
+  real HTTP (health check + an actual image upload/upscale round-trip with dimensions verified).
 - **M6 — Polish**: projects dashboard, custom palettes UI, fuller test coverage, docs,
   one-command `docker-compose up` dev loop verified end-to-end.
 
