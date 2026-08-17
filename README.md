@@ -20,12 +20,14 @@ monorepo · pnpm. Full rationale in PLAN.md §1.
 
 ## Prerequisites
 
-- Node 20+
-- pnpm (`corepack enable && corepack prepare pnpm@9 --activate`, or `npm i -g pnpm`)
+- Node 22 (via Corepack, which ships with it — no separate pnpm install needed)
 - PostgreSQL and Redis — either via Docker Compose (below) or installed locally.
   Redis is required from the converter onward: it enqueues conversion jobs
   on a BullMQ queue, which needs a reachable Redis to add or process jobs.
-- Docker + Docker Compose, if you want the one-command path
+  Everything else (auth, projects, patterns, palettes, editor, exports)
+  works without Redis running.
+- Docker + Docker Compose, if you want the one-command path (see the note
+  below — this path hasn't been verified in every environment)
 - Python 3.11+, only if you want to run the optional AI microservice
   (`services/ai`) outside Docker
 
@@ -34,20 +36,6 @@ monorepo · pnpm. Full rationale in PLAN.md §1.
 ```sh
 pnpm install
 ```
-
-> **Note on this environment:** this repository was built in a sandbox with
-> severely throttled access to the npm registry (a single small package
-> could take 10+ minutes, and the full toolchain never finished
-> downloading despite several attempts), so `pnpm install` for the
-> Node/Angular/Nest side was never run to completion here — everything
-> there was written and hand-traced carefully, not executed. PyPI was not
-> similarly throttled, so `services/ai` (the Python microservice) *was*
-> actually installed into a real virtualenv, tested with pytest, and
-> smoke-tested over real HTTP in this session — see PLAN.md's M5 section.
-> If `pnpm install` doesn't resolve cleanly on a normal connection, check
-> dependency versions in the relevant `package.json` against what's
-> actually current; nothing in the source depends on an exact patch
-> version.
 
 ### Option A: Docker Compose (db + redis + api + web)
 
@@ -59,8 +47,15 @@ docker compose up --build
 - API: http://localhost:3000/api
 
 The API container does not run migrations automatically. On first run,
-apply the schema from your host machine (see below) while the containers
-are up.
+apply the schema from your host machine (see Option B below) while the
+containers are up.
+
+> This path hasn't been exercised with a real `docker build` in this
+> environment (no Docker CLI available here) — the API's `Dockerfile` is
+> correct as far as static review + the equivalent host-side build/run
+> steps can confirm (see PLAN.md §7), but hasn't had an actual container
+> boot to prove it. Option B below _has_ been run for real, end to end,
+> including a live database.
 
 To also run the optional AI microservice:
 
@@ -77,17 +72,16 @@ docker compose --profile ai up --build
 
 ```sh
 cp .env.example .env
-# start Postgres + Redis only:
-docker compose up db redis
+# edit .env with real DATABASE_URL / REDIS_URL for your machine, or:
+docker compose up db redis   # start just Postgres + Redis
 
-# apply the Prisma schema
-pnpm prisma:generate
+# apply the Prisma schema (creates apps/api/prisma/migrations on first run)
 pnpm prisma:migrate
 
 # optional: seed a demo user + project + pattern
 pnpm nx run api:seed
 
-# run both apps
+# run both apps (two terminals)
 pnpm dev:api    # http://localhost:3000/api
 pnpm dev:web    # http://localhost:4200 (proxies /api to :3000 in dev)
 ```
@@ -108,11 +102,14 @@ uvicorn app.main:app --reload --port 8000
 ## Common tasks
 
 ```sh
-pnpm build              # build all projects
-pnpm test               # unit tests for all projects
+pnpm build               # build all projects
+pnpm test                # unit tests for all projects (281 tests)
 pnpm lint                # lint all projects
 pnpm affected:test       # only test what changed vs. main
-npx nx graph              # visualize the project dependency graph
+npx nx graph             # visualize the project dependency graph
+
+# e2e (needs pnpm dev:web running, or set E2E_BASE_URL to point elsewhere):
+npx playwright test
 ```
 
 ## Repository layout
@@ -196,10 +193,18 @@ brightness step in the converter; PDF chart cells show the palette number
 rather than the actual symbol glyph (font coverage); AI upscale is
 classical resampling, not a trained model.
 
-**Verification honesty**: everything on the Node/Angular/NestJS side was
-written and carefully hand-traced, not executed — this sandbox's npm
-registry access was too throttled to complete `pnpm install`. The Python
-AI service *was* actually run: real venv, real `pytest` (7/7 passing),
-real HTTP smoke test with an actual image upload/upscale round-trip. Please
-run the real test suites yourself once dependencies install on a normal
-connection before treating this as a verified green build.
+**Verification status**: the whole stack has actually been run, not just
+hand-traced — full details and the specific bugs each pass caught are in
+PLAN.md §7. In brief: `pnpm install`, `lint`, `test` (281 tests), and
+production builds all pass across every project; both Playwright e2e flows
+pass in a real browser; and the compiled API has been run directly against
+a real PostgreSQL database over real HTTP (register, login, create a
+project, confirmed via `psql` that it persisted) — this last part is worth
+calling out because two real bugs meant the _compiled_ API had never
+actually been executable before that pass, in dev or in Docker (see PLAN.md
+§7's build-fix writeup). The Python AI service was independently verified
+the same way: real venv, real `pytest` (7/7 passing), a real HTTP
+image-upload/upscale round-trip. The one thing genuinely not exercised in
+this environment is a real `docker build`/`docker compose up` (no Docker
+CLI available here) — Option A above should work but hasn't had an actual
+container boot to prove it.
