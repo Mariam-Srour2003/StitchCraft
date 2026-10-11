@@ -14,6 +14,8 @@ import {
 
 import { PaletteEntry } from '@stitchcraft/types';
 
+import type { EditorTool } from '@app/domain/editor/tools';
+
 import {
   CellPosition,
   cellSizeForZoom,
@@ -23,22 +25,12 @@ import {
   pixelToCell,
   RenderMode,
 } from './grid-render-math';
-import { GridRenderingService,GridRenderParams } from './grid-rendering.service';
+import { GridRenderingService, GridRenderParams } from './grid-rendering.service';
 
 const BASE_CELL_SIZE = 20;
 
-export type GridCanvasTool =
-  | 'paint'
-  | 'erase'
-  | 'fill'
-  | 'pick'
-  | 'line'
-  | 'rect'
-  | 'rect-fill'
-  | 'ellipse'
-  | 'ellipse-fill'
-  | 'text'
-  | 'stitch';
+/** The editor's tools, plus 'stitch' for marking progress in stitching mode. */
+export type GridCanvasTool = EditorTool | 'stitch';
 
 /** Tools that act once per click rather than on every cell a drag passes over. */
 const SINGLE_CLICK_TOOLS: ReadonlySet<GridCanvasTool> = new Set(['fill', 'pick', 'text']);

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { PaletteEntry } from '@stitchcraft/types';
 
-import { computeRegions, isRegionEdge,RegionMap } from '@app/domain/grid/regions';
+import { computeRegions, isRegionEdge, RegionMap } from '@app/domain/grid/regions';
 
 import {
   colorHexForCell,

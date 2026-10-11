@@ -15,6 +15,8 @@ import {
 
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import { EditorTool, isShapeTool } from '@app/domain/editor/tools';
+import { UndoHistory } from '@app/domain/editor/undo-history';
 import type { CellPosition } from '@app/domain/grid/cell';
 import {
   applyChanges,
@@ -28,6 +30,7 @@ import {
   rotateClockwise,
 } from '@app/domain/grid/grid-ops';
 import { textPoints } from '@app/domain/grid/pixel-font';
+import { RowTally } from '@app/domain/grid/row-tally';
 import {
   clipToGrid,
   ellipsePoints,
@@ -36,35 +39,17 @@ import {
   rectPoints,
   Symmetry,
 } from '@app/domain/grid/shapes';
-import { defaultRenderMode,RenderMode } from '@app/domain/pattern/pattern-rules';
+import { defaultRenderMode, RenderMode } from '@app/domain/pattern/pattern-rules';
+import {
+  blankProgress,
+  decodeProgress,
+  DONE,
+  encodeProgress,
+  NOT_DONE,
+} from '@app/domain/pattern/progress';
 import { LegendRow } from '@app/shared/ui/legend/legend';
 
-export type EditorTool =
-  | 'paint'
-  | 'erase'
-  | 'fill'
-  | 'pick'
-  | 'line'
-  | 'rect'
-  | 'rect-fill'
-  | 'ellipse'
-  | 'ellipse-fill'
-  | 'text';
-
-const SHAPE_TOOLS: ReadonlySet<EditorTool> = new Set([
-  'line',
-  'rect',
-  'rect-fill',
-  'ellipse',
-  'ellipse-fill',
-]);
-
-export function isShapeTool(tool: EditorTool): boolean {
-  return SHAPE_TOOLS.has(tool);
-}
-
-const NOT_DONE = 0;
-const DONE = 1;
+export type { EditorTool };
 
 /** Everything a whole-pattern operation (resize, flip, rotate, palette clean-up) can change. */
 interface PatternSnapshot {
@@ -84,10 +69,6 @@ interface PatternSnapshot {
 type HistoryStep =
   | { kind: 'cells'; changes: CellChange[] }
   | { kind: 'snapshot'; before: PatternSnapshot; after: PatternSnapshot };
-
-function blankProgress(width: number, height: number): Int16Array[] {
-  return Array.from({ length: height }, () => new Int16Array(width));
-}
 
 /**
  * Owns all pattern-editing state and business rules: the store mutates the
@@ -123,9 +104,12 @@ export class EditorStore {
   private readonly savingSignal = signal(false);
   private readonly dirtySignal = signal(false);
 
-  private readonly undoStackSignal = signal<HistoryStep[]>([]);
-  private readonly redoStackSignal = signal<HistoryStep[]>([]);
-  private currentStroke: CellChange[] | null = null;
+  private readonly history = new UndoHistory<HistoryStep>();
+  /** Bumped on every history change so canUndo/canRedo stay reactive. */
+  private readonly historyVersion = signal(0);
+  private readonly tally = new RowTally();
+  /** The current paint/erase drag, keyed by cell (y * width + x) for O(1) lookups on long strokes. */
+  private currentStroke: Map<number, CellChange> | null = null;
   private shapeStart: CellPosition | null = null;
   private shapePreview: CellChange[] = [];
   private stitchStrokeValue: number | null = null;
@@ -154,26 +138,19 @@ export class EditorStore {
   readonly saving = this.savingSignal.asReadonly();
   readonly dirty = this.dirtySignal.asReadonly();
 
-  readonly canUndo = computed(() => this.undoStackSignal().length > 0);
-  readonly canRedo = computed(() => this.redoStackSignal().length > 0);
+  readonly canUndo = computed(() => this.historyVersion() >= 0 && this.history.canUndo);
+  readonly canRedo = computed(() => this.historyVersion() >= 0 && this.history.canRedo);
 
   /** "Skeins" / "Drill bags" for the legend's buy column, or null when the type isn't bought by count. */
   readonly buyLabel = computed(() => materialColumnLabel(this.typeSignal()));
 
   readonly legendRows = computed<LegendRow[]>(() => {
     const palette = this.paletteSignal();
-    const counts = new Array(palette.length).fill(0);
-    const done = new Array(palette.length).fill(0);
-    const progress = this.progressSignal();
-    this.gridSignal().forEach((row, y) => {
-      const progressRow = progress[y];
-      for (let x = 0; x < row.length; x++) {
-        const value = row[x];
-        if (value < 0 || value >= counts.length) continue;
-        counts[value]++;
-        if (progressRow?.[x] === DONE) done[value]++;
-      }
-    });
+    const { counts, done } = this.tally.tally(
+      this.gridSignal(),
+      this.progressSignal(),
+      palette.length,
+    );
     const type = this.typeSignal();
     const fabricCount = this.metaSignal().fabricCount;
     const strands = this.settings.strands();
@@ -220,9 +197,9 @@ export class EditorStore {
     this.metaSignal.set(pattern.meta);
     this.paletteSignal.set(pattern.palette);
     this.gridSignal.set(decodeGrid(pattern.grid, pattern.width));
-    this.progressSignal.set(this.decodeProgress(pattern));
-    this.undoStackSignal.set([]);
-    this.redoStackSignal.set([]);
+    this.progressSignal.set(decodeProgress(pattern.meta.progress, pattern.width, pattern.height));
+    this.history.clear();
+    this.historyVersion.update((v) => v + 1);
     this.currentStroke = null;
     this.shapeStart = null;
     this.shapePreview = [];
@@ -231,16 +208,6 @@ export class EditorStore {
     if (highlight !== null && highlight >= pattern.palette.length) {
       this.highlightIndexSignal.set(null);
     }
-  }
-
-  private decodeProgress(pattern: Pattern): Int16Array[] {
-    const encoded = pattern.meta.progress;
-    if (!encoded || encoded.length !== pattern.height) {
-      return blankProgress(pattern.width, pattern.height);
-    }
-    return decodeGrid(encoded, pattern.width).map((row) =>
-      row.map((v) => (v === DONE ? DONE : NOT_DONE)),
-    );
   }
 
   // ---- view and tool settings ------------------------------------------------
@@ -330,23 +297,27 @@ export class EditorStore {
       this.heightSignal(),
       this.symmetrySignal(),
     );
-    for (const point of points) this.paintOne(point.x, point.y, target);
+    this.paintPoints(points, target);
   }
 
-  private paintOne(x: number, y: number, target: number): void {
-    const before = this.gridSignal()[y]?.[x];
-    if (before === undefined || before === target) return;
-
-    this.currentStroke ??= [];
-    const existing = this.currentStroke.find((e) => e.x === x && e.y === y);
-    if (existing) {
-      // touched twice in one drag: keep the original `before`, update `after`
-      existing.after = target;
-    } else {
-      this.currentStroke.push({ x, y, before, after: target });
+  /**
+   * Paints a batch of cells (one pointer move, plus its mirror images) as a
+   * single grid update, recording each cell's original value in the current
+   * stroke so the whole drag undoes as one step.
+   */
+  private paintPoints(points: readonly CellPosition[], target: number): void {
+    const width = this.widthSignal();
+    const stroke = (this.currentStroke ??= new Map());
+    const changes = this.changesFor(this.gridSignal(), points, target);
+    if (changes.length === 0) return;
+    for (const change of changes) {
+      const key = change.y * width + change.x;
+      const existing = stroke.get(key);
+      // Touched twice in one drag: keep the original `before`, update `after`.
+      if (existing) existing.after = target;
+      else stroke.set(key, { ...change });
     }
-
-    this.setCell(x, y, target);
+    this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
     this.dirtySignal.set(true);
   }
 
@@ -476,8 +447,8 @@ export class EditorStore {
 
   /** Closes the current drag (paint/erase stroke, shape, or stitch marking) into one undoable step. */
   endStroke(): void {
-    if (this.currentStroke && this.currentStroke.length > 0) {
-      this.pushHistory({ kind: 'cells', changes: this.currentStroke });
+    if (this.currentStroke && this.currentStroke.size > 0) {
+      this.pushHistory({ kind: 'cells', changes: [...this.currentStroke.values()] });
     }
     if (this.shapePreview.length > 0) {
       this.pushHistory({ kind: 'cells', changes: this.shapePreview });
@@ -491,23 +462,17 @@ export class EditorStore {
   // ---- history -------------------------------------------------------------
 
   undo(): void {
-    const stack = this.undoStackSignal();
-    if (stack.length === 0) return;
-    const step = stack[stack.length - 1];
+    const step = this.history.undo();
+    if (!step) return;
     this.applyStep(step, 'before');
-    this.undoStackSignal.set(stack.slice(0, -1));
-    this.redoStackSignal.update((redo) => [...redo, step]);
-    this.dirtySignal.set(true);
+    this.historyChanged();
   }
 
   redo(): void {
-    const stack = this.redoStackSignal();
-    if (stack.length === 0) return;
-    const step = stack[stack.length - 1];
+    const step = this.history.redo();
+    if (!step) return;
     this.applyStep(step, 'after');
-    this.redoStackSignal.set(stack.slice(0, -1));
-    this.undoStackSignal.update((undo) => [...undo, step]);
-    this.dirtySignal.set(true);
+    this.historyChanged();
   }
 
   // ---- whole-pattern operations (snapshot undo steps) ---------------------------
@@ -627,9 +592,7 @@ export class EditorStore {
       const grid = encodeGrid(
         this.gridSignal().map((row) => Array.from(row, (v) => (v === EMPTY_CELL ? null : v))),
       );
-      const progress = encodeGrid(
-        this.progressSignal().map((row) => Array.from(row, (v) => (v === DONE ? DONE : null))),
-      );
+      const progress = encodeProgress(this.progressSignal());
       const updated = await firstValueFrom(
         this.patternsApi.update(id, {
           width: this.widthSignal(),
@@ -674,8 +637,12 @@ export class EditorStore {
   }
 
   private pushHistory(step: HistoryStep): void {
-    this.undoStackSignal.update((stack) => [...stack, step]);
-    this.redoStackSignal.set([]);
+    this.history.push(step);
+    this.historyChanged();
+  }
+
+  private historyChanged(): void {
+    this.historyVersion.update((v) => v + 1);
     this.dirtySignal.set(true);
   }
 
@@ -713,15 +680,5 @@ export class EditorStore {
     if (selected !== null && selected >= snapshot.palette.length) {
       this.selectedPaletteIndexSignal.set(null);
     }
-  }
-
-  private setCell(x: number, y: number, value: number): void {
-    this.gridSignal.update((rows) => {
-      const next = rows.slice();
-      const newRow = next[y].slice();
-      newRow[x] = value;
-      next[y] = newRow;
-      return next;
-    });
   }
 }

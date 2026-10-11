@@ -15,8 +15,9 @@ import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { ExportApiService } from '@app/data-access/export-api.service';
-import { SHORTCUTS } from '@app/domain/editor/shortcuts';
-import { measureText,SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
+import { EditorAction, resolveShortcut, SHORTCUTS } from '@app/domain/editor/shortcuts';
+import type { EditorTool } from '@app/domain/editor/tools';
+import { measureText, SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
 import { Symmetry } from '@app/domain/grid/shapes';
 import { cellNoun, physicalUnit } from '@app/domain/pattern/pattern-rules';
 import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
@@ -43,7 +44,7 @@ import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
 import { Slider } from '@app/shared/ui/slider/slider';
 import { Toolbar } from '@app/shared/ui/toolbar/toolbar';
 
-import { EditorStore, EditorTool } from './editor.store';
+import { EditorStore } from './editor.store';
 
 const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },
@@ -83,18 +84,6 @@ const WORK_MODE_OPTIONS: SegmentedToggleOption<WorkMode>[] = [
   { value: 'design', label: 'Design' },
   { value: 'stitch', label: 'Stitch' },
 ];
-
-/** Single-key tool shortcuts (no modifier). */
-const TOOL_KEYS: Record<string, EditorTool> = {
-  b: 'paint',
-  e: 'erase',
-  g: 'fill',
-  i: 'pick',
-  t: 'text',
-  l: 'line',
-  r: 'rect',
-  o: 'ellipse',
-};
 
 const ZOOM_STEP = 25;
 
@@ -291,41 +280,34 @@ export class EditorComponent {
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
     if (isTypingTarget(event.target)) return;
-    const mod = event.ctrlKey || event.metaKey;
-    const key = event.key.toLowerCase();
+    const action = resolveShortcut(event);
+    if (!action) return;
+    event.preventDefault();
+    this.run(action);
+  }
 
-    if (mod) {
-      if (key === 'z' && !event.shiftKey) {
-        this.store.undo();
-      } else if ((key === 'z' && event.shiftKey) || key === 'y') {
-        this.store.redo();
-      } else if (key === 's') {
-        this.save();
-      } else {
+  private run(action: EditorAction): void {
+    switch (action.type) {
+      case 'undo':
+        return this.store.undo();
+      case 'redo':
+        return this.store.redo();
+      case 'save':
+        return this.save();
+      case 'tool':
+        return this.selectTool(action.tool);
+      case 'toggle-highlight': {
+        const index = this.store.selectedPaletteIndex();
+        if (index !== null) this.store.toggleHighlight(index);
         return;
       }
-      event.preventDefault();
-      return;
+      case 'toggle-stitch-mode':
+        return this.store.setStitchMode(!this.store.stitchMode());
+      case 'zoom':
+        return this.store.setZoomPercent(this.store.zoomPercent() + action.direction * ZOOM_STEP);
+      case 'clear-highlight':
+        return this.store.clearHighlight();
     }
-    if (event.altKey) return;
-
-    if (TOOL_KEYS[key]) {
-      this.selectTool(TOOL_KEYS[key]);
-    } else if (key === 'h') {
-      const index = this.store.selectedPaletteIndex();
-      if (index !== null) this.store.toggleHighlight(index);
-    } else if (key === 'k') {
-      this.store.setStitchMode(!this.store.stitchMode());
-    } else if (key === '+' || key === '=') {
-      this.store.setZoomPercent(this.store.zoomPercent() + ZOOM_STEP);
-    } else if (key === '-' || key === '_') {
-      this.store.setZoomPercent(this.store.zoomPercent() - ZOOM_STEP);
-    } else if (key === 'escape') {
-      this.store.clearHighlight();
-    } else {
-      return;
-    }
-    event.preventDefault();
   }
 }
 

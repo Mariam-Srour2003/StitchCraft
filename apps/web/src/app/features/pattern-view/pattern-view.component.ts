@@ -25,6 +25,7 @@ import {
   physicalUnit,
 } from '@app/domain/pattern/pattern-rules';
 import { hoursRemaining, patternStats } from '@app/domain/pattern/pattern-stats';
+import { decodeProgress } from '@app/domain/pattern/progress';
 import { GridCanvas } from '@app/shared/canvas/grid-canvas';
 import { Button } from '@app/shared/ui/button/button';
 import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
@@ -94,10 +95,8 @@ export class PatternViewComponent {
 
   protected readonly progress = computed(() => {
     const p = this.pattern();
-    if (!this.showProgress() || !p?.meta.progress || p.meta.progress.length !== p.height) {
-      return null;
-    }
-    return decodeGrid(p.meta.progress, p.width);
+    if (!this.showProgress() || !p?.meta.progress) return null;
+    return decodeProgress(p.meta.progress, p.width, p.height);
   });
 
   protected readonly stats = computed(() => {

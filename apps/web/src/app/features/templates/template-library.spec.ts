@@ -1,6 +1,6 @@
 import { isDmcColor } from '@stitchcraft/types';
 
-import { findTemplate,TEMPLATE_CATEGORIES, TEMPLATES } from './template-library';
+import { findTemplate, TEMPLATE_CATEGORIES, TEMPLATES } from './template-library';
 
 describe('template library', () => {
   it('has unique ids and known categories', () => {

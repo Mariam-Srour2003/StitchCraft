@@ -1,4 +1,4 @@
-import { inject,Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { CreatePatternDto, Pattern, UpdatePatternDto } from '@stitchcraft/types';
