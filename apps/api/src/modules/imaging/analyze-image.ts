@@ -17,7 +17,7 @@ import {
   removeStrayStitches,
 } from '@stitchcraft/types';
 
-import { buildGridFromPixels } from './build-grid-from-pixels';
+import { buildGridFromPixels, minPaintAreaCells } from './build-grid-from-pixels';
 import cascadeJson from './faces/frontalface-alt2.json';
 import type { Box, GrayImage, HaarCascade } from './faces/haar-cascade';
 import { detectMultiScale, toGray } from './faces/haar-cascade';
@@ -183,6 +183,11 @@ async function simulateConversion(
   const pixels = await stitchPixels(oriented, width, height, target.enhance);
   const result = buildGridFromPixels(pixels, width, height, target.colorCount, {
     cleanup: target.cleanup,
+    // the trial grid can be smaller than the pattern; scale the area threshold with it
+    minRegionSize:
+      target.targetType === 'color_by_number'
+        ? Math.max(2, Math.round(minPaintAreaCells(target.width * target.height) * shrink * shrink))
+        : undefined,
   });
   const rows = decodeGrid(result.grid, width);
   // Confetti is measured before cleanup - it's what cleanup is for.

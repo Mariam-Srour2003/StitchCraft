@@ -127,6 +127,7 @@ export async function mockApi(page: Page): Promise<void> {
     route.fulfill({
       json: {
         pdfUrl: 'http://localhost/mock-export/chart.pdf',
+        paintByNumberPdfUrl: 'http://localhost/mock-export/paint-by-number.pdf',
         pngUrl: 'http://localhost/mock-export/chart.png',
         svgUrl: 'http://localhost/mock-export/chart.svg',
         materialsListUrl: 'http://localhost/mock-export/materials.csv',

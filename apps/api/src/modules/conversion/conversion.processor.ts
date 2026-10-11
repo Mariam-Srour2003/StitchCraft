@@ -42,6 +42,7 @@ export class ConversionsProcessor extends WorkerHost {
       useAiUpscale: params.useAiUpscale,
       enhance: params.enhance,
       cleanup: params.cleanup,
+      targetType: params.targetType,
     });
 
     await job.updateProgress(85);

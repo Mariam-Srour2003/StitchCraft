@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { AnalyzeImageParams, ImageAnalysis } from '@stitchcraft/types';
+import { AnalyzeImageParams, ImageAnalysis, PatternType } from '@stitchcraft/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
 import { analyzeImage } from './analyze-image';
-import { buildGridFromPixels, BuildGridResult } from './build-grid-from-pixels';
+import { buildGridFromPixels, BuildGridResult, minPaintAreaCells } from './build-grid-from-pixels';
 import { stitchPixels } from './stitch-pixels';
 
 export interface ConvertImageOptions {
@@ -17,6 +17,8 @@ export interface ConvertImageOptions {
   enhance?: boolean;
   /** Remove confetti stitches and fold barely-used colours into close ones. */
   cleanup?: boolean;
+  /** Paint by number also merges areas too small to paint when cleaning up. */
+  targetType?: PatternType;
 }
 
 @Injectable()
@@ -41,6 +43,10 @@ export class ImagingService {
     const pixels = await stitchPixels(working, opts.width, opts.height, opts.enhance);
     return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount, {
       cleanup: opts.cleanup,
+      minRegionSize:
+        opts.targetType === 'color_by_number'
+          ? minPaintAreaCells(opts.width * opts.height)
+          : undefined,
     });
   }
 

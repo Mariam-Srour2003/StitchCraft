@@ -12,6 +12,12 @@ export interface Region {
   /** The cell deepest inside the region - where its number is printed. */
   labelX: number;
   labelY: number;
+  /**
+   * How many cells the label cell is from the region's edge (0 = on the
+   * edge). A square of (2 * depth + 1) cells around the label fits inside
+   * the region, so printing can size each number to its region.
+   */
+  labelDepth: number;
 }
 
 export interface RegionMap {
@@ -58,7 +64,7 @@ export function computeRegions(
         visit(cx, cy + 1);
         visit(cx, cy - 1);
       }
-      regions.push({ id, paletteIndex: value, size, labelX: x, labelY: y });
+      regions.push({ id, paletteIndex: value, size, labelX: x, labelY: y, labelDepth: 0 });
     }
   }
 
@@ -119,6 +125,7 @@ function placeLabels(ids: Int32Array, width: number, height: number, regions: Re
     const id = ids[key];
     if (id < 0 || dist[key] <= best[id]) continue;
     best[id] = dist[key];
+    regions[id].labelDepth = dist[key];
     regions[id].labelX = key % width;
     regions[id].labelY = Math.floor(key / width);
   }
@@ -135,4 +142,97 @@ export function isRegionEdge(
   const id = map.ids[y * map.width + x];
   if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height) return id >= 0;
   return map.ids[ny * map.width + nx] !== id;
+}
+
+export interface MergeSmallRegionsResult {
+  /** Same row objects where nothing changed, new rows where something did. */
+  rows: Int16Array[];
+  /** Regions repainted into a neighbour. */
+  merged: number;
+}
+
+/**
+ * Paint by number needs areas big enough to paint: repaints every region
+ * smaller than `minSize` cells with the colour of the neighbouring region it
+ * shares the longest border with (ties go to the bigger neighbour). Runs a
+ * few passes, since merging can leave a still-small region next to another.
+ * Regions bordered only by empty cells are left alone.
+ */
+export function mergeSmallRegions(
+  rows: readonly Int16Array[],
+  minSize: number,
+  maxPasses = 4,
+): MergeSmallRegionsResult {
+  const height = rows.length;
+  const width = height > 0 ? rows[0].length : 0;
+  let current = rows.slice();
+  let merged = 0;
+
+  for (let pass = 0; pass < maxPasses; pass++) {
+    const map = computeRegions(current, width, height);
+    const small = map.regions.filter((r) => r.size < minSize);
+    if (small.length === 0) break;
+
+    const isSmall = new Uint8Array(map.regions.length);
+    for (const r of small) isSmall[r.id] = 1;
+    const cellsOf = new Map<number, number[]>();
+    for (let key = 0; key < map.ids.length; key++) {
+      const id = map.ids[key];
+      if (id >= 0 && isSmall[id]) {
+        const cells = cellsOf.get(id);
+        if (cells) cells.push(key);
+        else cellsOf.set(id, [key]);
+      }
+    }
+
+    const next = current.slice();
+    const copied = new Uint8Array(height);
+    let changedThisPass = 0;
+    for (const region of small) {
+      const border = new Map<number, number>();
+      for (const key of cellsOf.get(region.id) ?? []) {
+        const x = key % width;
+        const y = (key - x) / width;
+        const neighbours = [
+          x > 0 ? key - 1 : -1,
+          x < width - 1 ? key + 1 : -1,
+          y > 0 ? key - width : -1,
+          y < height - 1 ? key + width : -1,
+        ];
+        for (const n of neighbours) {
+          if (n < 0) continue;
+          const id = map.ids[n];
+          if (id >= 0 && id !== region.id) border.set(id, (border.get(id) ?? 0) + 1);
+        }
+      }
+      let target = -1;
+      let targetBorder = 0;
+      for (const [id, shared] of border) {
+        if (
+          shared > targetBorder ||
+          (shared === targetBorder && map.regions[id].size > map.regions[target].size)
+        ) {
+          target = id;
+          targetBorder = shared;
+        }
+      }
+      if (target < 0) continue;
+      const color = map.regions[target].paletteIndex;
+      for (const key of cellsOf.get(region.id) ?? []) {
+        const x = key % width;
+        const y = (key - x) / width;
+        if (!copied[y]) {
+          next[y] = Int16Array.from(next[y]);
+          copied[y] = 1;
+        }
+        next[y][x] = color;
+      }
+      changedThisPass++;
+    }
+    current = next;
+    merged += changedThisPass;
+    if (changedThisPass === 0) break;
+  }
+
+  return { rows: current, merged };
 }

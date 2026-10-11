@@ -109,6 +109,7 @@ describe('EditorComponent', () => {
   describe('export', () => {
     const result: ExportResponse = {
       pdfUrl: 'https://storage.local/chart.pdf',
+      paintByNumberPdfUrl: 'https://storage.local/paint-by-number.pdf',
       pngUrl: 'https://storage.local/chart.png',
       svgUrl: 'https://storage.local/chart.svg',
       materialsListUrl: 'https://storage.local/materials.csv',

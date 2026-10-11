@@ -12,6 +12,7 @@ import {
   countDecodedCells,
   EMPTY_CELL,
   encodeRow,
+  mergeSmallRegions,
   remapCells,
   removeStrayStitches,
 } from '@stitchcraft/types';
@@ -23,11 +24,18 @@ export interface BuildGridOptions {
    * stitches into their closest common colour.
    */
   cleanup?: boolean;
+  /**
+   * With cleanup, also repaint areas smaller than this many cells into a
+   * neighbour - paint by number needs areas big enough to paint.
+   */
+  minRegionSize?: number;
 }
 
 export interface CleanupReport {
   strayStitchesRemoved: number;
   colorsMerged: number;
+  /** Paint by number only: tiny areas repainted into a neighbour. */
+  regionsMerged?: number;
 }
 
 export interface BuildGridResult {
@@ -46,6 +54,14 @@ const MIN_CELLS_FLOOR = 4;
 
 export function minCellsPerColor(cellCount: number): number {
   return Math.max(MIN_CELLS_FLOOR, Math.round(cellCount * RARE_COLOR_SHARE));
+}
+
+/**
+ * Smallest paint-by-number area worth keeping: 4 cells on patterns up to
+ * 100x100, growing with size so a big canvas isn't mostly tiny areas.
+ */
+export function minPaintAreaCells(cellCount: number): number {
+  return Math.max(4, Math.round(cellCount / 2500));
 }
 
 /**
@@ -99,6 +115,12 @@ export function buildGridFromPixels(
   if (options.cleanup) {
     const stray = removeStrayStitches(rows);
     rows = stray.rows;
+    let regionsMerged: number | undefined;
+    if (options.minRegionSize) {
+      const regions = mergeSmallRegions(rows, options.minRegionSize);
+      rows = regions.rows;
+      regionsMerged = regions.merged;
+    }
 
     const counts = countDecodedCells(rows, colors.length);
     const merge = planRareColorMerge(
@@ -108,7 +130,11 @@ export function buildGridFromPixels(
     );
     const colorsMerged = merge.filter((target, index) => target !== index).length;
     rows = remapCells(rows, merge);
-    cleanup = { strayStitchesRemoved: stray.changed, colorsMerged };
+    cleanup = {
+      strayStitchesRemoved: stray.changed,
+      colorsMerged,
+      ...(regionsMerged !== undefined ? { regionsMerged } : {}),
+    };
   }
 
   // Drop colours nothing uses any more (after dedupe or cleanup) and number

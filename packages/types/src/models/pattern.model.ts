@@ -12,7 +12,11 @@ export interface PatternMeta {
   createdFrom: 'blank' | 'conversion';
   sourceConversionJobId?: string;
   /** What the converter's cleanup step changed, for patterns made from a photo. */
-  conversionCleanup?: { strayStitchesRemoved: number; colorsMerged: number };
+  conversionCleanup?: {
+    strayStitchesRemoved: number;
+    colorsMerged: number;
+    regionsMerged?: number;
+  };
   /**
    * Stitching progress: which cells the stitcher has marked done, RLE-encoded
    * like the grid (1 = done, null = not yet). Optional; absent or mismatched

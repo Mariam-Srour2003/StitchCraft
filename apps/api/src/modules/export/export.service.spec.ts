@@ -64,7 +64,7 @@ describe('ExportService', () => {
     expect(storage.put).not.toHaveBeenCalled();
   });
 
-  it('stores all four export artifacts under a per-pattern prefix and returns their URLs', async () => {
+  it('stores all five export artifacts under a per-pattern prefix and returns their URLs', async () => {
     prisma.pattern.findUnique.mockResolvedValueOnce(ownedPattern);
 
     const result = await service.generate('user-1', 'pattern-1');
@@ -74,12 +74,14 @@ describe('ExportService', () => {
       'exports/pattern-1/chart.svg',
       'exports/pattern-1/chart.png',
       'exports/pattern-1/chart.pdf',
+      'exports/pattern-1/paint-by-number.pdf',
       'exports/pattern-1/materials.csv',
     ]);
     expect(result).toEqual({
       svgUrl: 'https://storage.local/exports/pattern-1/chart.svg',
       pngUrl: 'https://storage.local/exports/pattern-1/chart.png',
       pdfUrl: 'https://storage.local/exports/pattern-1/chart.pdf',
+      paintByNumberPdfUrl: 'https://storage.local/exports/pattern-1/paint-by-number.pdf',
       materialsListUrl: 'https://storage.local/exports/pattern-1/materials.csv',
     });
   });
@@ -89,6 +91,12 @@ describe('ExportService', () => {
     await service.generate('user-1', 'pattern-1');
 
     const mimeTypes = storage.put.mock.calls.map((call) => call[2]);
-    expect(mimeTypes).toEqual(['image/svg+xml', 'image/png', 'application/pdf', 'text/csv']);
+    expect(mimeTypes).toEqual([
+      'image/svg+xml',
+      'image/png',
+      'application/pdf',
+      'application/pdf',
+      'text/csv',
+    ]);
   });
 });

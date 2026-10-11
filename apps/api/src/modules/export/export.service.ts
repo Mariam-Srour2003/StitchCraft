@@ -9,6 +9,7 @@ import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
 import { buildChartPdf } from './build-chart-pdf';
 import { buildChartSvg } from './build-chart-svg';
 import { buildMaterialsListCsv } from './build-materials-list';
+import { buildPaintByNumberPdf } from './build-paint-by-number-pdf';
 
 @Injectable()
 export class ExportService {
@@ -23,13 +24,15 @@ export class ExportService {
     const svg = buildChartSvg(pattern);
     const png = await sharp(Buffer.from(svg)).png().toBuffer();
     const pdf = await buildChartPdf(pattern);
+    const pbnPdf = await buildPaintByNumberPdf(pattern);
     const csv = buildMaterialsListCsv(pattern);
 
     const prefix = `exports/${pattern.id}`;
-    const [svgKey, pngKey, pdfKey, csvKey] = await Promise.all([
+    const [svgKey, pngKey, pdfKey, pbnKey, csvKey] = await Promise.all([
       this.storage.put(`${prefix}/chart.svg`, Buffer.from(svg), 'image/svg+xml'),
       this.storage.put(`${prefix}/chart.png`, png, 'image/png'),
       this.storage.put(`${prefix}/chart.pdf`, pdf, 'application/pdf'),
+      this.storage.put(`${prefix}/paint-by-number.pdf`, pbnPdf, 'application/pdf'),
       this.storage.put(`${prefix}/materials.csv`, Buffer.from(csv), 'text/csv'),
     ]);
 
@@ -37,6 +40,7 @@ export class ExportService {
       svgUrl: this.storage.urlFor(svgKey),
       pngUrl: this.storage.urlFor(pngKey),
       pdfUrl: this.storage.urlFor(pdfKey),
+      paintByNumberPdfUrl: this.storage.urlFor(pbnKey),
       materialsListUrl: this.storage.urlFor(csvKey),
     };
   }

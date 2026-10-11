@@ -281,6 +281,11 @@
     <sc-modal heading="Export ready" (closed)="closeExport()">
       <ul class="editor-page__export-links">
         <li><a [href]="result.pdfUrl" target="_blank" rel="noopener">Printable PDF chart</a></li>
+        <li>
+          <a [href]="result.paintByNumberPdfUrl" target="_blank" rel="noopener"
+            >Paint-by-number sheet (PDF)</a
+          >
+        </li>
         <li><a [href]="result.pngUrl" target="_blank" rel="noopener">PNG preview</a></li>
         <li><a [href]="result.svgUrl" target="_blank" rel="noopener">SVG preview</a></li>
         <li>

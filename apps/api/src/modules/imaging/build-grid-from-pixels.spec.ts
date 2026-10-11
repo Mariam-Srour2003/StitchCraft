@@ -117,4 +117,20 @@ describe('buildGridFromPixels', () => {
       expect(decoded[1][10]).toBe(decoded[0][0]);
     });
   });
+
+  it('for paint by number, merges areas too small to paint', () => {
+    // 10x10: left half red with a 2-cell blue clump in it, right half blue.
+    // The clump isn't confetti (its cells touch) and blue isn't rare.
+    const red = { r: 220, g: 20, b: 20 };
+    const blue = { r: 20, g: 20, b: 220 };
+    const pixels = Array.from({ length: 100 }, (_, i) => (i % 10 < 5 ? red : blue));
+    pixels[41] = blue;
+    pixels[42] = blue;
+    const plain = buildGridFromPixels(pixels, 10, 10, 2, { cleanup: true });
+    expect(decodeGrid(plain.grid, 10)[4][1]).toBe(decodeGrid(plain.grid, 10)[0][9]);
+    const pbn = buildGridFromPixels(pixels, 10, 10, 2, { cleanup: true, minRegionSize: 4 });
+    expect(pbn.cleanup?.regionsMerged).toBe(1);
+    const rows = decodeGrid(pbn.grid, 10);
+    expect(rows[4][1]).toBe(rows[0][0]); // clump is red now
+  });
 });

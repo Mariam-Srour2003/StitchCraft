@@ -5131,7 +5131,7 @@
   },
   {
     "code": "606",
-    "name": "Orange?Red Bright",
+    "name": "Orange-Red Bright",
     "hex": "#FA3203",
     "rgb": {
       "r": 250,
@@ -5281,7 +5281,7 @@
   },
   {
     "code": "919",
-    "name": "Red?Copper",
+    "name": "Red-Copper",
     "hex": "#A64510",
     "rgb": {
       "r": 166,
@@ -5296,7 +5296,7 @@
   },
   {
     "code": "918",
-    "name": "Red?Copper Dark",
+    "name": "Red-Copper Dark",
     "hex": "#82340A",
     "rgb": {
       "r": 130,
