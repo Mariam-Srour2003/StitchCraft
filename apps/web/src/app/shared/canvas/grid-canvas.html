@@ -1,4 +1,9 @@
-<div class="sc-grid-canvas" [class.sc-grid-canvas--erase]="tool() === 'erase'">
+<div
+  class="sc-grid-canvas"
+  [class.sc-grid-canvas--erase]="tool() === 'erase'"
+  [class.sc-grid-canvas--fill]="tool() === 'fill'"
+  [class.sc-grid-canvas--pick]="tool() === 'pick'"
+>
   <canvas
     #canvas
     [width]="canvasWidthPx()"

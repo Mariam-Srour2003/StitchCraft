@@ -136,7 +136,7 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M6) is built:
+Everything in PLAN.md's milestone list (M0-M7) is built:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
   password hashing, refresh-token revocation via a stored hash.
@@ -146,9 +146,11 @@ Everything in PLAN.md's milestone list (M0-M6) is built:
   fabric-count-or-drill-size) and jumps straight into the editor, or starts
   the image converter for a project.
 - **Pattern editor**: a canvas `grid-canvas` component driven by a
-  framework-free `GridRenderingService` - paint/erase, five render modes
-  (x-stitch/block/diamond/symbol/number, grid guides bold every 10 cells),
-  zoom, per-drag-stroke undo/redo, resize, a palette panel, a live legend
+  framework-free `GridRenderingService` - paint/erase/fill (bucket)/pick
+  (eyedropper) tools, five render modes (x-stitch/block/diamond/symbol/
+  number, grid guides bold every 10 cells), zoom, undo/redo (per drag
+  stroke, per fill, and for resizes), a palette panel with DMC thread
+  search plus a custom color-picker, a live legend
   (stitch/drill counts per color), and a size readout (finished dimensions
   by Aida count or diamond drill size in mm). All state lives in a
   component-scoped `EditorStore`; the canvas component itself owns no
@@ -186,9 +188,8 @@ Everything in PLAN.md's milestone list (M0-M6) is built:
   color-picker, legend, size-readout), each with its own test.
 
 **Known, documented scope cuts** (not bugs — deliberate boundaries, each
-with a one-line reason): see PLAN.md assumptions #10-13. Briefly: pattern
-resize isn't itself undoable; no DMC-search-inside-the-editor (only the
-custom color-picker); pan is native scroll; no image crop/rotate/
+with a one-line reason): see PLAN.md assumptions #10-13. Briefly: pan is
+native scroll; no image crop/rotate/
 brightness step in the converter; PDF chart cells show the palette number
 rather than the actual symbol glyph (font coverage); AI upscale is
 classical resampling, not a trained model.

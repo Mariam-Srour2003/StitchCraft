@@ -2,6 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import type { ExportResponse, Pattern } from '@stitchcraft/types';
 import { of, throwError } from 'rxjs';
+import { PalettesApiService } from '../palettes/palettes-api.service';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { EditorComponent } from './editor.component';
 import { ExportApiService } from './export-api.service';
@@ -39,6 +40,7 @@ describe('EditorComponent', () => {
       providers: [
         { provide: PatternsApiService, useValue: patternsApi },
         { provide: ExportApiService, useValue: exportApi },
+        { provide: PalettesApiService, useValue: { searchDmc: jest.fn() } },
       ],
     }).compileComponents();
 
@@ -72,6 +74,26 @@ describe('EditorComponent', () => {
     fixture.componentInstance.applyResize('6', '8');
     expect(store.width()).toBe(6);
     expect(store.height()).toBe(8);
+  });
+
+  it('routes canvas cell edits through the active tool (fill floods the blank canvas)', () => {
+    const store = fixture.componentInstance['store'];
+    store.setSelectedPaletteIndex(0);
+    store.setTool('fill');
+    fixture.componentInstance.onCellEdit({ x: 0, y: 0 });
+    expect(store.legendRows()[0].count).toBe(16);
+  });
+
+  it('adds a DMC thread picked from the sidebar search to the palette', () => {
+    const store = fixture.componentInstance['store'];
+    store.addColorToPalette({
+      code: '310',
+      name: 'Black',
+      hex: '#000000',
+      rgb: { r: 0, g: 0, b: 0 },
+      lab: { l: 0, a: 0, b: 0 },
+    });
+    expect(fixture.componentInstance['paletteDmcCodes']()).toEqual(['310']);
   });
 
   it('save() calls through to the store, which calls the API', async () => {
