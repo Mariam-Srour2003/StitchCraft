@@ -136,7 +136,8 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M9) is built:
+Everything in PLAN.md's milestone list (M0-M10) is built. How the code is
+organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.md). Features:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
   password hashing, refresh-token revocation via a stored hash.
