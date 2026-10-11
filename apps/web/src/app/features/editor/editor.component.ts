@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   computed,
   effect,
   inject,
@@ -9,14 +10,15 @@ import {
 } from '@angular/core';
 import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
 import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
+import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
 import { Button } from '../../shared/ui/button/button';
 import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
 import { IconButton } from '../../shared/ui/icon-button/icon-button';
 import { Legend } from '../../shared/ui/legend/legend';
 import { Modal } from '../../shared/ui/modal/modal';
 import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
+import { Progress } from '../../shared/ui/progress/progress';
 import {
   SegmentedToggle,
   SegmentedToggleOption,
@@ -25,14 +27,25 @@ import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
 import { Slider } from '../../shared/ui/slider/slider';
 import { Toolbar } from '../../shared/ui/toolbar/toolbar';
 import { DmcThreadSearchComponent } from './dmc-thread-search.component';
-import { EditorStore } from './editor.store';
+import { EditorStore, EditorTool } from './editor.store';
 import { ExportApiService } from './export-api.service';
+import { SUPPORTED_CHARACTERS, measureText } from './pixel-font';
+import { Symmetry } from './shapes';
 
-const TOOL_OPTIONS: SegmentedToggleOption<GridCanvasTool>[] = [
+const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },
   { value: 'erase', label: 'Erase' },
   { value: 'fill', label: 'Fill' },
   { value: 'pick', label: 'Pick' },
+  { value: 'text', label: 'Text' },
+];
+
+const SHAPE_TOOLS: SegmentedToggleOption<EditorTool>[] = [
+  { value: 'line', label: 'Line' },
+  { value: 'rect', label: 'Box' },
+  { value: 'rect-fill', label: 'Box ■' },
+  { value: 'ellipse', label: 'Oval' },
+  { value: 'ellipse-fill', label: 'Oval ●' },
 ];
 
 const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
@@ -41,10 +54,50 @@ const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
   { value: 'diamond', label: 'Diamond' },
   { value: 'symbol', label: 'Symbol' },
   { value: 'number', label: 'Number' },
+  { value: 'paint-by-number', label: 'Paint #' },
+];
+
+const SYMMETRY_OPTIONS: SegmentedToggleOption<Symmetry>[] = [
+  { value: 'none', label: 'Off' },
+  { value: 'vertical', label: 'Left↔Right' },
+  { value: 'horizontal', label: 'Top↕Bottom' },
+  { value: 'both', label: 'Both' },
+];
+
+type WorkMode = 'design' | 'stitch';
+
+const WORK_MODE_OPTIONS: SegmentedToggleOption<WorkMode>[] = [
+  { value: 'design', label: 'Design' },
+  { value: 'stitch', label: 'Stitch' },
+];
+
+/** Single-key tool shortcuts (no modifier). */
+const TOOL_KEYS: Record<string, EditorTool> = {
+  b: 'paint',
+  e: 'erase',
+  g: 'fill',
+  i: 'pick',
+  t: 'text',
+  l: 'line',
+  r: 'rect',
+  o: 'ellipse',
+};
+
+export const SHORTCUTS: readonly { keys: string; action: string }[] = [
+  { keys: 'Ctrl/⌘ Z', action: 'Undo' },
+  { keys: 'Ctrl/⌘ Shift Z, Ctrl Y', action: 'Redo' },
+  { keys: 'Ctrl/⌘ S', action: 'Save' },
+  { keys: 'B / E / G / I / T', action: 'Paint, Erase, Fill, Pick, Text' },
+  { keys: 'L / R / O', action: 'Line, Box, Oval' },
+  { keys: 'H', action: 'Highlight the selected color' },
+  { keys: 'K', action: 'Toggle stitching mode' },
+  { keys: '+ / −', action: 'Zoom in / out' },
+  { keys: 'Esc', action: 'Clear highlight' },
 ];
 
 const DEFAULT_FABRIC_COUNT = 14;
 const DEFAULT_DRILL_SIZE_MM = 2.8;
+const ZOOM_STEP = 25;
 
 @Component({
   selector: 'sc-editor',
@@ -58,6 +111,7 @@ const DEFAULT_DRILL_SIZE_MM = 2.8;
     Legend,
     Modal,
     PaletteGrid,
+    Progress,
     SegmentedToggle,
     SizeReadout,
     Slider,
@@ -75,8 +129,14 @@ export class EditorComponent {
   protected readonly store = inject(EditorStore);
   private readonly exportApi = inject(ExportApiService);
 
-  protected readonly toolOptions = TOOL_OPTIONS;
+  protected readonly drawTools = DRAW_TOOLS;
+  protected readonly shapeTools = SHAPE_TOOLS;
   protected readonly modeOptions = MODE_OPTIONS;
+  protected readonly symmetryOptions = SYMMETRY_OPTIONS;
+  protected readonly workModeOptions = WORK_MODE_OPTIONS;
+  protected readonly shortcuts = SHORTCUTS;
+  /** The font's non-alphanumeric characters, listed as a hint under the lettering box. */
+  protected readonly lettering = SUPPORTED_CHARACTERS.replace(/[A-Z0-9 ]/g, '');
 
   protected readonly unitSize = computed(() =>
     this.store.type() === 'diamond'
@@ -87,6 +147,24 @@ export class EditorComponent {
   protected readonly paletteDmcCodes = computed(() =>
     this.store.palette().flatMap((entry) => (isDmcColor(entry.color) ? [entry.color.code] : [])),
   );
+
+  protected readonly workMode = computed<WorkMode>(() =>
+    this.store.stitchMode() ? 'stitch' : 'design',
+  );
+
+  /** What the canvas should treat pointer input as (cursor + click-vs-drag behaviour). */
+  protected readonly canvasTool = computed<GridCanvasTool>(() =>
+    this.store.stitchMode() ? 'stitch' : this.store.tool(),
+  );
+
+  protected readonly selectedEntry = computed(() => {
+    const index = this.store.selectedPaletteIndex();
+    return index === null ? null : (this.store.palette()[index] ?? null);
+  });
+
+  protected readonly stampSize = computed(() => measureText(this.store.stampText()));
+
+  protected readonly replaceTarget = signal<number | null>(null);
 
   protected readonly exporting = signal(false);
   protected readonly exportResult = signal<ExportResponse | null>(null);
@@ -109,12 +187,46 @@ export class EditorComponent {
     this.store.applyTool(cell.x, cell.y);
   }
 
+  setWorkMode(mode: WorkMode): void {
+    this.store.setStitchMode(mode === 'stitch');
+  }
+
+  /** Picking a drawing tool always leaves stitching mode, so the click does what the tool says. */
+  selectTool(tool: EditorTool): void {
+    this.store.setTool(tool);
+    this.store.setStitchMode(false);
+  }
+
   applyResize(widthValue: string, heightValue: string): void {
     const width = Math.max(1, Math.round(Number(widthValue)));
     const height = Math.max(1, Math.round(Number(heightValue)));
     if (Number.isFinite(width) && Number.isFinite(height)) {
       this.store.resize(width, height);
     }
+  }
+
+  onReplaceTargetChange(value: string): void {
+    this.replaceTarget.set(value === '' ? null : Number(value));
+  }
+
+  applyReplace(): void {
+    const from = this.store.selectedPaletteIndex();
+    const to = this.replaceTarget();
+    if (from === null || to === null || from === to) return;
+    this.store.replaceColor(from, to);
+    this.replaceTarget.set(null);
+  }
+
+  deleteSelectedColor(): void {
+    const index = this.store.selectedPaletteIndex();
+    if (index === null) return;
+    const count = this.store.legendRows()[index]?.count ?? 0;
+    if (count > 0 && !confirm(`Delete this color and erase its ${count} stitches?`)) return;
+    this.store.deleteColor(index);
+  }
+
+  resetProgress(): void {
+    if (confirm('Clear all stitching progress for this pattern?')) this.store.resetProgress();
   }
 
   save(): void {
@@ -141,4 +253,64 @@ export class EditorComponent {
     this.exportResult.set(null);
     this.exportError.set(null);
   }
+
+  /** Used by the route's canDeactivate guard. */
+  canLeave(): boolean {
+    return !this.store.dirty() || confirm('You have unsaved changes. Leave without saving?');
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.store.dirty()) event.preventDefault();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (isTypingTarget(event.target)) return;
+    const mod = event.ctrlKey || event.metaKey;
+    const key = event.key.toLowerCase();
+
+    if (mod) {
+      if (key === 'z' && !event.shiftKey) {
+        this.store.undo();
+      } else if ((key === 'z' && event.shiftKey) || key === 'y') {
+        this.store.redo();
+      } else if (key === 's') {
+        this.save();
+      } else {
+        return;
+      }
+      event.preventDefault();
+      return;
+    }
+    if (event.altKey) return;
+
+    if (TOOL_KEYS[key]) {
+      this.selectTool(TOOL_KEYS[key]);
+    } else if (key === 'h') {
+      const index = this.store.selectedPaletteIndex();
+      if (index !== null) this.store.toggleHighlight(index);
+    } else if (key === 'k') {
+      this.store.setStitchMode(!this.store.stitchMode());
+    } else if (key === '+' || key === '=') {
+      this.store.setZoomPercent(this.store.zoomPercent() + ZOOM_STEP);
+    } else if (key === '-' || key === '_') {
+      this.store.setZoomPercent(this.store.zoomPercent() - ZOOM_STEP);
+    } else if (key === 'escape') {
+      this.store.clearHighlight();
+    } else {
+      return;
+    }
+    event.preventDefault();
+  }
+}
+
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement
+  );
 }

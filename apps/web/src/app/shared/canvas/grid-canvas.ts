@@ -2,37 +2,46 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   output,
+  signal,
   viewChild,
 } from '@angular/core';
 import { PaletteEntry } from '@stitchcraft/types';
 import {
   CellPosition,
+  DARK_GRID_THEME,
   GridTheme,
+  LIGHT_GRID_THEME,
   RenderMode,
   cellSizeForZoom,
   pixelToCell,
 } from './grid-render-math';
-import { GridRenderingService } from './grid-rendering.service';
+import { GridRenderParams, GridRenderingService } from './grid-rendering.service';
 
 const BASE_CELL_SIZE = 20;
 
-const DEFAULT_THEME: GridTheme = {
-  emptyCellFill: '#f4f1ec',
-  paintedCellFill: '#ffffff',
-  gridLine: '#d8d2c8',
-  gridLineBold: '#a39a8c',
-  symbolText: '#2b2622',
-};
-
-export type GridCanvasTool = 'paint' | 'erase' | 'fill' | 'pick';
+export type GridCanvasTool =
+  | 'paint'
+  | 'erase'
+  | 'fill'
+  | 'pick'
+  | 'line'
+  | 'rect'
+  | 'rect-fill'
+  | 'ellipse'
+  | 'ellipse-fill'
+  | 'text'
+  | 'stitch';
 
 /** Tools that act once per click rather than on every cell a drag passes over. */
-const SINGLE_CLICK_TOOLS: ReadonlySet<GridCanvasTool> = new Set(['fill', 'pick']);
+const SINGLE_CLICK_TOOLS: ReadonlySet<GridCanvasTool> = new Set(['fill', 'pick', 'text']);
+
+const DARK_QUERY = '(prefers-color-scheme: dark)';
 
 /**
  * Renders a pattern grid and turns pointer input into `cellEdit` events.
@@ -60,7 +69,12 @@ export class GridCanvas {
   readonly mode = input<RenderMode>('block');
   readonly zoomPercent = input<number>(100);
   readonly tool = input<GridCanvasTool>('paint');
-  readonly theme = input<GridTheme>(DEFAULT_THEME);
+  /** Explicit theme; when null the canvas follows the OS light/dark preference like the rest of the UI. */
+  readonly theme = input<GridTheme | null>(null);
+  /** Stitching progress rows (1 = done). */
+  readonly progress = input<readonly (Int16Array | number[])[] | null>(null);
+  readonly highlightIndex = input<number | null>(null);
+  readonly showCenter = input(false);
 
   /**
    * Emitted for every cell touched during an active pointer-down drag
@@ -77,13 +91,21 @@ export class GridCanvas {
   protected readonly canvasWidthPx = computed(() => this.width() * this.cellSize());
   protected readonly canvasHeightPx = computed(() => this.height() * this.cellSize());
 
+  private readonly prefersDark = signal(false);
+  protected readonly resolvedTheme = computed(
+    () => this.theme() ?? (this.prefersDark() ? DARK_GRID_THEME : LIGHT_GRID_THEME),
+  );
+
   private lastStructuralKey = '';
   private lastPaletteRef: readonly PaletteEntry[] | null = null;
   private lastGridRows: readonly (Int16Array | number[])[] = [];
+  private lastProgressRows: readonly (Int16Array | number[])[] = [];
   private isPointerDown = false;
   private lastPaintedCell: CellPosition | null = null;
 
   constructor() {
+    this.watchColorScheme();
+
     effect(() => {
       // Track every input this component's render depends on.
       const width = this.width();
@@ -91,22 +113,69 @@ export class GridCanvas {
       const palette = this.palette();
       const mode = this.mode();
       const cellSize = this.cellSize();
-      const theme = this.theme();
+      const theme = this.resolvedTheme();
       const grid = this.grid();
+      const progress = this.progress() ?? [];
+      const highlightIndex = this.highlightIndex();
+      const showCenter = this.showCenter();
 
-      const ctx = this.canvasRef().nativeElement.getContext('2d');
+      const canvasEl = this.canvasRef().nativeElement;
+      const ctx = canvasEl.getContext('2d');
       if (!ctx) return; // canvas 2D context is unavailable (e.g. jsdom in unit tests)
 
-      const structuralKey = `${width}x${height}:${mode}:${cellSize}`;
-      const params = { grid, width, height, palette, mode, cellSize, theme };
+      // Back the canvas with devicePixelRatio-scaled pixels so stitches stay
+      // crisp on high-DPI screens; drawing still happens in CSS pixels.
+      const dpr = Math.max(1, Math.min(3, globalThis.devicePixelRatio || 1));
+      const bitmapWidth = Math.round(width * cellSize * dpr);
+      const bitmapHeight = Math.round(height * cellSize * dpr);
+      if (canvasEl.width !== bitmapWidth) canvasEl.width = bitmapWidth;
+      if (canvasEl.height !== bitmapHeight) canvasEl.height = bitmapHeight;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      if (structuralKey !== this.lastStructuralKey || palette !== this.lastPaletteRef) {
+      const structuralKey = [
+        width,
+        height,
+        mode,
+        cellSize,
+        dpr,
+        bitmapWidth,
+        bitmapHeight,
+        highlightIndex,
+        showCenter,
+      ].join(':');
+      const params: GridRenderParams = {
+        grid,
+        width,
+        height,
+        palette,
+        mode,
+        cellSize,
+        theme,
+        progress,
+        highlightIndex,
+        showCenter,
+      };
+
+      const needsFull =
+        structuralKey !== this.lastStructuralKey ||
+        palette !== this.lastPaletteRef ||
+        theme !== this.lastTheme ||
+        // region outlines/labels depend on neighbouring cells, so any change redraws
+        (mode === 'paint-by-number' &&
+          (grid !== this.lastGridRows || progress !== this.lastProgressRows));
+
+      if (needsFull) {
         this.renderer.renderAll(ctx, params);
       } else {
         for (let y = 0; y < height; y++) {
-          if (grid[y] === this.lastGridRows[y]) continue; // unchanged row reference - skip entirely
+          const gridRowSame = grid[y] === this.lastGridRows[y];
+          const progressRowSame = progress[y] === this.lastProgressRows[y];
+          if (gridRowSame && progressRowSame) continue; // unchanged row references - skip entirely
           for (let x = 0; x < width; x++) {
-            if (grid[y][x] !== this.lastGridRows[y]?.[x]) {
+            if (
+              grid[y][x] !== this.lastGridRows[y]?.[x] ||
+              progress[y]?.[x] !== this.lastProgressRows[y]?.[x]
+            ) {
               this.renderer.renderCell(ctx, params, x, y);
             }
           }
@@ -115,8 +184,22 @@ export class GridCanvas {
 
       this.lastStructuralKey = structuralKey;
       this.lastPaletteRef = palette;
+      this.lastTheme = theme;
       this.lastGridRows = grid;
+      this.lastProgressRows = progress;
     });
+  }
+
+  private lastTheme: GridTheme | null = null;
+
+  private watchColorScheme(): void {
+    const media =
+      typeof globalThis.matchMedia === 'function' ? globalThis.matchMedia(DARK_QUERY) : null;
+    if (!media) return;
+    this.prefersDark.set(media.matches);
+    const listener = (event: MediaQueryListEvent) => this.prefersDark.set(event.matches);
+    media.addEventListener?.('change', listener);
+    inject(DestroyRef).onDestroy(() => media.removeEventListener?.('change', listener));
   }
 
   onPointerDown(event: PointerEvent): void {
@@ -139,8 +222,9 @@ export class GridCanvas {
   private paintAt(event: PointerEvent): void {
     const canvasEl = this.canvasRef().nativeElement;
     const rect = canvasEl.getBoundingClientRect();
-    const scaleX = canvasEl.width / rect.width;
-    const scaleY = canvasEl.height / rect.height;
+    // Map to CSS pixels (not bitmap pixels, which are devicePixelRatio-scaled).
+    const scaleX = this.canvasWidthPx() / rect.width;
+    const scaleY = this.canvasHeightPx() / rect.height;
     const px = (event.clientX - rect.left) * scaleX;
     const py = (event.clientY - rect.top) * scaleY;
 

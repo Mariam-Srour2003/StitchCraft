@@ -3,11 +3,11 @@
   [class.sc-grid-canvas--erase]="tool() === 'erase'"
   [class.sc-grid-canvas--fill]="tool() === 'fill'"
   [class.sc-grid-canvas--pick]="tool() === 'pick'"
+  [class.sc-grid-canvas--text]="tool() === 'text'"
+  [class.sc-grid-canvas--stitch]="tool() === 'stitch'"
 >
   <canvas
     #canvas
-    [width]="canvasWidthPx()"
-    [height]="canvasHeightPx()"
     [style.width.px]="canvasWidthPx()"
     [style.height.px]="canvasHeightPx()"
     (pointerdown)="onPointerDown($event)"
