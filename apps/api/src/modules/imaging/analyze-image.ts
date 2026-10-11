@@ -484,9 +484,13 @@ export function adviseFromMeasurements(
 
   advice.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 
+  const problems = advice.filter((a) => a.severity === 'problem').length;
+  // One problem caps the photo at "fair" and two at "poor", however clean the rest is:
+  // an unrecognisable face isn't made up for by good lighting.
+  const cap = problems >= 2 ? 44 : problems === 1 ? 69 : 100;
   const score = Math.max(
     0,
-    Math.min(100, 100 - advice.reduce((sum, a) => sum + SEVERITY_PENALTY[a.severity], 0)),
+    Math.min(cap, 100 - advice.reduce((sum, a) => sum + SEVERITY_PENALTY[a.severity], 0)),
   );
   const verdict = score >= 85 ? 'great' : score >= 70 ? 'good' : score >= 45 ? 'fair' : 'poor';
   const top = advice.find((a) => a.severity === 'problem' || a.severity === 'warning');

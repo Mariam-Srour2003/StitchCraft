@@ -76,6 +76,23 @@
       />
     </header>
 
+    @if (showConvertedNote()) {
+      <div class="editor-page__converted" role="status">
+        <div>
+          <strong>Your photo is now a pattern.</strong>
+          @if (conversionCleanupText(); as text) {
+            {{ text }}
+          }
+          Make it yours: <em>Paint</em>, <em>Erase</em> and <em>Fill</em> to change stitches, add
+          threads from the DMC search, replace or delete colors in the palette, and use
+          <em>Tidy</em> in the sidebar for more clean-up. Everything can be undone.
+        </div>
+        <sc-icon-button label="Dismiss" (pressed)="convertedNoteDismissed.set(true)"
+          >✕</sc-icon-button
+        >
+      </div>
+    }
+
     @if (!store.stitchMode() && store.tool() === 'half-stitch') {
       <p class="editor-page__hint" role="status">
         Half stitch: click near a corner of a cell to stitch the diagonal through it. Click the same
@@ -202,6 +219,43 @@
         </section>
 
         @if (!store.stitchMode()) {
+          <section class="editor-page__panel" aria-labelledby="tidy-heading">
+            <h2 id="tidy-heading">Tidy</h2>
+            <p class="editor-page__muted">
+              Clean up a pattern made from a photo. Each step can be undone.
+            </p>
+            <sc-button variant="secondary" (pressed)="tidyStrays()"
+              >Remove stray stitches</sc-button
+            >
+            <form
+              class="editor-page__row"
+              (submit)="$event.preventDefault(); tidyRareColors(rareInput.value)"
+            >
+              <label class="editor-page__tidy-field">
+                Merge colors with fewer than
+                <input #rareInput type="number" min="1" max="10000" value="10" />
+                stitches
+              </label>
+              <sc-button variant="secondary" type="submit">Merge</sc-button>
+            </form>
+            @if (store.type() === 'color_by_number') {
+              <form
+                class="editor-page__row"
+                (submit)="$event.preventDefault(); tidySmallAreas(areaInput.value)"
+              >
+                <label class="editor-page__tidy-field">
+                  Merge areas smaller than
+                  <input #areaInput type="number" min="2" max="1000" value="4" />
+                  cells
+                </label>
+                <sc-button variant="secondary" type="submit">Merge</sc-button>
+              </form>
+            }
+            @if (tidyMessage(); as message) {
+              <p class="editor-page__muted" role="status">{{ message }}</p>
+            }
+          </section>
+
           <section class="editor-page__panel">
             <h2>Mirror drawing</h2>
             <sc-segmented-toggle

@@ -52,7 +52,9 @@ describe('adviseFromMeasurements', () => {
       const advice = result.advice[0];
       expect(advice).toMatchObject({ code: 'face-too-small', severity: 'problem' });
       expect(advice.fix?.kind).toBe('crop');
-      expect(result.verdict).not.toBe('great');
+      // one problem, nothing else wrong: still no better than "fair"
+      expect(result.verdict).toBe('fair');
+      expect(result.score).toBeLessThan(70);
     });
 
     it('grades by stitch height: simplified, recognisable, good', () => {

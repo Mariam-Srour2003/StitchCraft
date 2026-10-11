@@ -849,4 +849,83 @@ describe('EditorStore', () => {
       ]);
     });
   });
+
+  describe('tidy', () => {
+    const text = () =>
+      store.grid().map((row) => [...row].map((v) => (v < 0 ? '.' : String(v))).join(''));
+
+    async function loadRows(rows: (number | null)[][], type: Pattern['type'] = 'cross_stitch') {
+      api.get.mockReturnValueOnce(
+        of(
+          makePattern({
+            type,
+            width: rows[0].length,
+            height: rows.length,
+            palette: [
+              { index: 0, symbol: 'A', color: { hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } } },
+              { index: 1, symbol: 'B', color: { hex: '#EE1111', rgb: { r: 238, g: 17, b: 17 } } },
+              { index: 2, symbol: 'C', color: { hex: '#0000FF', rgb: { r: 0, g: 0, b: 255 } } },
+            ],
+            grid: encodeGrid(rows),
+          }),
+        ),
+      );
+      await store.load('pattern-1');
+    }
+
+    it('removes stray stitches as one undo step', async () => {
+      await loadRows([
+        [0, 0, 0, 2],
+        [0, 2, 0, 2],
+        [0, 0, 0, 2],
+      ]);
+      expect(store.removeStrayStitches()).toBe(1);
+      expect(text()).toEqual(['0002', '0002', '0002']);
+      store.undo();
+      expect(text()).toEqual(['0002', '0202', '0002']);
+      expect(store.removeStrayStitches()).toBe(1);
+      expect(store.removeStrayStitches()).toBe(0);
+    });
+
+    it('merges rare colours into the closest one and drops them from the palette', async () => {
+      await loadRows([
+        [0, 0, 1, 2],
+        [0, 0, 1, 2],
+        [0, 0, 0, 2],
+      ]);
+      // colour 1 (a near-identical red) has 2 stitches; blue has 3
+      expect(store.mergeRareColors(3)).toBe(1);
+      expect(store.palette().map((e) => e.color.hex)).toEqual(['#FF0000', '#0000FF']);
+      expect(text()).toEqual(['0001', '0001', '0001']);
+      store.undo();
+      expect(store.palette()).toHaveLength(3);
+      expect(store.mergeRareColors(1)).toBe(0);
+    });
+
+    it('keeps a rare colour in the palette while backstitch uses it', async () => {
+      await loadRows([
+        [0, 0, 1, 2],
+        [0, 0, 0, 2],
+      ]);
+      store.setSelectedPaletteIndex(1);
+      store.addBackstitch({ x: 0, y: 0 }, { x: 1, y: 0 });
+      store.mergeRareColors(2);
+      expect(store.palette()).toHaveLength(3);
+      expect(text()).toEqual(['0002', '0002']);
+      expect(store.backstitches()[0].paletteIndex).toBe(1);
+    });
+
+    it('merges small paint-by-number areas', async () => {
+      await loadRows(
+        [
+          [0, 0, 0, 0],
+          [0, 2, 0, 0],
+          [0, 0, 0, 0],
+        ],
+        'color_by_number',
+      );
+      expect(store.mergeSmallAreas(2)).toBe(1);
+      expect(text()).toEqual(['0000', '0000', '0000']);
+    });
+  });
 });

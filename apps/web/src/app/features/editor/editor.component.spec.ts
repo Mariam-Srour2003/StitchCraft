@@ -271,4 +271,71 @@ describe('EditorComponent', () => {
     canvas.triggerEventHandler('lineErase', { x: 2, y: 0.1 });
     expect(store.backstitches()).toHaveLength(0);
   });
+
+  it('wires the half/quarter stitch tools and summarises partial stitches', () => {
+    const store = fixture.componentInstance['store'];
+    store.setSelectedPaletteIndex(0);
+    store.setTool('half-stitch');
+    const canvas = fixture.debugElement.query((el) => el.name === 'sc-grid-canvas');
+    canvas.triggerEventHandler('partialPlace', { x: 0.9, y: 0.1 });
+    expect(store.partialStitches()).toEqual([{ x: 0, y: 0, part: 'half-up', paletteIndex: 0 }]);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Partial stitches: 1 half, 0 quarter');
+    expect(text).toContain('Half stitch: click near a corner');
+  });
+
+  it('offers partial stitch tools only for cross-stitch patterns', () => {
+    const toggles = () =>
+      fixture.debugElement
+        .queryAll((el) => el.name === 'sc-segmented-toggle')
+        .map((el) => el.componentInstance.ariaLabel());
+    expect(toggles()).toContain('Partial stitch tool');
+  });
+
+  it('Tidy: removes stray stitches and merges rare colors, reporting what changed', () => {
+    const store = fixture.componentInstance['store'];
+    store.addColorToPalette({ hex: '#0000FF', rgb: { r: 0, g: 0, b: 255 } });
+    store.setSelectedPaletteIndex(0);
+    for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) store.paintCell(x, y);
+    store.setSelectedPaletteIndex(1);
+    store.paintCell(1, 1); // one lone blue stitch in a red square
+    store.endStroke();
+    fixture.componentInstance.tidyStrays();
+    expect(store.grid()[1][1]).toBe(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Recolored 1 stray stitch');
+
+    store.undo();
+    fixture.componentInstance.tidyRareColors('2');
+    expect(store.palette()).toHaveLength(1);
+    expect(store.grid()[1][1]).toBe(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Merged 1 rarely used color');
+  });
+
+  it('after a conversion, explains what was cleaned up and what can be edited', async () => {
+    patternsApi.get.mockReturnValue(
+      of({
+        ...makePattern(),
+        meta: {
+          createdFrom: 'conversion',
+          conversionCleanup: { strayStitchesRemoved: 12, colorsMerged: 2 },
+        },
+      }),
+    );
+    const converted = TestBed.createComponent(EditorComponent);
+    converted.componentRef.setInput('id', 'pattern-1');
+    converted.componentRef.setInput('converted', '1');
+    converted.detectChanges();
+    await converted.whenStable();
+    converted.detectChanges();
+    const text = converted.nativeElement.textContent;
+    expect(text).toContain('Your photo is now a pattern.');
+    expect(text).toContain('Clean up: 12 stray stitches recolored, 2 rarely used colors merged.');
+
+    converted.componentInstance['convertedNoteDismissed'].set(true);
+    converted.detectChanges();
+    expect(converted.nativeElement.textContent).not.toContain('Your photo is now a pattern.');
+  });
 });

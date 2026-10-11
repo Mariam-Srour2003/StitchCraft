@@ -13,7 +13,9 @@ services/
   ai/         optional FastAPI service (background removal, upscale)
 packages/
   types/      shared models, DTOs and pure grid helpers (RLE codec,
-              grid validation, cell counting, CSV)
+              grid validation, cell counting, CSV, paint-by-number
+              regions, stray-stitch and small-area clean-up, partial
+              stitches)
   color/      color math: CIELAB, CIEDE2000, quantizers, DMC dataset and
               matching, symbols, thread/drill estimates
 ```
@@ -33,6 +35,7 @@ apps/web/src/app/
     grid/          grid ops, flood fill, shapes, stitch font, regions, row tally
     pattern/       per-type rules, stats, progress codec
     editor/        tools, shortcut resolver, undo history
+    image/         photo prep: rotate, flip, crop, tone, downscale (RGBA)
   core/          app-wide singletons: auth, API client, settings, browser
                  storage and downloads, confirm dialogs, interceptors
   data-access/   one service per API resource, the pattern library loader,
@@ -75,6 +78,13 @@ packages, `@stitchcraft/*`, `@app/*`, then `./local`.
 - **Grids are run-length encoded on the wire and in the database**
   (`EncodedRow[]`), and decoded to one `Int16Array` per row in the editor.
   `-1` is an empty cell.
+- **Half and quarter stitches live in `meta.partialStitches`** and share
+  the overlay canvas with backstitch. Each covers some of a cell's four
+  corner-to-centre legs; no two may share one (`findPartialStitchProblem`).
+- **The image advisor is the conversion pipeline run small**: the same
+  `stitchPixels` + `buildGridFromPixels` on at most 120x120 cells, plus face
+  detection (`imaging/faces`, an OpenCV Haar cascade ported to TypeScript),
+  so its preview and numbers match what a conversion produces.
 - **Backstitch lives in `meta.backstitches`** as corner-to-corner lines and
   is drawn on its own overlay canvas above the cells, so line edits and cell
   edits never force each other to repaint.

@@ -1,7 +1,13 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { assignSymbols, estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
+import {
+  assignSymbols,
+  estimateMaterial,
+  materialColumnLabel,
+  planRareColorMerge,
+  srgbToLab,
+} from '@stitchcraft/color';
 import {
   Backstitch,
   backstitchLengthByIndex,
@@ -10,11 +16,15 @@ import {
   DmcColor,
   EMPTY_CELL,
   encodeGrid,
+  countDecodedCells,
   isDmcColor,
+  mergeSmallRegions,
   PaletteEntry,
   PartialStitch,
   partialThreadByIndex,
   Pattern,
+  remapCells,
+  removeStrayStitches,
 } from '@stitchcraft/types';
 
 import { SettingsStore } from '@app/core/settings/settings.store';
@@ -603,6 +613,83 @@ export class EditorStore {
     if (changes.length > 0) this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
     this.partialsSignal.set(after);
     this.pushHistory({ kind: 'cells', changes, partials: { before, after } });
+  }
+
+  // ---- tidy (mostly for patterns made from photos) ------------------------------
+
+  /**
+   * Recolours every lone "confetti" stitch (no same-colour neighbour) to the
+   * colour most of its neighbours have, as one undo step. Returns how many
+   * stitches changed.
+   */
+  removeStrayStitches(): number {
+    const before = this.gridSignal();
+    return this.commitRows(before, removeStrayStitches(before).rows);
+  }
+
+  /**
+   * Paint by number: repaints areas smaller than `minCells` with the colour
+   * of the neighbour they share the longest border with. One undo step;
+   * returns how many areas were merged.
+   */
+  mergeSmallAreas(minCells: number): number {
+    const before = this.gridSignal();
+    const { rows, merged } = mergeSmallRegions(before, Math.max(1, Math.round(minCells)));
+    this.commitRows(before, rows);
+    return merged;
+  }
+
+  /**
+   * Folds every colour used for fewer than `minCells` stitches into the
+   * closest (CIEDE2000) colour that is used more, then drops the emptied
+   * colours - one undo step. Colours also used by backstitch or partial
+   * stitches keep those, so they stay in the palette. Returns how many
+   * colours were merged.
+   */
+  mergeRareColors(minCells: number): number {
+    const before = this.snapshot();
+    const counts = countDecodedCells(before.grid, before.palette.length);
+    const labs = before.palette.map((entry) => srgbToLab(entry.color.rgb));
+    const plan = planRareColorMerge(labs, counts, Math.max(1, Math.round(minCells)));
+    const merged = plan.filter((target, index) => target !== index).length;
+    if (merged === 0) return 0;
+    const grid = remapCells(before.grid, plan);
+    const {
+      palette,
+      grid: compactGrid,
+      remap,
+    } = compactPalette(
+      before.palette,
+      grid,
+      new Set([
+        ...usedLineColors(before.backstitches),
+        ...usedPartialColors(before.partialStitches),
+      ]),
+    );
+    this.remapSelection(remap); // before restore(), which clears out-of-range selections
+    this.commitSnapshot(before, {
+      ...before,
+      palette,
+      grid: compactGrid,
+      backstitches: remapLines(before.backstitches, remap),
+      partialStitches: remapPartials(before.partialStitches, remap),
+    });
+    return merged;
+  }
+
+  /** Records the difference between two grids (rows compared by reference) as one cell step. */
+  private commitRows(before: readonly Int16Array[], after: readonly Int16Array[]): number {
+    const changes: CellChange[] = [];
+    after.forEach((row, y) => {
+      if (row === before[y]) return;
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] !== before[y][x]) changes.push({ x, y, before: before[y][x], after: row[x] });
+      }
+    });
+    if (changes.length === 0) return 0;
+    this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
+    this.pushHistory({ kind: 'cells', changes });
+    return changes.length;
   }
 
   // ---- history -------------------------------------------------------------

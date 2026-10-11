@@ -103,7 +103,7 @@ uvicorn app.main:app --reload --port 8000
 
 ```sh
 pnpm build               # build all projects
-pnpm test                # unit tests for all projects (281 tests)
+pnpm test                # unit tests for all projects (708 tests)
 pnpm lint                # lint all projects
 pnpm affected:test       # only test what changed vs. main
 npx nx graph             # visualize the project dependency graph
@@ -136,7 +136,7 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M11) is built. How the code is
+Everything in PLAN.md's milestone list (M0-M12) is built. How the code is
 organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.md). Features:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
@@ -174,6 +174,15 @@ organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.m
   and overall progress, saved with the pattern.
 - **Shopping quantities**: skeins (cross-stitch) or drill bags (diamond) per
   color in the legend and the export CSV, from a documented thread model.
+- **Photo advisor** (M12): before converting, a photo check scores how well
+  the photo will stitch at your settings and says why - faces too small to
+  recognise (built-in face detection, no extra service), blur, darkness,
+  stretching, busy backgrounds - with one-click fixes such as "Crop to the
+  face", and a preview of the pattern in real thread colors.
+- **Photo prep** (M12): rotate, flip, crop, brightness, contrast and
+  saturation in the converter; Auto-enhance and Clean up options.
+- **Half and quarter stitches** (M12), and a **Tidy** panel in the editor
+  (remove stray stitches, merge rare colors, merge small paint areas).
 - **Image converter**: upload a PNG/JPG/WebP, pick type/size/color count,
   and a BullMQ worker resizes it (`sharp`), k-means quantizes it, nearest-
   DMC-matches and dedupes the resulting colors, assigns symbols, and builds
@@ -184,7 +193,8 @@ organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.m
   settable drill size (mm) driving the size readout's physical-size math,
   a legend that reads "Drills" instead of "Stitches" for diamond patterns.
 - **Exports**: `POST /exports/:patternId` generates a tiled, printable PDF
-  (row/col rulers, grid guides, a legend/materials page), a standalone SVG
+  (row/col rulers, grid guides, a legend/materials page), a printable
+  paint-by-number kit PDF (color reference, key, outlined numbered canvas), a standalone SVG
   chart, a PNG rasterized from it, and a CSV shopping list sorted by how
   much of each color you'll need - all downloadable from the editor.
 - **Custom palettes**: a "My palettes" page to build a named palette from
@@ -208,14 +218,13 @@ organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.m
 
 **Known, documented scope cuts** (not bugs — deliberate boundaries, each
 with a one-line reason): see PLAN.md assumptions #10-13. Briefly: pan is
-native scroll; no image crop/rotate/
-brightness step in the converter; PDF chart cells show the palette number
+native scroll; PDF chart cells show the palette number
 rather than the actual symbol glyph (font coverage); AI upscale is
 classical resampling, not a trained model.
 
 **Verification status**: the whole stack has actually been run, not just
 hand-traced — full details and the specific bugs each pass caught are in
-PLAN.md §7. In brief: `pnpm install`, `lint`, `test` (281 tests), and
+PLAN.md §7. In brief: `pnpm install`, `lint`, `test` (708 tests), and
 production builds all pass across every project; both Playwright e2e flows
 pass in a real browser; and the compiled API has been run directly against
 a real PostgreSQL database over real HTTP (register, login, create a

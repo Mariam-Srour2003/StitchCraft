@@ -125,6 +125,8 @@ export class EditorComponent {
   readonly id = input.required<string>();
   /** Optional `?mode=stitch` query param (also bound via withComponentInputBinding) opens straight into stitching mode. */
   readonly mode = input<string | undefined>(undefined);
+  /** `?converted=1`, set by the photo converter: show what it did and what to try next. */
+  readonly converted = input<string | undefined>(undefined);
 
   protected readonly store = inject(EditorStore);
   private readonly confirmer = inject(ConfirmService);
@@ -199,6 +201,29 @@ export class EditorComponent {
 
   protected readonly stampSize = computed(() => measureText(this.store.stampText()));
 
+  protected readonly convertedNoteDismissed = signal(false);
+  protected readonly showConvertedNote = computed(
+    () => this.converted() === '1' && !this.convertedNoteDismissed() && !this.store.loading(),
+  );
+  /** What the converter's clean-up changed, in words, or null when it didn't run. */
+  protected readonly conversionCleanupText = computed(() => {
+    const report = this.store.meta().conversionCleanup;
+    if (!report) return null;
+    const parts = [
+      `${report.strayStitchesRemoved} stray ${report.strayStitchesRemoved === 1 ? 'stitch' : 'stitches'} recolored`,
+      `${report.colorsMerged} rarely used ${report.colorsMerged === 1 ? 'color' : 'colors'} merged`,
+    ];
+    if (report.regionsMerged !== undefined) {
+      parts.push(
+        `${report.regionsMerged} tiny ${report.regionsMerged === 1 ? 'area' : 'areas'} merged`,
+      );
+    }
+    return `Clean up: ${parts.join(', ')}.`;
+  });
+
+  /** Result of the last Tidy action, shown under its buttons. */
+  protected readonly tidyMessage = signal<string | null>(null);
+
   protected readonly replaceTarget = signal<number | null>(null);
 
   protected readonly exporting = signal(false);
@@ -231,6 +256,37 @@ export class EditorComponent {
   }
 
   /** Picking a drawing tool always leaves stitching mode, so the click does what the tool says. */
+  tidyStrays(): void {
+    const changed = this.store.removeStrayStitches();
+    this.tidyMessage.set(
+      changed === 0
+        ? 'No stray stitches found.'
+        : `Recolored ${changed} stray ${changed === 1 ? 'stitch' : 'stitches'} to match their neighbours.`,
+    );
+  }
+
+  tidyRareColors(value: string): void {
+    const min = Number(value);
+    if (!Number.isFinite(min) || min < 1) return;
+    const merged = this.store.mergeRareColors(min);
+    this.tidyMessage.set(
+      merged === 0
+        ? `Every color is used for at least ${min} stitches.`
+        : `Merged ${merged} rarely used ${merged === 1 ? 'color' : 'colors'} into the closest ones.`,
+    );
+  }
+
+  tidySmallAreas(value: string): void {
+    const min = Number(value);
+    if (!Number.isFinite(min) || min < 2) return;
+    const merged = this.store.mergeSmallAreas(min);
+    this.tidyMessage.set(
+      merged === 0
+        ? `No areas smaller than ${min} cells.`
+        : `Merged ${merged} small ${merged === 1 ? 'area' : 'areas'} into their neighbours.`,
+    );
+  }
+
   selectTool(tool: EditorTool): void {
     this.store.setTool(tool);
     this.store.setStitchMode(false);

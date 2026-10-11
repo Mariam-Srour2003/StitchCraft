@@ -52,9 +52,8 @@ Proceeding with these; flag if any should change:
     (both closed in M7, see §6); pan is native
     browser scroll rather than a custom space-drag gesture; ~~devicePixelRatio scaling isn't applied
     to the canvas bitmap; the canvas doesn't follow dark mode~~ (both closed in M8). None of these block the milestone's stated scope.
-11. **Converter scope cuts, to revisit in a later milestone**: no crop/rotate/brightness/contrast
-    adjustment step (the spec lists these as optional; M2 is the "classic" deterministic pipeline
-    per PLAN.md's own M2 description); target sizing is stitch-count only, not physical
+11. **Converter scope cuts, to revisit in a later milestone**: ~~no crop/rotate/brightness/contrast
+    adjustment step~~ (added in M12); target sizing is stitch-count only, not physical
     size+fabric-count (a unit-conversion nicety, not new capability - `size-readout`'s math already
     supports the reverse conversion); no lock/swap-specific-DMC-match UI after conversion (the
     result opens in the full editor, where palette entries can be edited, just not swapped
@@ -269,7 +268,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | POST   | `/patterns`                                               | ✅  | create blank pattern within a project                                       |
 | PATCH  | `/patterns/:id`                                           | ✅  | save grid/palette edits                                                     |
 | DELETE | `/patterns/:id`                                           | ✅  |                                                                             |
-| POST   | `/patterns/:id/duplicate`                                 | ✅  | added in M9: copy into the same project, without stitching progress        |
+| POST   | `/patterns/:id/duplicate`                                 | ✅  | added in M9: copy into the same project, without stitching progress         |
 | GET    | `/palettes/dmc`                                           | ✅  | seeded reference data, paginated/filterable by name or code                 |
 | GET    | `/palettes`                                               | ✅  | list current user's custom palettes                                         |
 | POST   | `/palettes`                                               | ✅  | create custom palette                                                       |
@@ -426,7 +425,7 @@ typed against `packages/types`, but do no real work yet.
   - **My threads** (`/threads`): a DMC stash - add from search, paste a list ("310 x2, 321, B5200
     1.5"), edit quantities in half skeins, filter, flag running-low, export CSV.
   - **Shopping list** (`/shopping`): totals what the selected patterns need (unfinished ones by
-    default), minus the stash. Skeins are summed *unrounded* across patterns and rounded once, so
+    default), minus the stash. Skeins are summed _unrounded_ across patterns and rounded once, so
     two half-skein needs make one skein, not two. Drills in bags; paint-by-number colors listed.
     Tick off what you bought, then move it into the stash in one click. Copy, download, print.
   - **Help** (`/help`): getting started, per-craft guides, stitching mode, a glossary, FAQ and
@@ -472,10 +471,10 @@ typed against `packages/types`, but do no real work yet.
   - **Data:** a `Backstitch` is a line between two grid corners (`0..width`, `0..height`) in a palette
     color, stored in `pattern.meta.backstitches` - `meta` is free-form JSON, so no migration.
     `findBackstitchProblem` (in `@stitchcraft/types`) checks corners, length, color and a 20,000-line
-    cap; the API runs it whenever lines change *and* whenever a resize or palette change could
+    cap; the API runs it whenever lines change _and_ whenever a resize or palette change could
     strand existing lines.
-  - **Editor:** *Backstitch* tool (key `J`) drags corner to corner with a dashed live preview and a
-    snap marker; drawing over a line in a new color recolors it; *Remove line* deletes the nearest
+  - **Editor:** _Backstitch_ tool (key `J`) drags corner to corner with a dashed live preview and a
+    snap marker; drawing over a line in a new color recolors it; _Remove line_ deletes the nearest
     line within half a cell. Lines live on a separate overlay canvas, so drawing them never repaints
     cells. Every operation is undoable, and lines follow flips, rotation (verified against the cell
     rotation), resize (lines that no longer fit are dropped), color replace/delete and
@@ -487,6 +486,53 @@ typed against `packages/types`, but do no real work yet.
   - **Exports:** lines drawn on top in the SVG/PNG, and in the PDF clipped per page tile so a line
     crossing a page edge prints on both pages; the PDF legend lists line length per color.
     Checked visually by rasterizing a real chart through the export code.
+
+- **M12 - Photo advisor, photo prep, paint-by-number kit, partial stitches** _(done)_: making
+  photo conversions good, and everything after them editable.
+  - **Image advisor** (`POST /conversions/analyze`): measures a photo _at the chosen pattern
+    size_ and returns a 0-100 score, a verdict, plain-language findings each with a one-click fix,
+    suggested settings and a preview of the real result. Checks: faces (graded by how many stitches
+    tall they'll be - under ~10 is unrecognisable, the "person far away in the photo" case; fix:
+    crop to head and shoulders, or enlarge), stretching, photo smaller than the pattern, blur
+    measured at ~3 px per stitch (blur a small pattern can't show doesn't count), dark/bright/flat,
+    confetti from a real trial conversion, and tiny paint-by-number areas. One problem caps the
+    verdict at "fair", two at "poor".
+  - **Face detection with no extra service**: a TypeScript port of OpenCV's Haar cascade detector
+    (`imaging/faces/haar-cascade.ts`) running OpenCV's `frontalface_alt2` cascade (Intel licence
+    kept next to it; `tools/face-cascade/haar-to-json.py` regenerates the JSON). Verified against
+    `cv2.detectMultiScale` on the same pixels (identical boxes, one 1 px rounding difference; the
+    fixture and spec keep it that way). Searches a 640 px copy, so faces under ~3% of the photo's
+    long side are missed - by then they're a stitch or two anyway.
+  - **Converter photo prep**: rotate, flip, drag-to-crop (free/square/4:3/3:4, keyboard movable),
+    brightness/contrast/saturation - pure RGBA ops in `domain/image`. Width/height now keep the
+    photo's proportions by default (stretching used to be the default). The advisor re-runs 700 ms
+    after any change; detected faces are outlined on the photo with their stitch height; a
+    _Pattern preview_ tab shows the trial conversion in thread colours.
+  - **Better conversions**: _Auto-enhance_ (contrast stretch, +15% saturation, median denoise when
+    shrinking a lot) and _Clean up_ (lone stitches take their neighbours' colour; colours under 0.2%
+    of the pattern fold into the closest common one; paint by number also merges areas under 4
+    cells). What clean-up changed is stored in `meta.conversionCleanup` and shown in the editor.
+    Conversions are ~8x faster: pixels are matched with CIEDE2000 against a 5-colour Euclidean
+    shortlist (cached per RGB; ~0.1% of pixels pick a near-tied neighbour) instead of every colour.
+  - **Printable paint-by-number kit** (`paint-by-number.pdf` in every export): a reference page
+    (finished picture in colour + numbered colour key with area counts) and the canvas - outlines
+    merged into long strokes, one number per area sized to fit it. Up to 77x98 cells per sheet;
+    bigger canvases split evenly with dashed sheet edges.
+  - **Half and quarter stitches** (`meta.partialStitches`, no migration): a part covers some of a
+    cell's four corner-to-centre legs and parts may not share a leg, so half + quarter = three
+    quarter, and four quarters can share a square. Editor tools _Half_ (D) / _Quarter_ (Q),
+    undoable, follow every transform and palette operation, drawn on the overlay canvas, counted as
+    0.5 / 0.25 of a cross in skeins, drawn on SVG/PDF charts, validated by the API.
+  - **Editing after conversion**: an editor _Tidy_ panel (remove stray stitches, merge rarely used
+    colours, merge small paint-by-number areas - each one undo step) and a one-time banner after a
+    conversion pointing at the editing tools.
+  - **Fixed along the way**: phone photos with an EXIF rotation converted sideways; three DMC names
+    had `?` for a hyphen (606, 918, 919); the e2e fixture PNG was corrupt (Chromium couldn't decode
+    it; the old flow never decoded it); the API's exception filter returned 500s without logging
+    the cause.
+  - **Assumption #15**: analysis runs on the request thread (~0.3-1.5 s of CPU per call, debounced
+    in the UI). Fine for one server and a handful of users; move it onto the BullMQ worker if many
+    people convert at once.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 

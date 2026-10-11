@@ -120,6 +120,38 @@
     border-radius: var(--sc-radius-md);
   }
 
+  &__converted {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sc-space-3);
+    padding: var(--sc-space-3) var(--sc-space-4);
+    border: 1px solid var(--sc-color-border);
+    border-left: 4px solid var(--sc-color-primary);
+    border-radius: var(--sc-radius-md);
+    background: var(--sc-color-surface);
+    font-size: var(--sc-font-size-sm);
+
+    > div {
+      flex: 1;
+    }
+  }
+
+  &__tidy-field {
+    font-size: var(--sc-font-size-sm);
+    line-height: 2;
+
+    input {
+      width: 4.5rem;
+      margin: 0 var(--sc-space-1);
+      padding: var(--sc-space-1) var(--sc-space-2);
+      font: inherit;
+      border: 1px solid var(--sc-color-border);
+      border-radius: var(--sc-radius-sm);
+      background: var(--sc-color-surface);
+      color: inherit;
+    }
+  }
+
   &__inline-label,
   &__stacked-label {
     display: flex;
