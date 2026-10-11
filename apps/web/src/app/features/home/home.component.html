@@ -1,0 +1,171 @@
+@if (!auth.isAuthenticated()) {
+  <div class="sc-page home">
+    <section class="home__hero">
+      <p class="home__eyebrow">Cross-stitch · Diamond painting · Paint by number</p>
+      <h1 class="home__title">Design it, chart it, stitch it.</h1>
+      <p class="sc-page__lede">
+        StitchCraft turns your ideas and photos into real, stitchable patterns, with thread
+        matching, printable charts, shopping lists and a stitch tracker for when you sit down to
+        make it.
+      </p>
+      <div class="sc-actions">
+        <a class="home__cta home__cta--primary" routerLink="/register">Create a free account</a>
+        <a class="home__cta" routerLink="/sign-in">Sign in</a>
+        <a class="home__cta" routerLink="/tools">Try the calculators</a>
+      </div>
+    </section>
+
+    <ul class="sc-card-grid">
+      @for (craft of crafts; track craft.title) {
+        <li class="sc-card">
+          <h2>{{ craft.title }}</h2>
+          <p class="sc-muted">{{ craft.body }}</p>
+        </li>
+      }
+    </ul>
+
+    <section class="sc-card">
+      <h2>What you can do</h2>
+      <ul class="home__features">
+        <li>Draw with paint, fill, shapes, mirror drawing and stitched lettering</li>
+        <li>Convert a photo into a pattern matched to real DMC thread colors</li>
+        <li>Start from ready-made templates: samplers, borders, hearts, mandalas</li>
+        <li>Export a printable PDF chart and a floss or drill shopping list</li>
+        <li>Track what you've stitched and see what's left to buy from your thread stash</li>
+      </ul>
+    </section>
+  </div>
+} @else {
+  <div class="sc-page home">
+    <header class="sc-page__header">
+      <div>
+        <h1>Welcome back, {{ auth.currentUser()?.name }}</h1>
+        <p class="sc-page__lede">Pick up where you left off, or start something new.</p>
+      </div>
+      <div class="sc-actions">
+        <a class="home__cta home__cta--primary" routerLink="/projects">New pattern</a>
+        <a class="home__cta" routerLink="/templates">From a template</a>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <p class="sc-muted">Loading your patterns…</p>
+    } @else if (failed()) {
+      <p role="alert">
+        Couldn't load your patterns. <button type="button" (click)="load()">Try again</button>
+      </p>
+    } @else {
+      <section class="sc-stat-row" aria-label="Your stats">
+        <div class="sc-stat">
+          <span class="sc-stat__value">{{ projectCount() }}</span>
+          <span class="sc-stat__label">Projects</span>
+        </div>
+        <div class="sc-stat">
+          <span class="sc-stat__value">{{ patterns().length }}</span>
+          <span class="sc-stat__label">Patterns</span>
+        </div>
+        <div class="sc-stat">
+          <span class="sc-stat__value">{{ totals().done }}</span>
+          <span class="sc-stat__label">Stitches done of {{ totals().stitches }}</span>
+        </div>
+        <div class="sc-stat">
+          <span class="sc-stat__value">{{ totals().hours }}h</span>
+          <span class="sc-stat__label">Stitching left (est.)</span>
+        </div>
+        <div class="sc-stat">
+          <span class="sc-stat__value">{{ totals().finished }}</span>
+          <span class="sc-stat__label">Finished</span>
+        </div>
+      </section>
+
+      @if (inProgress().length > 0) {
+        <section class="home__section">
+          <h2>Continue stitching</h2>
+          <ul class="sc-card-grid">
+            @for (item of inProgress(); track item.pattern.id) {
+              <li class="sc-card">
+                <sc-pattern-thumbnail
+                  [width]="item.pattern.width"
+                  [height]="item.pattern.height"
+                  [grid]="item.pattern.grid"
+                  [palette]="item.pattern.palette"
+                  [size]="96"
+                  [label]="item.pattern.name + ' preview'"
+                />
+                <div>
+                  <strong>{{ item.pattern.name }}</strong>
+                  <div class="sc-muted">{{ item.project.name }}</div>
+                </div>
+                <sc-progress
+                  [value]="item.stats.percent"
+                  [label]="item.pattern.name + ' progress'"
+                />
+                <span class="sc-muted"
+                  >{{ item.stats.percent }}% · about {{ hoursLeft(item.stats) }}h left</span
+                >
+                <div class="sc-actions">
+                  <a [routerLink]="['/editor', item.pattern.id]" [queryParams]="{ mode: 'stitch' }"
+                    >Stitch</a
+                  >
+                  <a [routerLink]="['/patterns', item.pattern.id]">View</a>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <section class="home__section">
+        <h2>Recent patterns</h2>
+        @if (recent().length === 0) {
+          <div class="sc-card">
+            <p>No patterns yet. Try one of these to get started:</p>
+            <div class="sc-actions">
+              <a routerLink="/templates">Pick a template</a>
+              <a routerLink="/projects">Create a blank pattern</a>
+              <a routerLink="/projects">Convert a photo</a>
+            </div>
+          </div>
+        } @else {
+          <ul class="sc-card-grid">
+            @for (item of recent(); track item.pattern.id) {
+              <li class="sc-card">
+                <sc-pattern-thumbnail
+                  [width]="item.pattern.width"
+                  [height]="item.pattern.height"
+                  [grid]="item.pattern.grid"
+                  [palette]="item.pattern.palette"
+                  [size]="96"
+                  [label]="item.pattern.name + ' preview'"
+                />
+                <div>
+                  <strong>{{ item.pattern.name }}</strong>
+                  <div class="sc-muted">
+                    {{ typeLabels[item.pattern.type] }} · {{ item.pattern.width }}×{{
+                      item.pattern.height
+                    }}
+                    · {{ item.stats.colorsUsed }} colors
+                  </div>
+                </div>
+                <div class="sc-actions">
+                  <a [routerLink]="['/editor', item.pattern.id]">Edit</a>
+                  <a [routerLink]="['/patterns', item.pattern.id]">View</a>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="home__section">
+        <h2>Shortcuts</h2>
+        <div class="sc-actions">
+          <a routerLink="/threads">My thread stash</a>
+          <a routerLink="/shopping">Shopping list</a>
+          <a routerLink="/tools">Fabric &amp; thread calculators</a>
+          <a routerLink="/help">How it works</a>
+        </div>
+      </section>
+    }
+  </div>
+}

@@ -5,6 +5,7 @@
   [class.sc-grid-canvas--pick]="tool() === 'pick'"
   [class.sc-grid-canvas--text]="tool() === 'text'"
   [class.sc-grid-canvas--stitch]="tool() === 'stitch'"
+  [class.sc-grid-canvas--readonly]="!interactive()"
 >
   <canvas
     #canvas

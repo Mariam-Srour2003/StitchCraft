@@ -1,0 +1,207 @@
+<div class="sc-page tools">
+  <header>
+    <h1>Calculators</h1>
+    <p class="sc-page__lede">
+      Quick answers for planning a piece: how big it will be, how much fabric to cut, how much
+      thread or how many drills to buy, and how long it might take.
+    </p>
+  </header>
+
+  <section class="sc-card" aria-labelledby="size-h">
+    <h2 id="size-h">Fabric size</h2>
+    <div class="sc-form-grid">
+      <label class="sc-field"
+        >Width (stitches)<input
+          type="number"
+          min="1"
+          [ngModel]="width()"
+          (ngModelChange)="width.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Height (stitches)<input
+          type="number"
+          min="1"
+          [ngModel]="height()"
+          (ngModelChange)="height.set($event)"
+      /></label>
+      <label class="sc-field">
+        Fabric count
+        <input
+          type="number"
+          min="1"
+          [ngModel]="count()"
+          (ngModelChange)="count.set($event)"
+          list="counts"
+        />
+        <datalist id="counts">
+          @for (c of counts; track c) {
+            <option [value]="c"></option>
+          }
+        </datalist>
+      </label>
+      <label class="sc-field"
+        >Margin each side (in)<input
+          type="number"
+          min="0"
+          step="0.5"
+          [ngModel]="margin()"
+          (ngModelChange)="margin.set($event)"
+      /></label>
+    </div>
+    <label class="tools__check">
+      <input type="checkbox" [ngModel]="overTwo()" (ngModelChange)="overTwo.set($event)" />
+      Evenweave/linen stitched over two threads
+    </label>
+    <p class="tools__result" aria-live="polite">
+      Design: <strong>{{ size().designWidthIn }} × {{ size().designHeightIn }} in</strong> ({{
+        size().designWidthCm
+      }}
+      × {{ size().designHeightCm }} cm). Cut fabric:
+      <strong>{{ size().cutWidthIn }} × {{ size().cutHeightIn }} in</strong>
+      ({{ size().cutWidthCm }} × {{ size().cutHeightCm }} cm).
+    </p>
+    <details>
+      <summary>Compare fabric counts</summary>
+      <table class="sc-table">
+        <thead>
+          <tr>
+            <th>Count</th>
+            <th class="sc-num">Design (in)</th>
+            <th class="sc-num">Design (cm)</th>
+            <th class="sc-num">Cut fabric (in)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of comparison(); track row.count) {
+            <tr>
+              <td>{{ row.count }}-count</td>
+              <td class="sc-num">{{ row.designWidthIn }} × {{ row.designHeightIn }}</td>
+              <td class="sc-num">{{ row.designWidthCm }} × {{ row.designHeightCm }}</td>
+              <td class="sc-num">{{ row.cutWidthIn }} × {{ row.cutHeightIn }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <section class="sc-card" aria-labelledby="fit-h">
+    <h2 id="fit-h">Fit a design to a frame</h2>
+    <div class="sc-form-grid">
+      <label class="sc-field"
+        >Frame opening width (in)<input
+          type="number"
+          min="0"
+          step="0.5"
+          [ngModel]="frameWidthIn()"
+          (ngModelChange)="frameWidthIn.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Frame opening height (in)<input
+          type="number"
+          min="0"
+          step="0.5"
+          [ngModel]="frameHeightIn()"
+          (ngModelChange)="frameHeightIn.set($event)"
+      /></label>
+    </div>
+    <p class="tools__result" aria-live="polite">
+      On {{ count() }}-count, make your pattern up to
+      <strong>{{ fit().width }} × {{ fit().height }} stitches</strong>.
+    </p>
+  </section>
+
+  <section class="sc-card" aria-labelledby="thread-h">
+    <h2 id="thread-h">Thread</h2>
+    <div class="sc-form-grid">
+      <label class="sc-field"
+        >Stitches of one color<input
+          type="number"
+          min="0"
+          [ngModel]="stitches()"
+          (ngModelChange)="stitches.set($event)"
+      /></label>
+      <label class="sc-field">
+        Strands
+        <select [ngModel]="strands()" (ngModelChange)="strands.set($event)">
+          <option value="auto">Usual for {{ count() }}-count</option>
+          <option [ngValue]="1">1</option>
+          <option [ngValue]="2">2</option>
+          <option [ngValue]="3">3</option>
+        </select>
+      </label>
+    </div>
+    <p class="tools__result" aria-live="polite">
+      About <strong>{{ thread().skeins }} skein(s)</strong> ({{ thread().perSkein }} full stitches
+      per skein).
+    </p>
+  </section>
+
+  <section class="sc-card" aria-labelledby="drill-h">
+    <h2 id="drill-h">Diamond painting</h2>
+    <div class="sc-form-grid">
+      <label class="sc-field"
+        >Width (drills)<input
+          type="number"
+          min="1"
+          [ngModel]="drillWidth()"
+          (ngModelChange)="drillWidth.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Height (drills)<input
+          type="number"
+          min="1"
+          [ngModel]="drillHeight()"
+          (ngModelChange)="drillHeight.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Drill size (mm)<input
+          type="number"
+          min="1"
+          step="0.1"
+          [ngModel]="drillSize()"
+          (ngModelChange)="drillSize.set($event)"
+      /></label>
+    </div>
+    <p class="tools__result" aria-live="polite">
+      {{ drills().drills }} drills on a
+      <strong>{{ drills().widthCm }} × {{ drills().heightCm }} cm</strong> canvas, about
+      <strong>{{ drills().bags }} bags</strong> of 200 including 10% spare.
+    </p>
+  </section>
+
+  <section class="sc-card" aria-labelledby="time-h">
+    <h2 id="time-h">Time</h2>
+    <div class="sc-form-grid">
+      <label class="sc-field"
+        >Stitches<input
+          type="number"
+          min="0"
+          [ngModel]="timeStitches()"
+          (ngModelChange)="timeStitches.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Your stitches per hour<input
+          type="number"
+          min="1"
+          [ngModel]="perHour()"
+          (ngModelChange)="perHour.set($event)"
+      /></label>
+      <label class="sc-field"
+        >Hours a day<input
+          type="number"
+          min="0"
+          step="0.5"
+          [ngModel]="hoursPerDay()"
+          (ngModelChange)="hoursPerDay.set($event)"
+      /></label>
+    </div>
+    <p class="tools__result" aria-live="polite">
+      About <strong>{{ time().hours }} hours</strong>
+      @if (time().days > 0) {
+        , or <strong>{{ time().days }} days</strong> at {{ hoursPerDay() }}h a day
+      }
+      .
+    </p>
+  </section>
+</div>

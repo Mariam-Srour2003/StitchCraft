@@ -122,4 +122,14 @@ describe('GridCanvas', () => {
 
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('ignores pointer input when not interactive', () => {
+    fixture.componentRef.setInput('interactive', false);
+    fixture.detectChanges();
+    const spy = jest.fn();
+    component.cellEdit.subscribe(spy);
+    component.onPointerDown(fakePointerEvent(5, 5));
+    component.onPointerUp();
+    expect(spy).not.toHaveBeenCalled();
+  });
 });

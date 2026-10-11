@@ -78,3 +78,13 @@ export function estimateMaterial(
   }
   return null;
 }
+
+/**
+ * Unrounded skeins for a stitch count - for adding up one thread's needs
+ * across several patterns (possibly on different fabrics) before rounding
+ * up once, instead of rounding each pattern up separately.
+ */
+export function skeinFraction(stitchCount: number, fabricCount: number, strands?: number): number {
+  if (stitchCount <= 0) return 0;
+  return stitchCount / stitchesPerSkein(fabricCount, strands);
+}

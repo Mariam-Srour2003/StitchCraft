@@ -244,4 +244,14 @@ describe('EditorComponent', () => {
       expect(text).toContain('Skeins');
     });
   });
+
+  it('opens in stitching mode with ?mode=stitch', async () => {
+    const stitchFixture = TestBed.createComponent(EditorComponent);
+    stitchFixture.componentRef.setInput('id', 'pattern-1');
+    stitchFixture.componentRef.setInput('mode', 'stitch');
+    stitchFixture.detectChanges();
+    await stitchFixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve)); // let load()'s .then() run
+    expect(stitchFixture.componentInstance['store'].stitchMode()).toBe(true);
+  });
 });

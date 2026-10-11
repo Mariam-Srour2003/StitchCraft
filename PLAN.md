@@ -269,6 +269,7 @@ Base path `/api`. JSON unless noted. Auth via `Authorization: Bearer <accessToke
 | POST   | `/patterns`                                               | ✅  | create blank pattern within a project                                       |
 | PATCH  | `/patterns/:id`                                           | ✅  | save grid/palette edits                                                     |
 | DELETE | `/patterns/:id`                                           | ✅  |                                                                             |
+| POST   | `/patterns/:id/duplicate`                                 | ✅  | added in M9: copy into the same project, without stitching progress        |
 | GET    | `/palettes/dmc`                                           | ✅  | seeded reference data, paginated/filterable by name or code                 |
 | GET    | `/palettes`                                               | ✅  | list current user's custom palettes                                         |
 | POST   | `/palettes`                                               | ✅  | create custom palette                                                       |
@@ -401,6 +402,47 @@ typed against `packages/types`, but do no real work yet.
     page. It now handles the plain `submit` event. The shared `segmented-toggle` also gives its
     first option the tab stop when no option matches its value, so two toggles can share one
     setting (draw tools / shape tools) without one becoming keyboard-unreachable.
+
+- **M9 — Pages: a whole app around the editor** _(done)_: nine new or rebuilt pages, all
+  lazy-loaded (initial bundle unchanged at ~88 kB gzipped).
+  - **Home** (`/`): a landing page for signed-out visitors; for signed-in users a dashboard with
+    totals (projects, patterns, stitches done, estimated hours left, finished), "Continue
+    stitching" cards with progress bars and a straight-into-stitching-mode link
+    (`/editor/:id?mode=stitch`), and recent patterns with pixel thumbnails. `/` used to redirect
+    to `/projects`.
+  - **Pattern viewer** (`/patterns/:id`, replacing the placeholder): read-only chart (chart /
+    stitched / block / diamond / paint-by-number views), stats, a legend of only the colors used
+    with shopping quantities, progress overlay toggle, and Edit / Stitch / Duplicate / Print /
+    Delete. Printing uses print CSS that drops the app chrome.
+  - **Template library** (`/templates`): ten designs generated in code
+    (`features/templates/template-library.ts`) - little heart, gingham practice square, alphabet
+    sampler, home sweet home, diamond border frame, bookmark, snowflake, tulip, rainbow
+    (diamond painting) and sunset (paint by number). Every template is unit-tested to use only
+    real DMC codes, use every palette color, index correctly, be deterministic and, for
+    full-coverage crafts, leave no blank cells; each was also eyeballed as ASCII art. "Use this
+    template" creates the pattern in a chosen or new project and opens the editor.
+  - **Calculators** (`/tools`): fabric size and fabric to cut (incl. over-two on evenweave), a
+    count-comparison table, fit-to-a-frame, thread, diamond drills, and time.
+  - **My threads** (`/threads`): a DMC stash - add from search, paste a list ("310 x2, 321, B5200
+    1.5"), edit quantities in half skeins, filter, flag running-low, export CSV.
+  - **Shopping list** (`/shopping`): totals what the selected patterns need (unfinished ones by
+    default), minus the stash. Skeins are summed *unrounded* across patterns and rounded once, so
+    two half-skein needs make one skein, not two. Drills in bags; paint-by-number colors listed.
+    Tick off what you bought, then move it into the stash in one click. Copy, download, print.
+  - **Help** (`/help`): getting started, per-craft guides, stitching mode, a glossary, FAQ and
+    shortcuts. **Settings** (`/settings`): default fabric count, drill size, strands for
+    estimates, stitching speed and canvas theme, used across the editor, viewer, calculators and
+    new-pattern form. **404 page** instead of silently redirecting.
+  - Backend: `POST /patterns/:id/duplicate` (ownership-checked, unit-tested), also offered on the
+    projects page alongside a "View" link per pattern.
+  - **Assumption #14 - browser storage for stash and settings.** Both live in `localStorage`
+    (stash keyed per user id) behind small stores whose public API pages use exclusively, so
+    moving them to the API later only touches `StashStore`/`SettingsStore`. Done this way on
+    purpose: the workspace that built M9 couldn't download Prisma's engines (`prisma generate`
+    blocked), so a new table and migration couldn't be generated or checked against a real
+    database, and shipping an unverified hand-written migration risks `prisma migrate dev`
+    flagging drift on your machine. The Help page says plainly that these don't sync between
+    devices yet.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 

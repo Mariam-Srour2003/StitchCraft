@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Pattern, PatternType, Project } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import { Button } from '../../shared/ui/button/button';
 import { EmptyState } from '../../shared/ui/empty-state/empty-state';
 import { Modal } from '../../shared/ui/modal/modal';
+import { SettingsStore } from '../../core/settings/settings.store';
 import { ProjectsApiService } from './projects-api.service';
 
 const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
@@ -14,7 +15,7 @@ const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamon
 @Component({
   selector: 'sc-projects-list',
   standalone: true,
-  imports: [ReactiveFormsModule, Button, EmptyState, Modal],
+  imports: [ReactiveFormsModule, RouterLink, Button, EmptyState, Modal],
   templateUrl: './projects-list.component.html',
   styleUrl: './projects-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,6 +24,7 @@ export class ProjectsListComponent {
   private readonly projectsApi = inject(ProjectsApiService);
   private readonly patternsApi = inject(PatternsApiService);
   private readonly router = inject(Router);
+  private readonly settings = inject(SettingsStore);
 
   protected readonly patternTypes = PATTERN_TYPES;
 
@@ -38,12 +40,24 @@ export class ProjectsListComponent {
   protected readonly newPatternForm = new FormGroup({
     name: new FormControl('New pattern', { nonNullable: true, validators: [Validators.required] }),
     type: new FormControl<PatternType>('cross_stitch', { nonNullable: true }),
-    width: new FormControl(40, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
-    height: new FormControl(40, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
+    width: new FormControl(40, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(1)],
+    }),
+    height: new FormControl(40, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(1)],
+    }),
     // Physical sizing: fabric count applies to cross-stitch/color-by-number,
     // drill size (mm) to diamond - only one is relevant per pattern type, see template.
-    fabricCount: new FormControl(14, { nonNullable: true, validators: [Validators.required, Validators.min(1)] }),
-    drillSizeMm: new FormControl(2.8, { nonNullable: true, validators: [Validators.required, Validators.min(0.1)] }),
+    fabricCount: new FormControl(this.settings.fabricCount(), {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(1)],
+    }),
+    drillSizeMm: new FormControl(this.settings.drillSizeMm(), {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(0.1)],
+    }),
   });
 
   constructor() {
@@ -97,11 +111,22 @@ export class ProjectsListComponent {
     const projectId = this.newPatternProjectId();
     if (!projectId || this.newPatternForm.invalid) return;
 
-    const { name, type, width, height, fabricCount, drillSizeMm } = this.newPatternForm.getRawValue();
+    const { name, type, width, height, fabricCount, drillSizeMm } =
+      this.newPatternForm.getRawValue();
     const meta = type === 'diamond' ? { drillSizeMm } : { fabricCount };
-    const pattern = await firstValueFrom(this.patternsApi.create({ projectId, name, type, width, height, meta }));
+    const pattern = await firstValueFrom(
+      this.patternsApi.create({ projectId, name, type, width, height, meta }),
+    );
     this.closeNewPattern();
     await this.router.navigate(['/editor', pattern.id]);
+  }
+
+  /** Copies a pattern into the same project and refreshes that project's list. */
+  async duplicatePattern(projectId: string, patternId: string): Promise<void> {
+    await firstValueFrom(this.patternsApi.duplicate(patternId));
+    const patterns = await firstValueFrom(this.patternsApi.listForProject(projectId));
+    this.patternsByProject.update((byProject) => ({ ...byProject, [projectId]: patterns }));
+    await this.refresh();
   }
 
   openPattern(patternId: string): void {

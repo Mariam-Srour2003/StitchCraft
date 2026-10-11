@@ -1,0 +1,116 @@
+<div class="sc-page sc-page--narrow help">
+  <header>
+    <h1>Help &amp; guide</h1>
+    <p class="sc-page__lede">Everything you need to go from an idea to a finished piece.</p>
+  </header>
+
+  <nav class="sc-card" aria-label="On this page">
+    <ul class="help__toc">
+      <li><a href="#getting-started">Getting started</a></li>
+      <li><a href="#crafts">Crafts</a></li>
+      <li><a href="#stitching">Stitching mode</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+    </ul>
+  </nav>
+
+  <section id="getting-started" class="help__section">
+    <h2>Getting started</h2>
+    <ol class="help__steps">
+      <li>
+        <strong>Create a project</strong> on the <a routerLink="/projects">Projects</a> page. A
+        project groups related patterns, like "Christmas gifts".
+      </li>
+      <li>
+        <strong>Start a pattern</strong>: blank, from a <a routerLink="/templates">template</a>, or
+        by converting a photo.
+      </li>
+      <li>
+        <strong>Draw</strong> with Paint, Fill, shapes and lettering. Add DMC threads from the
+        palette search.
+      </li>
+      <li>
+        <strong>Check materials</strong>: the legend shows stitches and skeins per color. Add what
+        you own to <a routerLink="/threads">My threads</a>, then see what to buy on the
+        <a routerLink="/shopping">Shopping list</a>.
+      </li>
+      <li><strong>Export</strong> a printable PDF chart, or open the pattern view and print it.</li>
+      <li>
+        <strong>Stitch</strong>: switch the editor to Stitch mode and tick off squares as you go.
+      </li>
+    </ol>
+  </section>
+
+  <section id="crafts" class="help__section">
+    <h2>Crafts</h2>
+    <div class="sc-card">
+      <h3>Cross-stitch</h3>
+      <p>
+        Each square on the chart is one X on the fabric. Work one color at a time, finishing a row
+        of half stitches before crossing back. Use Highlight in the editor or legend to see where a
+        color goes.
+      </p>
+    </div>
+    <div class="sc-card">
+      <h3>Diamond painting</h3>
+      <p>
+        Each square is one drill. Peel back a small part of the film, pour the drills for one color
+        in a tray, and press them onto the matching symbols. Use the Diamond view to preview the
+        look.
+      </p>
+    </div>
+    <div class="sc-card">
+      <h3>Paint by number</h3>
+      <p>
+        The Paint # view outlines each region and numbers it once. Paint the smallest regions and
+        lightest colors first. Mark regions as painted in Stitch mode to see your progress fill in.
+      </p>
+    </div>
+  </section>
+
+  <section id="stitching" class="help__section">
+    <h2>Stitching mode</h2>
+    <p>
+      In the editor, switch from <em>Design</em> to <em>Stitch</em>. Clicking or dragging marks
+      squares done (drag across already-done squares to un-mark them). "Mark done" finishes a whole
+      color at once. Progress is saved with the pattern when you press Save.
+    </p>
+  </section>
+
+  <section id="glossary" class="help__section">
+    <h2>Glossary</h2>
+    <dl class="help__glossary">
+      @for (item of glossary; track item.term) {
+        <dt>{{ item.term }}</dt>
+        <dd>{{ item.definition }}</dd>
+      }
+    </dl>
+  </section>
+
+  <section id="faq" class="help__section">
+    <h2>FAQ</h2>
+    @for (item of faq; track item.q) {
+      <details class="sc-card help__faq">
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a }}</p>
+      </details>
+    }
+  </section>
+
+  <section id="shortcuts" class="help__section">
+    <h2>Keyboard shortcuts (editor)</h2>
+    <table class="sc-table">
+      <tbody>
+        @for (shortcut of shortcuts; track shortcut.keys) {
+          <tr>
+            <th scope="row">
+              <kbd>{{ shortcut.keys }}</kbd>
+            </th>
+            <td>{{ shortcut.action }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>

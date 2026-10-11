@@ -1,0 +1,41 @@
+.stash {
+  &__layout {
+    display: grid;
+    grid-template-columns: 20rem minmax(0, 1fr);
+    gap: var(--sc-space-4);
+    align-items: start;
+
+    @media (max-width: 52rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__add {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sc-space-4);
+  }
+
+  &__qty {
+    width: 5rem;
+    font: inherit;
+    padding: var(--sc-space-1);
+    border: 1px solid var(--sc-color-border);
+    border-radius: var(--sc-radius-sm);
+    background: var(--sc-color-surface);
+    color: inherit;
+    text-align: right;
+  }
+
+  &__low td {
+    color: var(--sc-color-danger);
+  }
+
+  &__remove {
+    border: none;
+    background: none;
+    color: var(--sc-color-text-muted);
+    cursor: pointer;
+    font: inherit;
+  }
+}

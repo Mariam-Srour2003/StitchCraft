@@ -75,6 +75,8 @@ export class GridCanvas {
   readonly progress = input<readonly (Int16Array | number[])[] | null>(null);
   readonly highlightIndex = input<number | null>(null);
   readonly showCenter = input(false);
+  /** False for read-only viewers: no pointer input, default cursor. */
+  readonly interactive = input(true);
 
   /**
    * Emitted for every cell touched during an active pointer-down drag
@@ -203,6 +205,7 @@ export class GridCanvas {
   }
 
   onPointerDown(event: PointerEvent): void {
+    if (!this.interactive()) return;
     this.isPointerDown = true;
     this.canvasRef().nativeElement.setPointerCapture(event.pointerId);
     this.paintAt(event);
