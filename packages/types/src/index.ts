@@ -12,3 +12,4 @@ export * from './models/palette.model';
 export * from './models/pattern.model';
 export * from './models/project.model';
 export * from './utils/csv';
+export * from './utils/stray-stitches';

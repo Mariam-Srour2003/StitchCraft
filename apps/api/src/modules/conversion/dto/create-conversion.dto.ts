@@ -46,4 +46,14 @@ export class CreateConversionDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   useAiUpscale?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  enhance?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  cleanup?: boolean;
 }

@@ -11,6 +11,10 @@ export interface ConversionParams {
   colorCount: number;
   useAiBackgroundRemoval?: boolean;
   useAiUpscale?: boolean;
+  /** Auto-improve the photo (contrast, saturation, denoise) before converting. */
+  enhance?: boolean;
+  /** Tidy the result: remove lone "confetti" stitches, merge barely-used colours. */
+  cleanup?: boolean;
 }
 
 export interface ConversionJob {

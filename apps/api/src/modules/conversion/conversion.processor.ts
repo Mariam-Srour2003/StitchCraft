@@ -34,12 +34,14 @@ export class ConversionsProcessor extends WorkerHost {
     const imageBuffer = await this.storage.get(params.sourceImageRef);
 
     await job.updateProgress(25);
-    const { palette, grid } = await this.imaging.convertImageToGrid(imageBuffer, {
+    const { palette, grid, cleanup } = await this.imaging.convertImageToGrid(imageBuffer, {
       width: params.width,
       height: params.height,
       colorCount: params.colorCount,
       useAiBackgroundRemoval: params.useAiBackgroundRemoval,
       useAiUpscale: params.useAiUpscale,
+      enhance: params.enhance,
+      cleanup: params.cleanup,
     });
 
     await job.updateProgress(85);
@@ -52,7 +54,11 @@ export class ConversionsProcessor extends WorkerHost {
         height: params.height,
         palette: palette as unknown as object[],
         grid: grid as unknown as object,
-        meta: { createdFrom: 'conversion', sourceConversionJobId: conversionJobId },
+        meta: {
+          createdFrom: 'conversion',
+          sourceConversionJobId: conversionJobId,
+          ...(cleanup ? { conversionCleanup: { ...cleanup } } : {}),
+        },
       },
     });
 

@@ -40,6 +40,8 @@ export class ConversionsService {
       colorCount: dto.colorCount,
       useAiBackgroundRemoval: dto.useAiBackgroundRemoval,
       useAiUpscale: dto.useAiUpscale,
+      enhance: dto.enhance,
+      cleanup: dto.cleanup,
     };
 
     const conversionJob = await this.prisma.conversionJob.create({

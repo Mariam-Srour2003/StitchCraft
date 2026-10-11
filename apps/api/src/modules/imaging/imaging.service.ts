@@ -12,6 +12,10 @@ export interface ConvertImageOptions {
   colorCount: number;
   useAiBackgroundRemoval?: boolean;
   useAiUpscale?: boolean;
+  /** Stretch contrast, lift saturation and denoise before shrinking to stitch size. */
+  enhance?: boolean;
+  /** Remove confetti stitches and fold barely-used colours into close ones. */
+  cleanup?: boolean;
 }
 
 @Injectable()
@@ -33,15 +37,34 @@ export class ImagingService {
       working = await this.aiProvider.upscale(working);
     }
 
-    const pixels = await this.extractPixels(working, opts.width, opts.height);
-    return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount);
+    const pixels = await this.extractPixels(working, opts.width, opts.height, !!opts.enhance);
+    return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount, {
+      cleanup: opts.cleanup,
+    });
   }
 
   /** Resizes to exactly width x height (one output pixel per stitch cell) and reads raw RGB bytes. */
-  private async extractPixels(buffer: Buffer, width: number, height: number): Promise<Rgb[]> {
-    const { data, info } = await sharp(buffer)
-      .flatten({ background: '#ffffff' }) // composite any transparency onto white before quantizing
-      .resize(width, height, { fit: 'fill' })
+  private async extractPixels(
+    buffer: Buffer,
+    width: number,
+    height: number,
+    enhance: boolean,
+  ): Promise<Rgb[]> {
+    // .rotate() with no angle applies the EXIF orientation, so a phone photo
+    // stored sideways with an "rotate me" tag converts the right way up.
+    let image = sharp(buffer).rotate().flatten({ background: '#ffffff' }); // transparency onto white
+    if (enhance) {
+      const { width: sourceWidth = width, height: sourceHeight = height } =
+        await sharp(buffer).metadata();
+      // Thread colours read duller than screen colours, and quantizing a
+      // flat, washed-out photo wastes colours on near-identical greys.
+      image = image.normalise({ lower: 1, upper: 99 }).modulate({ saturation: 1.15 });
+      // Sensor/JPEG noise turns into confetti; a small median removes it
+      // without softening edges. Only worth it when we're shrinking a lot.
+      if (sourceWidth >= width * 3 && sourceHeight >= height * 3) image = image.median(3);
+    }
+    const { data, info } = await image
+      .resize(width, height, { fit: 'fill', kernel: 'lanczos3' })
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });

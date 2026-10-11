@@ -78,4 +78,43 @@ describe('buildGridFromPixels', () => {
       expect(decoded[0][0]).not.toBe(decoded[1][0]);
     }
   });
+
+  describe('cleanup', () => {
+    const red = { r: 220, g: 20, b: 20 };
+    const blue = { r: 20, g: 20, b: 220 };
+    const green = { r: 20, g: 200, b: 40 };
+
+    /** 10x10 red field with one blue stitch in the middle. */
+    function fieldWithSpeck(): Rgb[] {
+      const pixels = solidBlock(red, 100);
+      pixels[55] = blue;
+      return pixels;
+    }
+
+    it('is off by default and reports nothing', () => {
+      const result = buildGridFromPixels(fieldWithSpeck(), 10, 10, 2);
+      expect(result.cleanup).toBeUndefined();
+      expect(result.palette).toHaveLength(2);
+    });
+
+    it('recolours lone stitches and drops colours nothing uses any more', () => {
+      const result = buildGridFromPixels(fieldWithSpeck(), 10, 10, 2, { cleanup: true });
+      expect(result.cleanup).toEqual({ strayStitchesRemoved: 1, colorsMerged: 0 });
+      expect(result.palette).toHaveLength(1);
+      expect(result.grid.every((row) => row.length === 1 && row[0][0] === 0)).toBe(true);
+    });
+
+    it('merges a colour used for only a few (clumped) stitches into its closest common colour', () => {
+      // 20x20 = 400 cells, threshold max(4, 0.8) = 4: a 2x1 clump of blue is
+      // not confetti (the two touch) but is too rare to keep its own thread.
+      const pixels = [...solidBlock(red, 200), ...solidBlock(green, 200)];
+      pixels[30] = blue;
+      pixels[31] = blue;
+      const result = buildGridFromPixels(pixels, 20, 20, 3, { cleanup: true });
+      expect(result.cleanup).toEqual({ strayStitchesRemoved: 0, colorsMerged: 1 });
+      expect(result.palette).toHaveLength(2);
+      const decoded = decodeGrid(result.grid, 20);
+      expect(decoded[1][10]).toBe(decoded[0][0]);
+    });
+  });
 });
