@@ -159,7 +159,14 @@ export class ConverterComponent {
   protected readonly analysisState = signal<AdviceState>('idle');
   /** The crop the current analysis was made on - face boxes are relative to it. */
   private analyzedCrop: RelativeBox | null = null;
-  private readonly analysisRequests = new Subject<void>();
+  private readonly analysisRequests = new Subject<number>();
+  /**
+   * Bumped on every change that makes the current check out of date. A
+   * response for an older generation is dropped: it may arrive while the
+   * next check is still waiting out its debounce, and must not show as
+   * current (or put an earlier photo's faces on this one).
+   */
+  private analysisGeneration = 0;
 
   protected readonly progress = signal(0);
   protected readonly statusMessage = signal('');
@@ -194,22 +201,22 @@ export class ConverterComponent {
     this.analysisRequests
       .pipe(
         debounce(() => timer(this.analysisDebounceMs)),
-        switchMap(() => {
+        switchMap((generation) => {
           const file = this.selectedFile();
           if (!file) return of(null);
           const crop = this.edits().crop;
           const params = this.conversionParams();
           return from(this.photoForUpload()).pipe(
             switchMap((blob) => this.conversionsApi.analyze(blob, params)),
-            map((analysis) => ({ analysis, crop })),
-            catchError(() => of('error' as const)),
+            map((analysis) => ({ analysis, crop, generation })),
+            catchError(() => of({ error: true as const, generation })),
           );
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((result) => {
-        if (result === null) return;
-        if (result === 'error') {
+        if (result === null || result.generation !== this.analysisGeneration) return;
+        if ('error' in result) {
           this.analysisState.set('error');
           return;
         }
@@ -245,6 +252,7 @@ export class ConverterComponent {
   }
 
   reset(): void {
+    this.analysisGeneration++;
     this.selectedFile.set(null);
     this.working.set(null);
     this.display.set(null);
@@ -407,7 +415,7 @@ export class ConverterComponent {
   requestAnalysis(): void {
     if (!this.selectedFile()) return;
     this.analysisState.set('loading');
-    this.analysisRequests.next();
+    this.analysisRequests.next(++this.analysisGeneration);
   }
 
   private conversionParams(): AnalyzeImageParams {

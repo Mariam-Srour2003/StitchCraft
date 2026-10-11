@@ -801,6 +801,24 @@ describe('EditorStore', () => {
       expect(parts()).toEqual(['1,1 half-down 0', '3,3 half-down 0']);
     });
 
+    it('is a cross-stitch technique: ignored on other pattern types', async () => {
+      api.get.mockReturnValueOnce(
+        of(
+          makePattern({
+            type: 'diamond',
+            width: 4,
+            height: 4,
+            grid: encodeGrid(Array.from({ length: 4 }, () => [null, null, null, null])),
+          }),
+        ),
+      );
+      await store.load('pattern-1');
+      store.setSelectedPaletteIndex(0);
+      store.setTool('half-stitch');
+      store.placePartialAt(0.1, 0.1);
+      expect(parts()).toEqual([]);
+    });
+
     it('ignores cell clicks while a partial tool is active, and needs a colour', () => {
       store.setTool('quarter-stitch');
       store.applyTool(0, 0);

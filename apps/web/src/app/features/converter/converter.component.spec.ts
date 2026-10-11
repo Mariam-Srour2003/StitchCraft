@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import type { ConversionJob, ImageAnalysis } from '@stitchcraft/types';
 
@@ -259,6 +259,37 @@ describe('ConverterComponent', () => {
     expect(component['faceMarkers']()).toEqual([
       { box: { x: 0.5, y: 0.5, width: 0.1, height: 0.1 }, label: '4 st', tone: 'problem' },
     ]);
+  });
+
+  it('ignores a response that is out of date by the time it arrives', async () => {
+    const first = new Subject<ImageAnalysis>();
+    const second = new Subject<ImageAnalysis>();
+    conversionsApi.analyze.mockReturnValueOnce(first).mockReturnValueOnce(second);
+    await selectPhoto();
+    await settle(); // first check is in flight
+
+    component.setColorCount(40); // ...and is now out of date
+    first.next(makeAnalysis({ score: 11 }));
+    first.complete();
+    expect(component['analysisState']()).toBe('loading');
+    expect(component['analysis']()).toBeNull();
+
+    await settle();
+    second.next(makeAnalysis({ score: 88 }));
+    second.complete();
+    expect(component['analysisState']()).toBe('ready');
+    expect(component['analysis']()?.score).toBe(88);
+  });
+
+  it('drops a check that finishes after the photo was cleared', async () => {
+    const pending = new Subject<ImageAnalysis>();
+    conversionsApi.analyze.mockReturnValueOnce(pending);
+    await selectPhoto();
+    await settle();
+    component.reset();
+    pending.next(makeAnalysis());
+    expect(component['analysis']()).toBeNull();
+    expect(component['analysisState']()).toBe('idle');
   });
 
   it('shows the advisor error state but still allows converting', async () => {

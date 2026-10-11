@@ -594,7 +594,10 @@ export class EditorStore {
   placePartialAt(fx: number, fy: number): void {
     const tool = this.toolSignal();
     const paletteIndex = this.selectedPaletteIndexSignal();
-    if (!isPartialTool(tool) || paletteIndex === null) return;
+    // Partial stitches are a cross-stitch technique; drills and paint have no halves.
+    if (!isPartialTool(tool) || paletteIndex === null || this.typeSignal() !== 'cross_stitch') {
+      return;
+    }
     const at = partAt(
       fx,
       fy,

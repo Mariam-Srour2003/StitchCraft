@@ -17,6 +17,7 @@ import { SettingsStore } from '@app/core/settings/settings.store';
 import { ExportApiService } from '@app/data-access/export-api.service';
 import { EditorAction, resolveShortcut, SHORTCUTS } from '@app/domain/editor/shortcuts';
 import type { EditorTool } from '@app/domain/editor/tools';
+import { isPartialTool } from '@app/domain/editor/tools';
 import { measureText, SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
 import { Symmetry } from '@app/domain/grid/shapes';
 import { cellNoun, physicalUnit } from '@app/domain/pattern/pattern-rules';
@@ -382,6 +383,8 @@ export class EditorComponent {
       case 'save':
         return this.save();
       case 'tool':
+        // D/Q (half/quarter stitch) only exist for cross-stitch patterns, like their buttons.
+        if (isPartialTool(action.tool) && this.store.type() !== 'cross_stitch') return;
         return this.selectTool(action.tool);
       case 'toggle-highlight': {
         const index = this.store.selectedPaletteIndex();

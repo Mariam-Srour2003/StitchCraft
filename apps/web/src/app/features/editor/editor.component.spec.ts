@@ -159,6 +159,19 @@ describe('EditorComponent', () => {
       expect(store.tool()).toBe('fill');
       press('L');
       expect(store.tool()).toBe('line');
+      press('d');
+      expect(store.tool()).toBe('half-stitch');
+    });
+
+    it('ignores the half/quarter stitch keys on patterns that are not cross-stitch', async () => {
+      patternsApi.get.mockReturnValue(of({ ...makePattern(), type: 'diamond' }));
+      const diamond = TestBed.createComponent(EditorComponent);
+      diamond.componentRef.setInput('id', 'pattern-1');
+      diamond.detectChanges();
+      await diamond.whenStable();
+      const store = diamond.componentInstance['store'];
+      diamond.componentInstance.onKeydown(new KeyboardEvent('keydown', { key: 'q' }));
+      expect(store.tool()).toBe('paint');
     });
 
     it('undoes and redoes with Ctrl+Z / Ctrl+Shift+Z and prevents the browser default', () => {
