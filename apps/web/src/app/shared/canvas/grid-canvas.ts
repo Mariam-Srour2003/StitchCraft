@@ -10,7 +10,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { PaletteEntry } from '@stitchcraft/types';
-import { CellPosition, GridTheme, RenderMode, cellSizeForZoom, pixelToCell } from './grid-render-math';
+import {
+  CellPosition,
+  GridTheme,
+  RenderMode,
+  cellSizeForZoom,
+  pixelToCell,
+} from './grid-render-math';
 import { GridRenderingService } from './grid-rendering.service';
 
 const BASE_CELL_SIZE = 20;
@@ -23,7 +29,10 @@ const DEFAULT_THEME: GridTheme = {
   symbolText: '#2b2622',
 };
 
-export type GridCanvasTool = 'paint' | 'erase';
+export type GridCanvasTool = 'paint' | 'erase' | 'fill' | 'pick';
+
+/** Tools that act once per click rather than on every cell a drag passes over. */
+const SINGLE_CLICK_TOOLS: ReadonlySet<GridCanvasTool> = new Set(['fill', 'pick']);
 
 /**
  * Renders a pattern grid and turns pointer input into `cellEdit` events.
@@ -53,7 +62,10 @@ export class GridCanvas {
   readonly tool = input<GridCanvasTool>('paint');
   readonly theme = input<GridTheme>(DEFAULT_THEME);
 
-  /** Emitted for every cell touched during an active pointer-down drag. */
+  /**
+   * Emitted for every cell touched during an active pointer-down drag
+   * (paint/erase), or once per click for single-click tools (fill/pick).
+   */
   readonly cellEdit = output<CellPosition>();
   /** Emitted once when a paint/erase drag ends, so the caller can close an undo transaction. */
   readonly strokeEnd = output<void>();
@@ -114,7 +126,7 @@ export class GridCanvas {
   }
 
   onPointerMove(event: PointerEvent): void {
-    if (this.isPointerDown) this.paintAt(event);
+    if (this.isPointerDown && !SINGLE_CLICK_TOOLS.has(this.tool())) this.paintAt(event);
   }
 
   onPointerUp(): void {
@@ -134,7 +146,12 @@ export class GridCanvas {
 
     const cell = pixelToCell(px, py, this.cellSize(), this.width(), this.height());
     if (!cell) return;
-    if (this.lastPaintedCell && cell.x === this.lastPaintedCell.x && cell.y === this.lastPaintedCell.y) return;
+    if (
+      this.lastPaintedCell &&
+      cell.x === this.lastPaintedCell.x &&
+      cell.y === this.lastPaintedCell.y
+    )
+      return;
 
     this.lastPaintedCell = cell;
     this.cellEdit.emit(cell);

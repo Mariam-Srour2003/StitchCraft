@@ -67,6 +67,10 @@
             [selectedIndex]="store.selectedPaletteIndex()"
             (selectIndex)="store.setSelectedPaletteIndex($event)"
           />
+          <sc-dmc-thread-search
+            [paletteCodes]="paletteDmcCodes()"
+            (threadSelected)="store.addColorToPalette($event)"
+          />
           <sc-color-picker (colorAdded)="store.addColorToPalette($event)" />
         </section>
 

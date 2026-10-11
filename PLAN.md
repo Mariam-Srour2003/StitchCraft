@@ -47,9 +47,9 @@ Proceeding with these; flag if any should change:
    go-ahead to keep going each time (and, from M3 onward, an explicit instruction to proceed
    through all remaining milestones without stopping to ask). M4 (exports) onward follow in this
    same session.
-10. **Editor scope cuts, to revisit in a later milestone**: resize clears undo/redo history rather
-    than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet
-    (only the freeform color-picker) even though DMC browsing exists as its own page; pan is native
+10. **Editor scope cuts, to revisit in a later milestone**: ~~resize clears undo/redo history rather
+    than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet~~
+    (both closed in M7, see §6); pan is native
     browser scroll rather than a custom space-drag gesture; devicePixelRatio scaling isn't applied
     to the canvas bitmap; `grid-canvas`'s theme colors are a static JS constant rather than read
     from the CSS custom properties at render time, so the canvas doesn't follow dark mode the way
@@ -336,6 +336,28 @@ typed against `packages/types`, but do no real work yet.
   `navigate()`. Wired the optional `ai` service into `docker-compose.yml` behind a Compose profile
   (`docker compose --profile ai up`), off by default since `onnxruntime` makes for a large image
   and the app works fully without it.
+
+- **M7 — Editor tools** _(done)_: closes two of assumption #10's editor scope cuts and adds two
+  tools the original prototype brief asked for.
+  - **Fill (bucket) tool**: 4-connected flood fill of the clicked same-color region (including
+    blank areas) with the selected color, recorded as one undo step. The algorithm lives in a
+    pure, framework-free `features/editor/grid-ops.ts` (iterative, so a full 500x500 fill has no
+    recursion-depth risk; tested at that size) and copies only the rows it changes, so
+    `grid-canvas`'s skip-unchanged-rows repaint keeps working.
+  - **Pick (eyedropper) tool**: click a stitch to select its palette color, then drop back to
+    Paint. Fill and Pick are single-click tools: `grid-canvas` emits one `cellEdit` per click for
+    them rather than one per cell dragged over, so dragging with the bucket can't trigger dozens
+    of fills.
+  - **Resize is undoable**: the undo history is now a union of cell-edit steps and resize steps
+    (a before/after snapshot of width, height and row references - cheap, since rows are
+    immutable by convention). Undoing a shrink restores the dropped cells; earlier paint history
+    survives a resize instead of being wiped. Same-size "resizes" don't create a history step.
+  - **DMC thread search in the editor sidebar** (`sc-dmc-thread-search`): type a code or name,
+    click a result to add that thread to the pattern palette. Debounced, `switchMap`-cancelled
+    (a slow earlier response can never overwrite newer results), only queries once something is
+    typed, and marks threads already in the palette. `EditorStore.addColorToPalette` now selects
+    an existing entry instead of adding the same DMC code twice, which would otherwise split one
+    floss's count across two legend/shopping-list rows.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 

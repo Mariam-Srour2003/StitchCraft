@@ -7,23 +7,27 @@ import {
   Pattern,
   PaletteEntry,
   decodeGrid,
+  isDmcColor,
   encodeGrid,
 } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
 import { RenderMode } from '../../shared/canvas/grid-render-math';
+import { CellChange, applyChanges, floodFill, resizeGrid } from './grid-ops';
 import { LegendRow } from '../../shared/ui/legend/legend';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 
-export type EditorTool = 'paint' | 'erase';
+export type EditorTool = 'paint' | 'erase' | 'fill' | 'pick';
 
-interface UndoEntry {
-  x: number;
-  y: number;
-  before: number;
-  after: number;
+interface GridSnapshot {
+  width: number;
+  height: number;
+  grid: Int16Array[];
 }
 
-type UndoStroke = UndoEntry[];
+/** One undoable step: a paint/erase drag or fill (cell edits), or a canvas resize. */
+type HistoryStep =
+  | { kind: 'cells'; changes: CellChange[] }
+  | { kind: 'resize'; before: GridSnapshot; after: GridSnapshot };
 
 /**
  * Owns all pattern-editing state and business rules: the store mutates the
@@ -52,9 +56,9 @@ export class EditorStore {
   private readonly savingSignal = signal(false);
   private readonly dirtySignal = signal(false);
 
-  private readonly undoStackSignal = signal<UndoStroke[]>([]);
-  private readonly redoStackSignal = signal<UndoStroke[]>([]);
-  private currentStroke: UndoStroke | null = null;
+  private readonly undoStackSignal = signal<HistoryStep[]>([]);
+  private readonly redoStackSignal = signal<HistoryStep[]>([]);
+  private currentStroke: CellChange[] | null = null;
 
   readonly patternId = this.patternIdSignal.asReadonly();
   readonly name = this.nameSignal.asReadonly();
@@ -133,32 +137,70 @@ export class EditorStore {
     this.zoomPercentSignal.set(Math.min(400, Math.max(10, zoom)));
   }
 
+  /**
+   * Entry point for every cell the canvas reports, dispatched on the active
+   * tool. Paint/erase are called per cell during a drag; fill and pick only
+   * on pointer-down (the canvas doesn't emit drag moves for them).
+   */
+  applyTool(x: number, y: number): void {
+    switch (this.toolSignal()) {
+      case 'fill':
+        this.fillAt(x, y);
+        return;
+      case 'pick':
+        this.pickAt(x, y);
+        return;
+      default:
+        this.paintCell(x, y);
+    }
+  }
+
   /** Called for every cell the pointer touches during an active paint/erase drag. */
   paintCell(x: number, y: number): void {
-    const target =
-      this.toolSignal() === 'erase' ? EMPTY_CELL : this.selectedPaletteIndexSignal();
+    const target = this.toolSignal() === 'erase' ? EMPTY_CELL : this.selectedPaletteIndexSignal();
     if (target === null) return; // paint tool with no color selected yet: no-op
 
     const before = this.gridSignal()[y][x];
     if (before === target) return;
 
     this.currentStroke ??= [];
-    if (!this.currentStroke.some((e) => e.x === x && e.y === y)) {
-      this.currentStroke.push({ x, y, before, after: target });
-    } else {
+    const existing = this.currentStroke.find((e) => e.x === x && e.y === y);
+    if (existing) {
       // touched twice in one drag: keep the original `before`, update `after`
-      const entry = this.currentStroke.find((e) => e.x === x && e.y === y)!;
-      entry.after = target;
+      existing.after = target;
+    } else {
+      this.currentStroke.push({ x, y, before, after: target });
     }
 
     this.setCell(x, y, target);
     this.dirtySignal.set(true);
   }
 
+  /** Flood-fills the connected same-color region at (x, y) with the selected color, as one undo step. */
+  fillAt(x: number, y: number): void {
+    const target = this.selectedPaletteIndexSignal();
+    if (target === null) return;
+    const changes = floodFill(this.gridSignal(), x, y, target);
+    if (changes.length === 0) return;
+    this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
+    this.pushHistory({ kind: 'cells', changes });
+  }
+
+  /** Eyedropper: selects the palette color under (x, y) and switches back to paint. Empty cells are ignored. */
+  pickAt(x: number, y: number): void {
+    const value = this.gridSignal()[y]?.[x];
+    if (value === undefined || value === EMPTY_CELL) return;
+    this.selectedPaletteIndexSignal.set(value);
+    this.toolSignal.set('paint');
+  }
+
   /** Closes the current paint/erase drag into one undoable step. */
   endStroke(): void {
     if (this.currentStroke && this.currentStroke.length > 0) {
-      this.undoStackSignal.update((stack) => [...stack, this.currentStroke as UndoStroke]);
+      this.undoStackSignal.update((stack) => [
+        ...stack,
+        { kind: 'cells', changes: this.currentStroke as CellChange[] },
+      ]);
       this.redoStackSignal.set([]);
     }
     this.currentStroke = null;
@@ -167,49 +209,51 @@ export class EditorStore {
   undo(): void {
     const stack = this.undoStackSignal();
     if (stack.length === 0) return;
-    const stroke = stack[stack.length - 1];
-    for (const entry of stroke) this.setCell(entry.x, entry.y, entry.before);
+    const step = stack[stack.length - 1];
+    this.applyStep(step, 'before');
     this.undoStackSignal.set(stack.slice(0, -1));
-    this.redoStackSignal.update((redo) => [...redo, stroke]);
+    this.redoStackSignal.update((redo) => [...redo, step]);
     this.dirtySignal.set(true);
   }
 
   redo(): void {
     const stack = this.redoStackSignal();
     if (stack.length === 0) return;
-    const stroke = stack[stack.length - 1];
-    for (const entry of stroke) this.setCell(entry.x, entry.y, entry.after);
+    const step = stack[stack.length - 1];
+    this.applyStep(step, 'after');
     this.redoStackSignal.set(stack.slice(0, -1));
-    this.undoStackSignal.update((undo) => [...undo, stroke]);
+    this.undoStackSignal.update((undo) => [...undo, step]);
     this.dirtySignal.set(true);
   }
 
-  /** Rebuilds the grid at new dimensions, preserving overlapping (top-left anchored) cells. Not undoable. */
+  /** Rebuilds the grid at new dimensions, preserving overlapping (top-left anchored) cells. Undoable. */
   resize(newWidth: number, newHeight: number): void {
-    const oldGrid = this.gridSignal();
-    const oldWidth = this.widthSignal();
-
-    const nextGrid: Int16Array[] = Array.from({ length: newHeight }, (_, y) => {
-      const row = new Int16Array(newWidth).fill(EMPTY_CELL);
-      const oldRow = oldGrid[y];
-      if (oldRow) {
-        const copyWidth = Math.min(newWidth, oldWidth);
-        row.set(oldRow.subarray(0, copyWidth));
-      }
-      return row;
-    });
-
-    this.widthSignal.set(newWidth);
-    this.heightSignal.set(newHeight);
-    this.gridSignal.set(nextGrid);
-    this.undoStackSignal.set([]);
-    this.redoStackSignal.set([]);
+    const before = this.snapshot();
+    if (before.width === newWidth && before.height === newHeight) return;
+    const after: GridSnapshot = {
+      width: newWidth,
+      height: newHeight,
+      grid: resizeGrid(before.grid, before.width, newWidth, newHeight, EMPTY_CELL),
+    };
     this.currentStroke = null;
-    this.dirtySignal.set(true);
+    this.restore(after);
+    this.pushHistory({ kind: 'resize', before, after });
   }
 
+  /**
+   * Adds a color and selects it. A DMC thread already in the palette is just
+   * selected rather than added twice (two entries for one floss would split
+   * its stitch count across two legend rows).
+   */
   addColorToPalette(color: DmcColor | CustomColor): PaletteEntry {
     const palette = this.paletteSignal();
+    if (isDmcColor(color)) {
+      const existing = palette.find((e) => isDmcColor(e.color) && e.color.code === color.code);
+      if (existing) {
+        this.selectedPaletteIndexSignal.set(existing.index);
+        return existing;
+      }
+    }
     const symbol = assignSymbols(palette.length + 1)[palette.length];
     const entry: PaletteEntry = { index: palette.length, symbol, color };
     this.paletteSignal.set([...palette, entry]);
@@ -239,6 +283,30 @@ export class EditorStore {
     } finally {
       this.savingSignal.set(false);
     }
+  }
+
+  private pushHistory(step: HistoryStep): void {
+    this.undoStackSignal.update((stack) => [...stack, step]);
+    this.redoStackSignal.set([]);
+    this.dirtySignal.set(true);
+  }
+
+  private applyStep(step: HistoryStep, side: 'before' | 'after'): void {
+    if (step.kind === 'cells') {
+      this.gridSignal.set(applyChanges(this.gridSignal(), step.changes, side));
+    } else {
+      this.restore(step[side]);
+    }
+  }
+
+  private snapshot(): GridSnapshot {
+    return { width: this.widthSignal(), height: this.heightSignal(), grid: this.gridSignal() };
+  }
+
+  private restore(snapshot: GridSnapshot): void {
+    this.widthSignal.set(snapshot.width);
+    this.heightSignal.set(snapshot.height);
+    this.gridSignal.set(snapshot.grid);
   }
 
   private setCell(x: number, y: number, value: number): void {
