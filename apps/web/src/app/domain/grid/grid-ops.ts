@@ -144,13 +144,16 @@ export function replaceValue(
 /**
  * Drops palette entries no cell uses and re-numbers the rest (keeping their
  * order and symbols), rewriting the grid to the new indices. `remap[old]` is
- * the new index, or -1 for a removed entry.
+ * the new index, or -1 for a removed entry. `alsoUsed` marks colors that are
+ * in use elsewhere (e.g. only by backstitch) so they're kept.
  */
 export function compactPalette<T extends { index: number }>(
   palette: readonly T[],
   grid: readonly Int16Array[],
+  alsoUsed: Iterable<number> = [],
 ): { palette: T[]; grid: Int16Array[]; remap: Int16Array } {
   const used = new Uint8Array(palette.length);
+  for (const index of alsoUsed) if (index >= 0 && index < used.length) used[index] = 1;
   for (const row of grid) {
     for (const value of row) if (value >= 0 && value < used.length) used[value] = 1;
   }

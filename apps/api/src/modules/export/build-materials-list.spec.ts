@@ -78,4 +78,21 @@ describe('buildMaterialsListCsv', () => {
     const csv = buildMaterialsListCsv(makePattern({ type: 'color_by_number' }));
     expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count');
   });
+
+  it('adds a backstitch length column and counts its thread when lines exist', () => {
+    const csv = buildMaterialsListCsv(
+      makePattern({
+        meta: {
+          createdFrom: 'blank',
+          fabricCount: 14,
+          // 14 cells of line on 14-count = 2.54 cm, in the custom color (index 1)
+          backstitches: [{ x1: 0, y1: 0, x2: 14, y2: 0, paletteIndex: 1 }],
+        },
+      }),
+    );
+    const [header, ...rows] = csv.trim().split('\r\n');
+    expect(header).toBe('Symbol,DMC Code,Name,Hex,Count,Backstitch (cm),Skeins');
+    expect(rows).toContain('B,,"Sky, Custom",#123456,1,3,1');
+    expect(rows).toContain('A,310,Black,#000000,2,0,1');
+  });
 });

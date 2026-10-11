@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ExportResponse, isDmcColor } from '@stitchcraft/types';
+import { backstitchLength, ExportResponse, isDmcColor } from '@stitchcraft/types';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';
@@ -60,6 +60,11 @@ const SHAPE_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'rect-fill', label: 'Box ■' },
   { value: 'ellipse', label: 'Oval' },
   { value: 'ellipse-fill', label: 'Oval ●' },
+];
+
+const LINE_TOOLS: SegmentedToggleOption<EditorTool>[] = [
+  { value: 'backstitch', label: 'Backstitch' },
+  { value: 'backstitch-erase', label: 'Remove line' },
 ];
 
 const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
@@ -133,6 +138,7 @@ export class EditorComponent {
 
   protected readonly drawTools = DRAW_TOOLS;
   protected readonly shapeTools = SHAPE_TOOLS;
+  protected readonly lineTools = LINE_TOOLS;
   protected readonly modeOptions = MODE_OPTIONS;
   protected readonly symmetryOptions = SYMMETRY_OPTIONS;
   protected readonly workModeOptions = WORK_MODE_OPTIONS;
@@ -164,6 +170,14 @@ export class EditorComponent {
   protected readonly selectedEntry = computed(() => {
     const index = this.store.selectedPaletteIndex();
     return index === null ? null : (this.store.palette()[index] ?? null);
+  });
+
+  /** Line count and total length for the sidebar, in cm on the pattern's fabric. */
+  protected readonly backstitchSummary = computed(() => {
+    const lines = this.store.backstitches();
+    const cells = lines.reduce((sum, line) => sum + backstitchLength(line), 0);
+    const cm = Math.round((cells * 2.54) / this.unitSize());
+    return { lines: lines.length, cm };
   });
 
   protected readonly stampSize = computed(() => measureText(this.store.stampText()));

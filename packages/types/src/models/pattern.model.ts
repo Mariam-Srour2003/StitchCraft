@@ -1,3 +1,4 @@
+import type { Backstitch } from './backstitch';
 import type { EncodedRow } from './grid';
 import type { PaletteEntry } from './palette.model';
 
@@ -16,6 +17,8 @@ export interface PatternMeta {
    * dimensions mean "nothing stitched yet".
    */
   progress?: EncodedRow[];
+  /** Outline stitches drawn over the grid. Optional; absent means none. */
+  backstitches?: Backstitch[];
 }
 
 export interface Pattern {

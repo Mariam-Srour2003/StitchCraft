@@ -629,4 +629,109 @@ describe('EditorStore', () => {
       });
     });
   });
+
+  describe('backstitch', () => {
+    beforeEach(async () => {
+      api.get.mockReturnValueOnce(
+        of(
+          makePattern({
+            width: 4,
+            height: 4,
+            grid: encodeGrid(Array.from({ length: 4 }, () => [null, null, null, null])),
+          }),
+        ),
+      );
+      await store.load('pattern-1');
+      store.setSelectedPaletteIndex(0);
+    });
+
+    const lines = () => store.backstitches().map((l) => [l.x1, l.y1, l.x2, l.y2, l.paletteIndex]);
+
+    it('draws a line in the selected color as one undo step', () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 2, y: 2 });
+      expect(lines()).toEqual([[0, 0, 2, 2, 0]]);
+      expect(store.dirty()).toBe(true);
+      store.undo();
+      expect(lines()).toEqual([]);
+      store.redo();
+      expect(lines()).toHaveLength(1);
+    });
+
+    it('ignores zero-length lines, duplicates and reversed duplicates', () => {
+      store.addBackstitch({ x: 1, y: 1 }, { x: 1, y: 1 });
+      store.addBackstitch({ x: 0, y: 0 }, { x: 2, y: 0 });
+      store.addBackstitch({ x: 2, y: 0 }, { x: 0, y: 0 });
+      expect(lines()).toHaveLength(1);
+    });
+
+    it('recolors when the same line is drawn in another color', () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 2, y: 0 });
+      store.setSelectedPaletteIndex(1);
+      store.addBackstitch({ x: 2, y: 0 }, { x: 0, y: 0 });
+      expect(lines()).toEqual([[0, 0, 2, 0, 1]]);
+    });
+
+    it('does nothing without a selected color', () => {
+      store.setSelectedPaletteIndex(null);
+      store.addBackstitch({ x: 0, y: 0 }, { x: 1, y: 0 });
+      expect(lines()).toEqual([]);
+    });
+
+    it('removes the line nearest a click, undoably', () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 4, y: 0 });
+      store.addBackstitch({ x: 0, y: 3 }, { x: 4, y: 3 });
+      store.removeBackstitchAt(2, 2.8);
+      expect(lines()).toEqual([[0, 0, 4, 0, 0]]);
+      store.removeBackstitchAt(2, 1.5); // nothing within half a cell
+      expect(lines()).toHaveLength(1);
+      store.undo();
+      expect(lines()).toHaveLength(2);
+    });
+
+    it('ignores cell clicks while a line tool is active', () => {
+      store.setTool('backstitch');
+      store.applyTool(0, 0);
+      expect(store.grid()[0][0]).toBe(E);
+    });
+
+    it('moves lines with flips, rotation and resize', () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 1, y: 0 });
+      store.flipHorizontal();
+      expect(lines()).toEqual([[4, 0, 3, 0, 0]]);
+      store.flipVertical();
+      expect(lines()).toEqual([[4, 4, 3, 4, 0]]);
+      store.resize(2, 2); // line now outside the grid
+      expect(lines()).toEqual([]);
+      store.undo();
+      store.rotateClockwise();
+      expect(lines()).toEqual([[0, 4, 0, 3, 0]]);
+    });
+
+    it('follows palette operations', () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 1, y: 0 }); // color 0, used only by this line
+      store.setSelectedPaletteIndex(1);
+      store.addBackstitch({ x: 0, y: 1 }, { x: 1, y: 1 });
+
+      store.removeUnusedColors(); // both colors are used by lines: nothing removed
+      expect(store.palette()).toHaveLength(2);
+
+      store.replaceColor(0, 1);
+      expect(lines().map((l) => l[4])).toEqual([1, 1]);
+      store.undo();
+
+      store.deleteColor(0); // drops color 0's line and renumbers the other
+      expect(lines()).toEqual([[0, 1, 1, 1, 0]]);
+    });
+
+    it('adds line thread into the legend skeins and saves lines in meta', async () => {
+      store.addBackstitch({ x: 0, y: 0 }, { x: 4, y: 0 });
+      expect(store.legendRows()[0].count).toBe(0);
+      expect(store.legendRows()[0].buy).toBe(1);
+
+      api.update.mockReturnValueOnce(of(makePattern({ width: 4, height: 4 })));
+      await store.save();
+      const [, dto] = api.update.mock.calls[0];
+      expect(dto.meta.backstitches).toEqual([{ x1: 0, y1: 0, x2: 4, y2: 0, paletteIndex: 0 }]);
+    });
+  });
 });
