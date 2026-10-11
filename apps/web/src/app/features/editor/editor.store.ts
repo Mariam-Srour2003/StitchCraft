@@ -11,10 +11,10 @@ import {
   isDmcColor,
 } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
-import { LegendRow } from '../../shared/ui/legend/legend';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { PatternsApiService } from '../patterns/patterns-api.service';
+import { CellPosition, RenderMode } from '@app/shared/canvas/grid-render-math';
+import { LegendRow } from '@app/shared/ui/legend/legend';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
 import {
   CellChange,
   applyChanges,
@@ -25,8 +25,8 @@ import {
   replaceValue,
   resizeGrid,
   rotateClockwise,
-} from './grid-ops';
-import { textPoints } from './pixel-font';
+} from '@app/domain/grid/grid-ops';
+import { textPoints } from '@app/domain/grid/pixel-font';
 import {
   Symmetry,
   clipToGrid,
@@ -34,7 +34,7 @@ import {
   linePoints,
   mirrorPoints,
   rectPoints,
-} from './shapes';
+} from '@app/domain/grid/shapes';
 
 export type EditorTool =
   | 'paint'

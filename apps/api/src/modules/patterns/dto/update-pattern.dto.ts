@@ -1,6 +1,16 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsInt, IsObject, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsArray,
+  Max,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { UpdatePatternDto as UpdatePatternDtoShape } from '@stitchcraft/types';
+import { MAX_PATTERN_DIMENSION } from '@stitchcraft/types';
 
 export class UpdatePatternDto implements UpdatePatternDtoShape {
   @IsOptional()
@@ -12,12 +22,14 @@ export class UpdatePatternDto implements UpdatePatternDtoShape {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_PATTERN_DIMENSION)
   width?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_PATTERN_DIMENSION)
   height?: number;
 
   @IsOptional()

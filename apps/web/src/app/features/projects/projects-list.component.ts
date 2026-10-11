@@ -3,12 +3,12 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { Pattern, PatternType, Project } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { PatternsApiService } from '../patterns/patterns-api.service';
-import { Button } from '../../shared/ui/button/button';
-import { EmptyState } from '../../shared/ui/empty-state/empty-state';
-import { Modal } from '../../shared/ui/modal/modal';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { ProjectsApiService } from './projects-api.service';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import { Button } from '@app/shared/ui/button/button';
+import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
+import { Modal } from '@app/shared/ui/modal/modal';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { ProjectsApiService } from '@app/data-access/projects-api.service';
 
 const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
 

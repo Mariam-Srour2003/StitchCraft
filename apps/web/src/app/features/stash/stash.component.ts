@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import type { DmcColor } from '@stitchcraft/types';
-import { AuthStore } from '../../core/auth/auth.store';
-import { downloadText } from '../../shared/pattern/download';
-import { Button } from '../../shared/ui/button/button';
-import { DmcThreadSearchComponent } from '../editor/dmc-thread-search.component';
-import { ImportResult, StashStore } from './stash.store';
+import { AuthStore } from '@app/core/auth/auth.store';
+import { downloadText } from '@app/core/browser/download';
+import { Button } from '@app/shared/ui/button/button';
+import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
+import { ImportResult, StashStore } from '@app/data-access/stash.store';
 
 @Component({
   selector: 'sc-stash',

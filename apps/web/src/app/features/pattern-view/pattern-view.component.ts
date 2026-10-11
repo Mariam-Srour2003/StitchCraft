@@ -12,24 +12,24 @@ import { estimateMaterial } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { GridCanvas } from '../../shared/canvas/grid-canvas';
-import type { RenderMode } from '../../shared/canvas/grid-render-math';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { GridCanvas } from '@app/shared/canvas/grid-canvas';
+import type { RenderMode } from '@app/shared/canvas/grid-render-math';
 import {
   PATTERN_TYPE_LABELS,
   hoursRemaining,
   patternStats,
-} from '../../shared/pattern/pattern-stats';
-import { Button } from '../../shared/ui/button/button';
-import { EmptyState } from '../../shared/ui/empty-state/empty-state';
-import { Legend, LegendRow } from '../../shared/ui/legend/legend';
+} from '@app/domain/pattern/pattern-stats';
+import { Button } from '@app/shared/ui/button/button';
+import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
+import { Legend, LegendRow } from '@app/shared/ui/legend/legend';
 import {
   SegmentedToggle,
   SegmentedToggleOption,
-} from '../../shared/ui/segmented-toggle/segmented-toggle';
-import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
-import { Slider } from '../../shared/ui/slider/slider';
-import { PatternsApiService } from '../patterns/patterns-api.service';
+} from '@app/shared/ui/segmented-toggle/segmented-toggle';
+import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
+import { Slider } from '@app/shared/ui/slider/slider';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
 
 const VIEW_MODES: SegmentedToggleOption<RenderMode>[] = [
   { value: 'symbol', label: 'Chart' },

@@ -88,3 +88,12 @@ export function skeinFraction(stitchCount: number, fabricCount: number, strands?
   if (stitchCount <= 0) return 0;
   return stitchCount / stitchesPerSkein(fabricCount, strands);
 }
+
+/** Column header for shopping quantities by pattern type; null when the type isn't bought by count. */
+export function materialColumnLabel(
+  type: 'cross_stitch' | 'color_by_number' | 'diamond',
+): 'Skeins' | 'Drill bags' | null {
+  if (type === 'diamond') return 'Drill bags';
+  if (type === 'cross_stitch') return 'Skeins';
+  return null;
+}

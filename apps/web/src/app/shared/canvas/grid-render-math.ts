@@ -1,4 +1,7 @@
+import type { CellPosition } from '@app/domain/grid/cell';
 import type { PaletteEntry } from '@stitchcraft/types';
+
+export type { CellPosition };
 
 export type RenderMode =
   | 'x-stitch'
@@ -55,11 +58,6 @@ export const DARK_GRID_THEME: GridTheme = {
   regionLine: '#3b3530',
   regionText: '#5a524b',
 };
-
-export interface CellPosition {
-  x: number;
-  y: number;
-}
 
 /** Grid lines are bold every 10th line (line index 0, 10, 20, ...), matching cross-stitch chart convention. */
 export const BOLD_LINE_INTERVAL = 10;

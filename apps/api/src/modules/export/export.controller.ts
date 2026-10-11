@@ -11,7 +11,10 @@ export class ExportController {
   constructor(private readonly exportService: ExportService) {}
 
   @Post(':patternId')
-  create(@CurrentUser() user: RequestUser, @Param('patternId') patternId: string): Promise<ExportResponse> {
+  create(
+    @CurrentUser() user: RequestUser,
+    @Param('patternId') patternId: string,
+  ): Promise<ExportResponse> {
     return this.exportService.generate(user.id, patternId);
   }
 }

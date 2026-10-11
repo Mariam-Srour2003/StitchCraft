@@ -23,7 +23,9 @@ export class ConversionsProcessor extends WorkerHost {
 
   async process(job: Job<ConversionJobData, ConversionJobResult>): Promise<ConversionJobResult> {
     const { conversionJobId, projectId, patternName } = job.data;
-    const conversionJob = await this.prisma.conversionJob.findUniqueOrThrow({ where: { id: conversionJobId } });
+    const conversionJob = await this.prisma.conversionJob.findUniqueOrThrow({
+      where: { id: conversionJobId },
+    });
     const params = conversionJob.params as unknown as ConversionParams;
 
     await job.updateProgress(10);
@@ -72,7 +74,10 @@ export class ConversionsProcessor extends WorkerHost {
   @OnWorkerEvent('progress')
   async onProgress(job: Job<ConversionJobData>, progress: number | object): Promise<void> {
     const value = typeof progress === 'number' ? progress : 0;
-    await this.prisma.conversionJob.update({ where: { id: job.data.conversionJobId }, data: { progress: value } });
+    await this.prisma.conversionJob.update({
+      where: { id: job.data.conversionJobId },
+      data: { progress: value },
+    });
     this.gateway.emit(job.data.conversionJobId, {
       jobId: job.data.conversionJobId,
       status: 'processing',

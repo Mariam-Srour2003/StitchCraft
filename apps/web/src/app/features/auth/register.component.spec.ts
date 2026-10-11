@@ -2,7 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
-import { AuthStore } from '../../core/auth/auth.store';
+import { AuthStore } from '@app/core/auth/auth.store';
 import { RegisterComponent } from './register.component';
 
 describe('RegisterComponent', () => {

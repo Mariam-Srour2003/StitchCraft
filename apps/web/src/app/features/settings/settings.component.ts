@@ -3,9 +3,9 @@ import {
   CanvasThemePreference,
   SettingsStore,
   UserSettings,
-} from '../../core/settings/settings.store';
+} from '@app/core/settings/settings.store';
 import { stitchesPerSkein } from '@stitchcraft/color';
-import { Button } from '../../shared/ui/button/button';
+import { Button } from '@app/shared/ui/button/button';
 
 @Component({
   selector: 'sc-settings',

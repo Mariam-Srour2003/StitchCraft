@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { PaletteEntry } from '@stitchcraft/types';
-import { PaletteSwatch } from '../palette-swatch/palette-swatch';
+import { PaletteSwatch } from '@app/shared/ui/palette-swatch/palette-swatch';
 
 @Component({
   selector: 'sc-palette-grid',

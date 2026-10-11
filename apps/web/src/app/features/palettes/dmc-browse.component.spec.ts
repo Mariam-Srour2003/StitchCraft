@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import type { DmcColor, PaginatedResponse } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { DmcBrowseComponent } from './dmc-browse.component';
-import { PalettesApiService } from './palettes-api.service';
+import { PalettesApiService } from '@app/data-access/palettes-api.service';
 
 function makePage(items: DmcColor[], total = items.length): PaginatedResponse<DmcColor> {
   return { items, total, page: 1, pageSize: 60 };

@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { readJson, writeJson } from '../storage/browser-storage';
+import { readJson, writeJson } from '@app/core/browser/browser-storage';
 
 export type CanvasThemePreference = 'auto' | 'light' | 'dark';
 

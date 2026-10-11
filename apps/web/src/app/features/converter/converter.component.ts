@@ -1,14 +1,24 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { PatternType } from '@stitchcraft/types';
 import { interval, switchMap, takeWhile } from 'rxjs';
-import { Button } from '../../shared/ui/button/button';
-import { FileDrop } from '../../shared/ui/file-drop/file-drop';
-import { Progress } from '../../shared/ui/progress/progress';
-import { SegmentedToggle, SegmentedToggleOption } from '../../shared/ui/segmented-toggle/segmented-toggle';
-import { Slider } from '../../shared/ui/slider/slider';
-import { ConversionsApiService } from './conversions-api.service';
+import { Button } from '@app/shared/ui/button/button';
+import { FileDrop } from '@app/shared/ui/file-drop/file-drop';
+import { Progress } from '@app/shared/ui/progress/progress';
+import {
+  SegmentedToggle,
+  SegmentedToggleOption,
+} from '@app/shared/ui/segmented-toggle/segmented-toggle';
+import { Slider } from '@app/shared/ui/slider/slider';
+import { ConversionsApiService } from '@app/data-access/conversions-api.service';
 
 const TARGET_TYPE_OPTIONS: SegmentedToggleOption<PatternType>[] = [
   { value: 'cross_stitch', label: 'Cross-Stitch' },

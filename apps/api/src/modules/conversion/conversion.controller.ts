@@ -27,7 +27,9 @@ export class ConversionController {
   constructor(private readonly conversions: ConversionsService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async create(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File | undefined,

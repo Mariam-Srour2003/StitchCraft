@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ConversionJob, PatternType } from '@stitchcraft/types';
 import { Observable } from 'rxjs';
-import { ApiClient } from '../../core/api/api-client.service';
+import { ApiClient } from '@app/core/api/api-client.service';
 
 export interface CreateConversionParams {
   targetType: PatternType;
@@ -14,7 +14,11 @@ export interface CreateConversionParams {
 export class ConversionsApiService {
   private readonly api = inject(ApiClient);
 
-  create(projectId: string, file: File, params: CreateConversionParams): Observable<{ jobId: string }> {
+  create(
+    projectId: string,
+    file: File,
+    params: CreateConversionParams,
+  ): Observable<{ jobId: string }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('projectId', projectId);

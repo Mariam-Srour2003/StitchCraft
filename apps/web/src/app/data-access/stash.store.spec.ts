@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { AuthStore } from '../../core/auth/auth.store';
+import { AuthStore } from '@app/core/auth/auth.store';
 import { StashStore, compareDmcCodes, parseThreadList } from './stash.store';
 
 describe('parseThreadList', () => {

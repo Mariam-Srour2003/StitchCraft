@@ -53,7 +53,8 @@ export class ProjectsService {
       include: { patterns: true },
     });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
     return project;
   }
 }

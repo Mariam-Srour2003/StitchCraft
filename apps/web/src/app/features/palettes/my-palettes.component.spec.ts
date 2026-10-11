@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import type { Palette } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { MyPalettesComponent } from './my-palettes.component';
-import { PalettesApiService } from './palettes-api.service';
+import { PalettesApiService } from '@app/data-access/palettes-api.service';
 
 const savedPalette: Palette = {
   id: 'pal-1',

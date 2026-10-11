@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import type { PaletteEntry } from '@stitchcraft/types';
 import { PaletteGrid } from './palette-grid';
-import { PaletteSwatch } from '../palette-swatch/palette-swatch';
+import { PaletteSwatch } from '@app/shared/ui/palette-swatch/palette-swatch';
 
 describe('PaletteGrid', () => {
   let fixture: ComponentFixture<PaletteGrid>;

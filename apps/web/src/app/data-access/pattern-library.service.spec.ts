@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { ProjectsApiService } from '../projects/projects-api.service';
+import { ProjectsApiService } from './projects-api.service';
 import { PatternLibraryService } from './pattern-library.service';
 import { PatternsApiService } from './patterns-api.service';
 

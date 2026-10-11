@@ -55,7 +55,8 @@ export class PalettesService {
   async remove(userId: string, id: string): Promise<void> {
     const palette = await this.prisma.palette.findUnique({ where: { id } });
     if (!palette) throw new NotFoundException('Palette not found');
-    if (palette.ownerId !== userId) throw new ForbiddenException('You do not have access to this palette');
+    if (palette.ownerId !== userId)
+      throw new ForbiddenException('You do not have access to this palette');
 
     await this.prisma.palette.delete({ where: { id } });
   }

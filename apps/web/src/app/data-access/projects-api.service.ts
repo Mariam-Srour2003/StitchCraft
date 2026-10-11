@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CreateProjectDto, Project } from '@stitchcraft/types';
 import { Observable } from 'rxjs';
-import { ApiClient } from '../../core/api/api-client.service';
+import { ApiClient } from '@app/core/api/api-client.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectsApiService {

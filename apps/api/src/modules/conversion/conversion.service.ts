@@ -24,7 +24,8 @@ export class ConversionsService {
   ): Promise<{ jobId: string }> {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
 
     const sourceImageRef = `uploads/${userId}/${randomUUID()}-${file.originalname}`;
     await this.storage.put(sourceImageRef, file.buffer, file.mimetype);

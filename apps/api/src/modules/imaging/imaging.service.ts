@@ -16,7 +16,10 @@ export interface ConvertImageOptions {
 export class ImagingService {
   constructor(@Inject(AI_PROVIDER) private readonly aiProvider: AiProvider) {}
 
-  async convertImageToGrid(imageBuffer: Buffer, opts: ConvertImageOptions): Promise<BuildGridResult> {
+  async convertImageToGrid(
+    imageBuffer: Buffer,
+    opts: ConvertImageOptions,
+  ): Promise<BuildGridResult> {
     let working = imageBuffer;
 
     // Both AI steps degrade gracefully: if requested but no provider is

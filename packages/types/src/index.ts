@@ -11,3 +11,4 @@ export * from './dto/pattern.dto';
 export * from './dto/palette.dto';
 export * from './dto/conversion.dto';
 export * from './dto/export.dto';
+export * from './utils/csv';

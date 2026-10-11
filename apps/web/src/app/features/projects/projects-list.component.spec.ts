@@ -3,9 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import type { Pattern, Project } from '@stitchcraft/types';
 import { of } from 'rxjs';
-import { PatternsApiService } from '../patterns/patterns-api.service';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
 import { ProjectsListComponent } from './projects-list.component';
-import { ProjectsApiService } from './projects-api.service';
+import { ProjectsApiService } from '@app/data-access/projects-api.service';
 
 const project: Project = {
   id: 'proj-1',

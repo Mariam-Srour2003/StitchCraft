@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { assignSymbols } from '@stitchcraft/color';
 import { CustomColor, Palette, PaletteEntry } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { Button } from '../../shared/ui/button/button';
-import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
-import { EmptyState } from '../../shared/ui/empty-state/empty-state';
-import { Modal } from '../../shared/ui/modal/modal';
-import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
-import { PalettesApiService } from './palettes-api.service';
+import { Button } from '@app/shared/ui/button/button';
+import { ColorPicker } from '@app/shared/ui/color-picker/color-picker';
+import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
+import { Modal } from '@app/shared/ui/modal/modal';
+import { PaletteGrid } from '@app/shared/ui/palette-grid/palette-grid';
+import { PalettesApiService } from '@app/data-access/palettes-api.service';
 
 @Component({
   selector: 'sc-my-palettes',
@@ -73,7 +73,10 @@ export class MyPalettesComponent {
     await firstValueFrom(
       this.palettesApi.create({
         name: this.newName(),
-        entries: this.newEntries().map((e) => ({ color: e.color as CustomColor, symbol: e.symbol })),
+        entries: this.newEntries().map((e) => ({
+          color: e.color as CustomColor,
+          symbol: e.symbol,
+        })),
       }),
     );
     this.closeCreate();

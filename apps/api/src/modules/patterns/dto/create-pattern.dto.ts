@@ -1,6 +1,17 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsInt, IsObject, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsArray,
+  Max,
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { CreatePatternDto as CreatePatternDtoShape, PatternType } from '@stitchcraft/types';
+import { MAX_PATTERN_DIMENSION } from '@stitchcraft/types';
 
 const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
 
@@ -18,11 +29,13 @@ export class CreatePatternDto implements CreatePatternDtoShape {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_PATTERN_DIMENSION)
   width!: number;
 
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_PATTERN_DIMENSION)
   height!: number;
 
   @IsOptional()

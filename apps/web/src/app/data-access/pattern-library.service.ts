@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import type { Pattern, Project } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { ProjectsApiService } from '../projects/projects-api.service';
+import { ProjectsApiService } from './projects-api.service';
 import { PatternsApiService } from './patterns-api.service';
 
 export interface LibraryPattern {

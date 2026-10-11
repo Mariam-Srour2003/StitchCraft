@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AuthResponse, LoginDto, RegisterDto, User } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { ApiClient } from '../api/api-client.service';
+import { ApiClient } from '@app/core/api/api-client.service';
 import { TokenStorageService } from './token-storage.service';
 
 /**
@@ -44,7 +44,10 @@ export class AuthStore {
   }
 
   private applyAuthResponse(response: AuthResponse): void {
-    this.tokenStorage.save({ accessToken: response.accessToken, refreshToken: response.refreshToken });
+    this.tokenStorage.save({
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    });
     this.currentUserSignal.set(response.user);
   }
 }

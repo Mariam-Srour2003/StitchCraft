@@ -10,8 +10,10 @@ export class LocalStorageAdapter implements StorageAdapter {
   private readonly publicBaseUrl: string;
 
   constructor(config: ConfigService) {
-    this.rootDir = config.get<string>('STORAGE_LOCAL_DIR') ?? path.join(process.cwd(), 'storage', 'local');
-    this.publicBaseUrl = config.get<string>('STORAGE_PUBLIC_BASE_URL') ?? 'http://localhost:3000/api/storage';
+    this.rootDir =
+      config.get<string>('STORAGE_LOCAL_DIR') ?? path.join(process.cwd(), 'storage', 'local');
+    this.publicBaseUrl =
+      config.get<string>('STORAGE_PUBLIC_BASE_URL') ?? 'http://localhost:3000/api/storage';
   }
 
   async put(key: string, data: Buffer): Promise<string> {

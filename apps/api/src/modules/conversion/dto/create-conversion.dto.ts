@@ -1,6 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { PatternType } from '@stitchcraft/types';
+import { MAX_PATTERN_DIMENSION, PatternType } from '@stitchcraft/types';
 
 const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
 
@@ -21,13 +21,13 @@ export class CreateConversionDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(500)
+  @Max(MAX_PATTERN_DIMENSION)
   width!: number;
 
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(500)
+  @Max(MAX_PATTERN_DIMENSION)
   height!: number;
 
   @Type(() => Number)

@@ -9,6 +9,13 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Pattern saves carry the whole RLE grid plus stitching progress. Express's
+  // default 100 kB JSON limit rejects detailed patterns (a converted photo is
+  // easily 150 kB+); the worst case - a 500x500 grid where every cell differs,
+  // plus its progress grid - is about 4 MB, so 8 MB leaves headroom while
+  // still bounding request size.
+  app.useBodyParser('json', { limit: '8mb' });
+
   app.setGlobalPrefix('api');
   app.enableCors({ origin: process.env.WEB_ORIGIN ?? 'http://localhost:4200', credentials: true });
   app.useGlobalPipes(

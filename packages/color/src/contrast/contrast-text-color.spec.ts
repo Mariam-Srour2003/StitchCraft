@@ -10,8 +10,12 @@ describe('contrastTextColor', () => {
   });
 
   it('respects custom light/dark overrides', () => {
-    expect(contrastTextColor({ r: 0, g: 0, b: 0 }, { light: '#eeeeee', dark: '#111111' })).toBe('#eeeeee');
-    expect(contrastTextColor({ r: 255, g: 255, b: 255 }, { light: '#eeeeee', dark: '#111111' })).toBe('#111111');
+    expect(contrastTextColor({ r: 0, g: 0, b: 0 }, { light: '#eeeeee', dark: '#111111' })).toBe(
+      '#eeeeee',
+    );
+    expect(
+      contrastTextColor({ r: 255, g: 255, b: 255 }, { light: '#eeeeee', dark: '#111111' }),
+    ).toBe('#111111');
   });
 
   it('picks dark text for a mid-tone that is still on the light side', () => {

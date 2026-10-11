@@ -10,35 +10,35 @@ import {
 } from '@angular/core';
 import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
+import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
 import {
   CellPosition,
   DARK_GRID_THEME,
   GridTheme,
   LIGHT_GRID_THEME,
   RenderMode,
-} from '../../shared/canvas/grid-render-math';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { Button } from '../../shared/ui/button/button';
-import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
-import { IconButton } from '../../shared/ui/icon-button/icon-button';
-import { Legend } from '../../shared/ui/legend/legend';
-import { Modal } from '../../shared/ui/modal/modal';
-import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
-import { Progress } from '../../shared/ui/progress/progress';
+} from '@app/shared/canvas/grid-render-math';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { Button } from '@app/shared/ui/button/button';
+import { ColorPicker } from '@app/shared/ui/color-picker/color-picker';
+import { IconButton } from '@app/shared/ui/icon-button/icon-button';
+import { Legend } from '@app/shared/ui/legend/legend';
+import { Modal } from '@app/shared/ui/modal/modal';
+import { PaletteGrid } from '@app/shared/ui/palette-grid/palette-grid';
+import { Progress } from '@app/shared/ui/progress/progress';
 import {
   SegmentedToggle,
   SegmentedToggleOption,
-} from '../../shared/ui/segmented-toggle/segmented-toggle';
-import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
-import { Slider } from '../../shared/ui/slider/slider';
-import { Toolbar } from '../../shared/ui/toolbar/toolbar';
-import { DmcThreadSearchComponent } from './dmc-thread-search.component';
+} from '@app/shared/ui/segmented-toggle/segmented-toggle';
+import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
+import { Slider } from '@app/shared/ui/slider/slider';
+import { Toolbar } from '@app/shared/ui/toolbar/toolbar';
+import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
 import { EditorStore, EditorTool } from './editor.store';
-import { ExportApiService } from './export-api.service';
-import { SUPPORTED_CHARACTERS, measureText } from './pixel-font';
-import { Symmetry } from './shapes';
-import { SHORTCUTS } from './shortcuts';
+import { ExportApiService } from '@app/data-access/export-api.service';
+import { SUPPORTED_CHARACTERS, measureText } from '@app/domain/grid/pixel-font';
+import { Symmetry } from '@app/domain/grid/shapes';
+import { SHORTCUTS } from '@app/domain/editor/shortcuts';
 
 const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },

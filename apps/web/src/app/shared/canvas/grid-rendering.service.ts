@@ -7,7 +7,7 @@ import {
   isBoldGridLine,
   RenderMode,
 } from './grid-render-math';
-import { RegionMap, computeRegions, isRegionEdge } from './regions';
+import { RegionMap, computeRegions, isRegionEdge } from '@app/domain/grid/regions';
 
 export interface GridRenderParams {
   /** Decoded grid rows; a cell value of -1 (EMPTY_CELL from @stitchcraft/types) means unpainted. */
