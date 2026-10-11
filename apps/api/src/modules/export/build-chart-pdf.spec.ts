@@ -65,4 +65,17 @@ describe('buildChartPdf', () => {
     // two chart pages + one legend page
     expect((text.match(/\/Type \/Page\b/g) ?? []).length).toBe(3);
   });
+
+  it('draws partial stitches and lists them in the legend', async () => {
+    const plain = await buildChartPdf(makePattern());
+    const withPartials = await buildChartPdf(
+      makePattern({
+        meta: {
+          createdFrom: 'blank',
+          partialStitches: [{ x: 1, y: 1, part: 'half-down', paletteIndex: 0 }],
+        },
+      }),
+    );
+    expect(withPartials.length).toBeGreaterThan(plain.length);
+  });
 });

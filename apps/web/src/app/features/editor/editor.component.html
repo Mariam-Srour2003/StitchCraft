@@ -38,6 +38,14 @@
             (valueChange)="selectTool($event)"
             ariaLabel="Backstitch tool"
           />
+          @if (store.type() === 'cross_stitch') {
+            <sc-segmented-toggle
+              [options]="partialTools"
+              [value]="store.tool()"
+              (valueChange)="selectTool($event)"
+              ariaLabel="Partial stitch tool"
+            />
+          }
         }
         <sc-segmented-toggle
           [options]="modeOptions"
@@ -68,6 +76,18 @@
       />
     </header>
 
+    @if (!store.stitchMode() && store.tool() === 'half-stitch') {
+      <p class="editor-page__hint" role="status">
+        Half stitch: click near a corner of a cell to stitch the diagonal through it. Click the same
+        stitch again to remove it.
+      </p>
+    } @else if (!store.stitchMode() && store.tool() === 'quarter-stitch') {
+      <p class="editor-page__hint" role="status">
+        Quarter stitch: click a quarter of a cell to stitch from that corner to the centre. Combine
+        with a half stitch for a three-quarter stitch.
+      </p>
+    }
+
     @if (store.stitchMode()) {
       <p class="editor-page__hint" role="status">
         Stitching mode: click or drag over stitches to mark them done. Click a legend row to
@@ -90,11 +110,13 @@
         [showCenter]="store.showCenter()"
         [theme]="canvasTheme()"
         [backstitches]="store.backstitches()"
+        [partialStitches]="store.partialStitches()"
         [previewColor]="selectedEntry()?.color?.hex ?? null"
         (cellEdit)="onCellEdit($event)"
         (strokeEnd)="store.endStroke()"
         (lineDraw)="store.addBackstitch($event.from, $event.to)"
         (lineErase)="store.removeBackstitchAt($event.x, $event.y)"
+        (partialPlace)="store.placePartialAt($event.x, $event.y)"
       />
 
       <aside class="editor-page__sidebar">
@@ -250,6 +272,12 @@
           <p class="editor-page__muted" role="status">
             Backstitch: {{ backstitchSummary().lines }} line(s), about
             {{ backstitchSummary().cm }} cm (included in the skein counts)
+          </p>
+        }
+        @if (partialSummary().total > 0) {
+          <p class="editor-page__muted" role="status">
+            Partial stitches: {{ partialSummary().halves }} half,
+            {{ partialSummary().quarters }} quarter (included in the skein counts)
           </p>
         }
 

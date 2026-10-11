@@ -59,7 +59,7 @@ export async function buildPaintByNumberPdf(pattern: Pattern): Promise<Buffer> {
       doc.fontSize(10).fillColor('#000000').text(`${pattern.name} - ${label}`, MARGIN, MARGIN, {
         width: AREA_WIDTH,
       });
-      drawCanvas(doc, pattern, map, sheet, cell, MARGIN, MARGIN + TITLE_HEIGHT);
+      drawCanvas(doc, map, sheet, cell, MARGIN, MARGIN + TITLE_HEIGHT);
     });
 
     doc.end();
@@ -176,7 +176,6 @@ function drawReferencePage(
 /** Region outlines (merged into long straight segments) and one number per region. */
 function drawCanvas(
   doc: PdfDoc,
-  pattern: Pattern,
   map: RegionMap,
   sheet: Sheet,
   cell: number,

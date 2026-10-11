@@ -12,12 +12,14 @@ import {
   encodeGrid,
   isDmcColor,
   PaletteEntry,
+  PartialStitch,
+  partialThreadByIndex,
   Pattern,
 } from '@stitchcraft/types';
 
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
-import { EditorTool, isLineTool, isShapeTool } from '@app/domain/editor/tools';
+import { EditorTool, isLineTool, isPartialTool, isShapeTool } from '@app/domain/editor/tools';
 import { UndoHistory } from '@app/domain/editor/undo-history';
 import {
   clipLines,
@@ -42,6 +44,18 @@ import {
   resizeGrid,
   rotateClockwise,
 } from '@app/domain/grid/grid-ops';
+import {
+  clipPartials,
+  flipPartialsHorizontal,
+  flipPartialsVertical,
+  partAt,
+  placePartial,
+  recolorPartials,
+  remapPartials,
+  removePartialsInCells,
+  rotatePartialsClockwise,
+  usedPartialColors,
+} from '@app/domain/grid/partial-stitches';
 import { textPoints } from '@app/domain/grid/pixel-font';
 import { RowTally } from '@app/domain/grid/row-tally';
 import {
@@ -72,6 +86,13 @@ interface PatternSnapshot {
   palette: PaletteEntry[];
   progress: Int16Array[];
   backstitches: Backstitch[];
+  partialStitches: readonly PartialStitch[];
+}
+
+/** A change to the partial stitches, carried by the step that made it. */
+interface PartialsChange {
+  before: readonly PartialStitch[];
+  after: readonly PartialStitch[];
 }
 
 /**
@@ -81,7 +102,8 @@ interface PatternSnapshot {
  * which is cheap because rows are never mutated in place.
  */
 type HistoryStep =
-  | { kind: 'cells'; changes: CellChange[] }
+  /** Cell edits; painting or erasing over half/quarter stitches also removes them (`partials`). */
+  | { kind: 'cells'; changes: CellChange[]; partials?: PartialsChange }
   | { kind: 'lines'; before: Backstitch[]; after: Backstitch[] }
   | { kind: 'snapshot'; before: PatternSnapshot; after: PatternSnapshot };
 
@@ -105,6 +127,7 @@ export class EditorStore {
   private readonly gridSignal = signal<Int16Array[]>([]);
   private readonly progressSignal = signal<Int16Array[]>([]);
   private readonly backstitchesSignal = signal<Backstitch[]>([]);
+  private readonly partialsSignal = signal<readonly PartialStitch[]>([]);
 
   private readonly toolSignal = signal<EditorTool>('paint');
   private readonly selectedPaletteIndexSignal = signal<number | null>(null);
@@ -129,6 +152,8 @@ export class EditorStore {
   private shapeStart: CellPosition | null = null;
   private shapePreview: CellChange[] = [];
   private stitchStrokeValue: number | null = null;
+  /** Partial stitches as they were before the current paint/erase drag removed any. */
+  private strokePartialsBefore: readonly PartialStitch[] | null = null;
 
   readonly patternId = this.patternIdSignal.asReadonly();
   readonly name = this.nameSignal.asReadonly();
@@ -140,6 +165,7 @@ export class EditorStore {
   readonly grid = this.gridSignal.asReadonly();
   readonly progress = this.progressSignal.asReadonly();
   readonly backstitches = this.backstitchesSignal.asReadonly();
+  readonly partialStitches = this.partialsSignal.asReadonly();
 
   readonly tool = this.toolSignal.asReadonly();
   readonly selectedPaletteIndex = this.selectedPaletteIndexSignal.asReadonly();
@@ -172,6 +198,7 @@ export class EditorStore {
     const fabricCount = this.metaSignal().fabricCount;
     const strands = this.settings.strands();
     const lineLengths = backstitchLengthByIndex(this.backstitchesSignal(), palette.length);
+    const partials = partialThreadByIndex(this.partialsSignal(), palette.length);
     return palette.map((entry, i) => ({
       entry,
       count: counts[i],
@@ -180,6 +207,7 @@ export class EditorStore {
         fabricCount,
         strands,
         backstitchLength: lineLengths[i],
+        partialStitches: partials[i],
       })?.quantity,
     }));
   });
@@ -221,9 +249,11 @@ export class EditorStore {
     this.gridSignal.set(decodeGrid(pattern.grid, pattern.width));
     this.progressSignal.set(decodeProgress(pattern.meta.progress, pattern.width, pattern.height));
     this.backstitchesSignal.set(pattern.meta.backstitches ?? []);
+    this.partialsSignal.set(pattern.meta.partialStitches ?? []);
     this.history.clear();
     this.historyVersion.update((v) => v + 1);
     this.currentStroke = null;
+    this.strokePartialsBefore = null;
     this.shapeStart = null;
     this.shapePreview = [];
     this.dirtySignal.set(false);
@@ -290,7 +320,9 @@ export class EditorStore {
       return;
     }
     const tool = this.toolSignal();
-    if (isLineTool(tool)) return; // line tools act on corners: addBackstitch / removeBackstitchAt
+    // line tools act on corners (addBackstitch / removeBackstitchAt), partial
+    // tools on points inside a cell (placePartialAt)
+    if (isLineTool(tool) || isPartialTool(tool)) return;
     if (isShapeTool(tool)) {
       this.dragShape(x, y);
       return;
@@ -331,18 +363,31 @@ export class EditorStore {
    */
   private paintPoints(points: readonly CellPosition[], target: number): void {
     const width = this.widthSignal();
-    const stroke = (this.currentStroke ??= new Map());
     const changes = this.changesFor(this.gridSignal(), points, target);
-    if (changes.length === 0) return;
-    for (const change of changes) {
-      const key = change.y * width + change.x;
-      const existing = stroke.get(key);
-      // Touched twice in one drag: keep the original `before`, update `after`.
-      if (existing) existing.after = target;
-      else stroke.set(key, { ...change });
+    if (changes.length > 0) {
+      const stroke = (this.currentStroke ??= new Map());
+      for (const change of changes) {
+        const key = change.y * width + change.x;
+        const existing = stroke.get(key);
+        // Touched twice in one drag: keep the original `before`, update `after`.
+        if (existing) existing.after = target;
+        else stroke.set(key, { ...change });
+      }
+      this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
     }
-    this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
-    this.dirtySignal.set(true);
+    // A full stitch (or erasing) replaces any half/quarter stitches in those
+    // cells - even when the cell itself was already that colour or empty.
+    const partials = this.partialsSignal();
+    const cleared = removePartialsInCells(
+      partials,
+      new Set(points.map((p) => p.y * width + p.x)),
+      width,
+    );
+    if (cleared !== partials) {
+      this.strokePartialsBefore ??= partials;
+      this.partialsSignal.set(cleared);
+    }
+    if (changes.length > 0 || cleared !== partials) this.dirtySignal.set(true);
   }
 
   /**
@@ -471,13 +516,21 @@ export class EditorStore {
 
   /** Closes the current drag (paint/erase stroke, shape, or stitch marking) into one undoable step. */
   endStroke(): void {
-    if (this.currentStroke && this.currentStroke.size > 0) {
-      this.pushHistory({ kind: 'cells', changes: [...this.currentStroke.values()] });
+    const partials = this.strokePartialsBefore
+      ? { before: this.strokePartialsBefore, after: this.partialsSignal() }
+      : undefined;
+    if ((this.currentStroke && this.currentStroke.size > 0) || partials) {
+      this.pushHistory({
+        kind: 'cells',
+        changes: [...(this.currentStroke?.values() ?? [])],
+        ...(partials ? { partials } : {}),
+      });
     }
     if (this.shapePreview.length > 0) {
       this.pushHistory({ kind: 'cells', changes: this.shapePreview });
     }
     this.currentStroke = null;
+    this.strokePartialsBefore = null;
     this.shapeStart = null;
     this.shapePreview = [];
     this.stitchStrokeValue = null;
@@ -520,6 +573,38 @@ export class EditorStore {
     this.pushHistory({ kind: 'lines', before, after });
   }
 
+  // ---- half and quarter stitches ----------------------------------------------
+
+  /**
+   * Places a half or quarter stitch (by the active tool) in the selected
+   * colour at a point given in fractional cells. Overlapping parts in that
+   * cell are replaced, and a full stitch there is removed - one undo step.
+   * Placing exactly the same stitch again removes it.
+   */
+  placePartialAt(fx: number, fy: number): void {
+    const tool = this.toolSignal();
+    const paletteIndex = this.selectedPaletteIndexSignal();
+    if (!isPartialTool(tool) || paletteIndex === null) return;
+    const at = partAt(
+      fx,
+      fy,
+      tool === 'half-stitch' ? 'half' : 'quarter',
+      this.widthSignal(),
+      this.heightSignal(),
+    );
+    if (!at) return;
+    const before = this.partialsSignal();
+    const stitch: PartialStitch = { ...at, paletteIndex };
+    const after = placePartial(before, stitch);
+    const added = after.includes(stitch); // false when this click removed the same stitch
+    const full = this.gridSignal()[at.y][at.x];
+    const changes: CellChange[] =
+      added && full !== EMPTY_CELL ? [{ x: at.x, y: at.y, before: full, after: EMPTY_CELL }] : [];
+    if (changes.length > 0) this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
+    this.partialsSignal.set(after);
+    this.pushHistory({ kind: 'cells', changes, partials: { before, after } });
+  }
+
   // ---- history -------------------------------------------------------------
 
   undo(): void {
@@ -549,6 +634,7 @@ export class EditorStore {
       grid: resizeGrid(before.grid, before.width, newWidth, newHeight, EMPTY_CELL),
       progress: resizeGrid(before.progress, before.width, newWidth, newHeight, NOT_DONE),
       backstitches: clipLines(before.backstitches, newWidth, newHeight),
+      partialStitches: clipPartials(before.partialStitches, newWidth, newHeight),
     });
   }
 
@@ -559,6 +645,7 @@ export class EditorStore {
       grid: flipHorizontal(before.grid),
       progress: flipHorizontal(before.progress),
       backstitches: flipLinesHorizontal(before.backstitches, before.width),
+      partialStitches: flipPartialsHorizontal(before.partialStitches, before.width),
     });
   }
 
@@ -569,6 +656,7 @@ export class EditorStore {
       grid: flipVertical(before.grid),
       progress: flipVertical(before.progress),
       backstitches: flipLinesVertical(before.backstitches, before.height),
+      partialStitches: flipPartialsVertical(before.partialStitches, before.height),
     });
   }
 
@@ -582,13 +670,16 @@ export class EditorStore {
       grid: rotateClockwise(before.grid, before.width, before.height),
       progress: rotateClockwise(before.progress, before.width, before.height),
       backstitches: rotateLinesClockwise(before.backstitches, before.height),
+      partialStitches: rotatePartialsClockwise(before.partialStitches, before.height),
     });
   }
 
-  /** Recolors every stitch (and backstitch line) of one palette color with another, as one undo step. */
+  /** Recolors every stitch (backstitch and partial stitches too) of one palette color with another, as one undo step. */
   replaceColor(from: number, to: number): void {
     const changes = replaceValue(this.gridSignal(), from, to);
-    const linesChange = this.backstitchesSignal().some((l) => l.paletteIndex === from);
+    const linesChange =
+      this.backstitchesSignal().some((l) => l.paletteIndex === from) ||
+      this.partialsSignal().some((s) => s.paletteIndex === from);
     if (changes.length === 0 && !linesChange) return;
     if (!linesChange) {
       this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
@@ -600,6 +691,7 @@ export class EditorStore {
       ...before,
       grid: applyChanges(before.grid, changes, 'after'),
       backstitches: recolorLines(before.backstitches, from, to),
+      partialStitches: recolorPartials(before.partialStitches, from, to),
     });
   }
 
@@ -609,7 +701,10 @@ export class EditorStore {
     const { palette, grid, remap } = compactPalette(
       before.palette,
       before.grid,
-      usedLineColors(before.backstitches),
+      new Set([
+        ...usedLineColors(before.backstitches),
+        ...usedPartialColors(before.partialStitches),
+      ]),
     );
     if (palette.length === before.palette.length) return;
     this.remapSelection(remap); // before restore(), which clears out-of-range selections
@@ -618,6 +713,7 @@ export class EditorStore {
       palette,
       grid,
       backstitches: remapLines(before.backstitches, remap),
+      partialStitches: remapPartials(before.partialStitches, remap),
     });
   }
 
@@ -640,6 +736,7 @@ export class EditorStore {
       palette,
       grid,
       backstitches: remapLines(before.backstitches, remap),
+      partialStitches: remapPartials(before.partialStitches, remap),
     });
   }
 
@@ -688,7 +785,11 @@ export class EditorStore {
           height: this.heightSignal(),
           palette: this.paletteSignal(),
           grid,
-          meta: { progress, backstitches: this.backstitchesSignal() },
+          meta: {
+            progress,
+            backstitches: this.backstitchesSignal(),
+            partialStitches: [...this.partialsSignal()],
+          },
         }),
       );
       this.applyPattern(updated);
@@ -744,6 +845,7 @@ export class EditorStore {
   private applyStep(step: HistoryStep, side: 'before' | 'after'): void {
     if (step.kind === 'cells') {
       this.gridSignal.set(applyChanges(this.gridSignal(), step.changes, side));
+      if (step.partials) this.partialsSignal.set(step.partials[side]);
     } else if (step.kind === 'lines') {
       this.backstitchesSignal.set(step[side]);
     } else {
@@ -759,6 +861,7 @@ export class EditorStore {
       palette: this.paletteSignal(),
       progress: this.progressSignal(),
       backstitches: this.backstitchesSignal(),
+      partialStitches: this.partialsSignal(),
     };
   }
 
@@ -769,6 +872,7 @@ export class EditorStore {
     this.paletteSignal.set(snapshot.palette);
     this.progressSignal.set(snapshot.progress);
     this.backstitchesSignal.set(snapshot.backstitches);
+    this.partialsSignal.set(snapshot.partialStitches);
     const selected = this.selectedPaletteIndexSignal();
     if (selected !== null && selected >= snapshot.palette.length) {
       this.selectedPaletteIndexSignal.set(null);

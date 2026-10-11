@@ -15,3 +15,4 @@ export * from './models/project.model';
 export * from './utils/csv';
 export * from './utils/stray-stitches';
 export * from './utils/regions';
+export * from './models/partial-stitch';

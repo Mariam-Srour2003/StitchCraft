@@ -12,10 +12,10 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { Backstitch, PaletteEntry } from '@stitchcraft/types';
+import { Backstitch, PaletteEntry, PartialStitch } from '@stitchcraft/types';
 
 import type { EditorTool } from '@app/domain/editor/tools';
-import { isLineTool } from '@app/domain/editor/tools';
+import { isLineTool, isPartialTool } from '@app/domain/editor/tools';
 import { nearestCorner } from '@app/domain/grid/backstitch';
 
 import {
@@ -75,6 +75,8 @@ export class GridCanvas {
   readonly interactive = input(true);
   /** Backstitch lines, drawn on an overlay above the cells. */
   readonly backstitches = input<readonly Backstitch[]>([]);
+  /** Half and quarter stitches, drawn on the overlay under the backstitch lines. */
+  readonly partialStitches = input<readonly PartialStitch[]>([]);
   /** Color of the line being drawn with the backstitch tool. */
   readonly previewColor = input<string | null>(null);
 
@@ -89,6 +91,8 @@ export class GridCanvas {
   readonly lineDraw = output<{ from: CellPosition; to: CellPosition }>();
   /** Backstitch eraser: a click at this point, in fractional cells. */
   readonly lineErase = output<{ x: number; y: number }>();
+  /** Half/quarter stitch tools: a click at this point, in fractional cells. */
+  readonly partialPlace = output<{ x: number; y: number }>();
 
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private readonly overlayRef = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
@@ -215,6 +219,7 @@ export class GridCanvas {
       const height = this.height();
       const cellSize = this.cellSize();
       const lines = this.backstitches();
+      const partials = this.partialStitches();
       const palette = this.palette();
       const highlightIndex = this.highlightIndex();
       const drag = this.lineDrag();
@@ -236,6 +241,7 @@ export class GridCanvas {
         height,
         cellSize,
         lines,
+        partials,
         palette,
         highlightIndex,
         preview: drag ? { ...drag, color: this.previewColor() ?? theme.centerLine } : null,
@@ -261,6 +267,10 @@ export class GridCanvas {
     if (tool === 'backstitch-erase') {
       const point = this.pointerInCells(event);
       this.lineErase.emit(point);
+      return;
+    }
+    if (tool !== 'stitch' && isPartialTool(tool)) {
+      this.partialPlace.emit(this.pointerInCells(event));
       return;
     }
     this.isPointerDown = true;

@@ -1,5 +1,6 @@
 import type { Backstitch } from './backstitch';
 import type { EncodedRow } from './grid';
+import type { PartialStitch } from './partial-stitch';
 import type { PaletteEntry } from './palette.model';
 
 export type PatternType = 'cross_stitch' | 'color_by_number' | 'diamond';
@@ -25,6 +26,8 @@ export interface PatternMeta {
   progress?: EncodedRow[];
   /** Outline stitches drawn over the grid. Optional; absent means none. */
   backstitches?: Backstitch[];
+  /** Half and quarter stitches. Optional; absent means none. */
+  partialStitches?: PartialStitch[];
 }
 
 export interface Pattern {

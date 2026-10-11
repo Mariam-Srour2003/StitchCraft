@@ -67,6 +67,11 @@ const LINE_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'backstitch-erase', label: 'Remove line' },
 ];
 
+const PARTIAL_TOOLS: SegmentedToggleOption<EditorTool>[] = [
+  { value: 'half-stitch', label: 'Half ⁄' },
+  { value: 'quarter-stitch', label: 'Quarter ◸' },
+];
+
 const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
   { value: 'x-stitch', label: 'X-Stitch' },
   { value: 'block', label: 'Block' },
@@ -139,6 +144,7 @@ export class EditorComponent {
   protected readonly drawTools = DRAW_TOOLS;
   protected readonly shapeTools = SHAPE_TOOLS;
   protected readonly lineTools = LINE_TOOLS;
+  protected readonly partialTools = PARTIAL_TOOLS;
   protected readonly modeOptions = MODE_OPTIONS;
   protected readonly symmetryOptions = SYMMETRY_OPTIONS;
   protected readonly workModeOptions = WORK_MODE_OPTIONS;
@@ -178,6 +184,17 @@ export class EditorComponent {
     const cells = lines.reduce((sum, line) => sum + backstitchLength(line), 0);
     const cm = Math.round((cells * 2.54) / this.unitSize());
     return { lines: lines.length, cm };
+  });
+
+  /** Half and quarter stitch counts for the sidebar. */
+  protected readonly partialSummary = computed(() => {
+    let halves = 0;
+    let quarters = 0;
+    for (const stitch of this.store.partialStitches()) {
+      if (stitch.part.startsWith('half')) halves++;
+      else quarters++;
+    }
+    return { halves, quarters, total: halves + quarters };
   });
 
   protected readonly stampSize = computed(() => measureText(this.store.stampText()));

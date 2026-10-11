@@ -67,7 +67,13 @@ export interface MaterialEstimate {
 export function estimateMaterial(
   type: 'cross_stitch' | 'color_by_number' | 'diamond',
   count: number,
-  options: { fabricCount?: number; strands?: number; backstitchLength?: number } = {},
+  options: {
+    fabricCount?: number;
+    strands?: number;
+    backstitchLength?: number;
+    /** Half and quarter stitches, in full-stitch equivalents (see `partialThreadByIndex`). */
+    partialStitches?: number;
+  } = {},
 ): MaterialEstimate | null {
   if (type === 'diamond') return { quantity: drillBagsNeeded(count), unit: 'bag' };
   if (type === 'cross_stitch') {
@@ -75,7 +81,7 @@ export function estimateMaterial(
     // Cross stitches and backstitch in the same color come off the same skeins,
     // so their fractions are added before rounding up once.
     const skeins =
-      skeinFraction(count, fabricCount, options.strands) +
+      skeinFraction(count + (options.partialStitches ?? 0), fabricCount, options.strands) +
       backstitchSkeinFraction(options.backstitchLength ?? 0, fabricCount);
     // The epsilon absorbs float noise so an exact skein doesn't round up to two.
     return { quantity: skeins <= 0 ? 0 : Math.ceil(skeins - 1e-9), unit: 'skein' };

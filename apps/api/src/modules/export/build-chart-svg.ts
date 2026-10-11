@@ -1,6 +1,6 @@
 import { contrastTextColor } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
-import { decodeGrid } from '@stitchcraft/types';
+import { decodeGrid, PART_SEGMENT } from '@stitchcraft/types';
 
 const EMPTY_CELL_FILL = '#f4f1ec';
 const GRID_LINE = '#d8d2c8';
@@ -57,6 +57,20 @@ export function buildChartSvg(pattern: Pattern, options: BuildChartSvgOptions = 
   }
   for (let j = 0; j <= pattern.height; j++) {
     parts.push(gridLine(0, j * cellSize, width, j * cellSize, j % BOLD_EVERY === 0));
+  }
+
+  // Half and quarter stitches: a thick stroke in the thread colour, edged in
+  // a darker line so pale threads still show against the chart.
+  const partWidth = Math.max(2, cellSize * 0.24);
+  for (const stitch of pattern.meta.partialStitches ?? []) {
+    const entry = pattern.palette[stitch.paletteIndex];
+    if (!entry) continue;
+    const [fx1, fy1, fx2, fy2] = PART_SEGMENT[stitch.part];
+    const coords = `x1="${(stitch.x + fx1) * cellSize}" y1="${(stitch.y + fy1) * cellSize}" x2="${(stitch.x + fx2) * cellSize}" y2="${(stitch.y + fy2) * cellSize}"`;
+    parts.push(
+      `<line ${coords} stroke="#3a3530" stroke-width="${partWidth + 1.5}" stroke-linecap="round" />`,
+      `<line ${coords} stroke="${entry.color.hex}" stroke-width="${partWidth}" stroke-linecap="round" />`,
+    );
   }
 
   // Backstitch goes on top of everything, like on the fabric.

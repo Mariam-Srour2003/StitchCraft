@@ -5,6 +5,8 @@ import {
   computeRegions,
   isRegionEdge,
   PaletteEntry,
+  PART_SEGMENT,
+  PartialStitch,
   RegionMap,
 } from '@stitchcraft/types';
 
@@ -40,6 +42,8 @@ export interface LineRenderParams {
   height: number;
   cellSize: number;
   lines: readonly Backstitch[];
+  /** Half and quarter stitches, drawn under the lines. */
+  partials?: readonly PartialStitch[];
   palette: readonly PaletteEntry[];
   /** When set, lines in other colors are faded so this color's lines stand out. */
   highlightIndex?: number | null;
@@ -334,11 +338,43 @@ export class GridRenderingService {
     ctx.stroke();
   }
 
+  /**
+   * Half and quarter stitches: a thick stroke in the thread colour over a
+   * slightly wider dark edge, so pale threads still read on any background.
+   * Edges are all drawn first so a neighbour's edge never covers a stitch.
+   */
+  private drawPartials(ctx: CanvasRenderingContext2D, params: LineRenderParams): void {
+    const { cellSize, palette, highlightIndex } = params;
+    const partials = params.partials ?? [];
+    if (partials.length === 0) return;
+    const width = Math.max(2, cellSize * 0.26);
+    for (const pass of ['edge', 'colour'] as const) {
+      ctx.lineWidth = pass === 'edge' ? width + Math.max(1, cellSize * 0.06) : width;
+      for (const stitch of partials) {
+        const entry = palette[stitch.paletteIndex];
+        if (!entry) continue;
+        const faded =
+          highlightIndex !== null &&
+          highlightIndex !== undefined &&
+          highlightIndex !== stitch.paletteIndex;
+        ctx.globalAlpha = faded ? 0.25 : 1;
+        ctx.strokeStyle = pass === 'edge' ? 'rgba(40, 34, 28, 0.85)' : entry.color.hex;
+        const [x1, y1, x2, y2] = PART_SEGMENT[stitch.part];
+        ctx.beginPath();
+        ctx.moveTo((stitch.x + x1) * cellSize, (stitch.y + y1) * cellSize);
+        ctx.lineTo((stitch.x + x2) * cellSize, (stitch.y + y2) * cellSize);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
   /** Draws backstitch lines (plus any drag preview and snap marker) on the overlay canvas. */
   renderLines(ctx: CanvasRenderingContext2D, params: LineRenderParams): void {
     const { width, height, cellSize, lines, palette, highlightIndex } = params;
     ctx.clearRect(0, 0, width * cellSize, height * cellSize);
     ctx.lineCap = 'round';
+    this.drawPartials(ctx, params);
     ctx.lineWidth = Math.max(2, cellSize * 0.15);
 
     for (const line of lines) {

@@ -284,5 +284,28 @@ describe('GridRenderingService', () => {
       expect(mock.ctx.setLineDash).toHaveBeenCalledWith([3, 2]);
       expect(mock.ctx.arc).toHaveBeenCalled();
     });
+
+    it('draws partial stitches under the lines: dark edges first, then thread colours', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderLines(
+        mock.ctx,
+        lineParams({
+          lines: [{ x1: 0, y1: 0, x2: 1, y2: 0, paletteIndex: 1 }],
+          partials: [
+            { x: 1, y: 1, part: 'half-up', paletteIndex: 0 },
+            { x: 2, y: 2, part: 'quarter-br', paletteIndex: 1 },
+          ],
+        }),
+      );
+      const styles = mock.strokeCalls.map((c) => c.strokeStyle);
+      expect(styles.slice(0, 2).every((s) => String(s).startsWith('rgba'))).toBe(true);
+      expect(styles.slice(2)).toEqual(['#FF0000', '#00FF00', '#00FF00']); // partials, then the line
+      // "/" in cell (1,1) runs from its bottom-left (10,20) to its top-right (20,10)
+      expect(mock.ctx.moveTo).toHaveBeenCalledWith(10, 20);
+      expect(mock.ctx.lineTo).toHaveBeenCalledWith(20, 10);
+      // quarter from the bottom-right corner of cell (2,2) to its centre
+      expect(mock.ctx.moveTo).toHaveBeenCalledWith(30, 30);
+      expect(mock.ctx.lineTo).toHaveBeenCalledWith(25, 25);
+    });
   });
 });

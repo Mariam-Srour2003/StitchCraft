@@ -734,4 +734,119 @@ describe('EditorStore', () => {
       expect(dto.meta.backstitches).toEqual([{ x1: 0, y1: 0, x2: 4, y2: 0, paletteIndex: 0 }]);
     });
   });
+
+  describe('half and quarter stitches', () => {
+    beforeEach(async () => {
+      api.get.mockReturnValueOnce(
+        of(
+          makePattern({
+            width: 4,
+            height: 4,
+            grid: encodeGrid(Array.from({ length: 4 }, () => [null, null, null, null])),
+          }),
+        ),
+      );
+      await store.load('pattern-1');
+      store.setSelectedPaletteIndex(0);
+    });
+
+    const parts = () =>
+      store.partialStitches().map((s) => `${s.x},${s.y} ${s.part} ${s.paletteIndex}`);
+
+    it('places a half stitch on the diagonal through the clicked corner, undoably', () => {
+      store.setTool('half-stitch');
+      store.placePartialAt(1.9, 0.1); // near the top-right of cell (1,0)
+      expect(parts()).toEqual(['1,0 half-up 0']);
+      expect(store.dirty()).toBe(true);
+      store.undo();
+      expect(parts()).toEqual([]);
+      store.redo();
+      expect(parts()).toEqual(['1,0 half-up 0']);
+    });
+
+    it('builds a three-quarter stitch, and a second click on a stitch removes it', () => {
+      store.setTool('half-stitch');
+      store.placePartialAt(0.9, 0.1);
+      store.setTool('quarter-stitch');
+      store.setSelectedPaletteIndex(1);
+      store.placePartialAt(0.2, 0.2); // top-left quarter, not on the "/" diagonal
+      expect(parts()).toEqual(['0,0 half-up 0', '0,0 quarter-tl 1']);
+      store.placePartialAt(0.8, 0.2); // top-right quarter overlaps "/": replaces it
+      expect(parts()).toEqual(['0,0 quarter-tl 1', '0,0 quarter-tr 1']);
+      store.placePartialAt(0.8, 0.2); // same again: removed
+      expect(parts()).toEqual(['0,0 quarter-tl 1']);
+    });
+
+    it('replaces a full stitch in the cell, in the same undo step', () => {
+      store.paintCell(2, 2);
+      store.endStroke();
+      store.setTool('quarter-stitch');
+      store.placePartialAt(2.1, 2.1);
+      expect(store.grid()[2][2]).toBe(E);
+      store.undo();
+      expect(store.grid()[2][2]).toBe(0);
+      expect(parts()).toEqual([]);
+    });
+
+    it('painting or erasing over a cell removes its partial stitches; undo restores both', () => {
+      store.setTool('half-stitch');
+      store.placePartialAt(1.1, 1.1);
+      store.placePartialAt(3.1, 3.1);
+      store.setTool('erase');
+      store.applyTool(1, 1);
+      store.applyTool(1, 2);
+      store.endStroke();
+      expect(parts()).toEqual(['3,3 half-down 0']);
+      store.undo();
+      expect(parts()).toEqual(['1,1 half-down 0', '3,3 half-down 0']);
+    });
+
+    it('ignores cell clicks while a partial tool is active, and needs a colour', () => {
+      store.setTool('quarter-stitch');
+      store.applyTool(0, 0);
+      expect(store.grid()[0][0]).toBe(E);
+      store.setSelectedPaletteIndex(null);
+      store.placePartialAt(0.2, 0.2);
+      expect(parts()).toEqual([]);
+    });
+
+    it('moves with flips, rotation and resize', () => {
+      store.setTool('quarter-stitch');
+      store.placePartialAt(0.2, 0.2); // (0,0) top-left
+      store.flipHorizontal();
+      expect(parts()).toEqual(['3,0 quarter-tr 0']);
+      store.rotateClockwise();
+      expect(parts()).toEqual(['3,3 quarter-br 0']);
+      store.resize(2, 2);
+      expect(parts()).toEqual([]);
+      store.undo();
+      expect(parts()).toEqual(['3,3 quarter-br 0']);
+    });
+
+    it('follows palette operations, and keeps colours they use', () => {
+      store.setTool('half-stitch');
+      store.placePartialAt(0.1, 0.1); // colour 0, only used by this stitch
+      store.removeUnusedColors(); // colour 1 is unused; colour 0 kept for the partial
+      expect(store.palette()).toHaveLength(1);
+      store.undo();
+      store.replaceColor(0, 1);
+      expect(parts()).toEqual(['0,0 half-down 1']);
+      store.deleteColor(1);
+      expect(parts()).toEqual([]);
+    });
+
+    it('adds their thread to the legend skeins and saves them in meta', async () => {
+      store.setTool('half-stitch');
+      store.placePartialAt(0.1, 0.1);
+      expect(store.legendRows()[0].count).toBe(0);
+      expect(store.legendRows()[0].buy).toBe(1);
+
+      api.update.mockReturnValueOnce(of(makePattern({ width: 4, height: 4 })));
+      await store.save();
+      const [, dto] = api.update.mock.calls[0];
+      expect(dto.meta.partialStitches).toEqual([
+        { x: 0, y: 0, part: 'half-down', paletteIndex: 0 },
+      ]);
+    });
+  });
 });
