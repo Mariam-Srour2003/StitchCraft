@@ -1,6 +1,7 @@
 import { drillBagsNeeded, skeinFraction } from '@stitchcraft/color';
 import type { DmcColor, Pattern } from '@stitchcraft/types';
 import { isDmcColor } from '@stitchcraft/types';
+
 import { patternStats } from '@app/domain/pattern/pattern-stats';
 
 export interface ShoppingLine {

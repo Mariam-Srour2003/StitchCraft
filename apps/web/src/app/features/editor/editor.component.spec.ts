@@ -1,11 +1,14 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import type { ExportResponse, Pattern } from '@stitchcraft/types';
 import { of, throwError } from 'rxjs';
+
+import type { ExportResponse, Pattern } from '@stitchcraft/types';
+
+import { ExportApiService } from '@app/data-access/export-api.service';
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
+
 import { EditorComponent } from './editor.component';
-import { ExportApiService } from '@app/data-access/export-api.service';
 
 function makePattern(): Pattern {
   return {

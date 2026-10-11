@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { AI_PROVIDER } from './ai-provider';
 import { HttpAiProvider } from './http-ai-provider';
 import { ImagingService } from './imaging.service';

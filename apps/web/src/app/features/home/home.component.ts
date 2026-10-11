@@ -7,17 +7,14 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
 import { AuthStore } from '@app/core/auth/auth.store';
 import { SettingsStore } from '@app/core/settings/settings.store';
-import {
-  PATTERN_TYPE_LABELS,
-  PatternStats,
-  hoursRemaining,
-  patternStats,
-} from '@app/domain/pattern/pattern-stats';
+import { LibraryPattern, PatternLibraryService } from '@app/data-access/pattern-library.service';
+import { PATTERN_TYPE_LABELS } from '@app/domain/pattern/pattern-rules';
+import { hoursRemaining, PatternStats, patternStats } from '@app/domain/pattern/pattern-stats';
 import { PatternThumbnail } from '@app/shared/pattern/pattern-thumbnail';
 import { Progress } from '@app/shared/ui/progress/progress';
-import { LibraryPattern, PatternLibraryService } from '@app/data-access/pattern-library.service';
 
 interface DashboardPattern extends LibraryPattern {
   stats: PatternStats;

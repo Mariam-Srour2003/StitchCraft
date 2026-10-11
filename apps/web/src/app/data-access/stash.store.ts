@@ -1,6 +1,8 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+
 import { DMC_COLORS, findDmcByCode } from '@stitchcraft/color';
 import type { DmcColor } from '@stitchcraft/types';
+
 import { AuthStore } from '@app/core/auth/auth.store';
 import { readJson, writeJson } from '@app/core/browser/browser-storage';
 

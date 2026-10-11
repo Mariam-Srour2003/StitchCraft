@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+
 import type { DmcColor } from '@stitchcraft/types';
+
 import { AuthStore } from '@app/core/auth/auth.store';
 import { downloadText } from '@app/core/browser/download';
-import { Button } from '@app/shared/ui/button/button';
-import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
+import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { ImportResult, StashStore } from '@app/data-access/stash.store';
+import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
+import { Button } from '@app/shared/ui/button/button';
 
 @Component({
   selector: 'sc-stash',
@@ -18,6 +21,7 @@ import { ImportResult, StashStore } from '@app/data-access/stash.store';
 })
 export class StashComponent {
   protected readonly stash = inject(StashStore);
+  private readonly confirmer = inject(ConfirmService);
   protected readonly auth = inject(AuthStore);
 
   protected readonly filter = signal('');
@@ -57,6 +61,6 @@ export class StashComponent {
   }
 
   clearAll(): void {
-    if (confirm('Remove every thread from your stash?')) this.stash.clear();
+    if (this.confirmer.confirm('Remove every thread from your stash?')) this.stash.clear();
   }
 }

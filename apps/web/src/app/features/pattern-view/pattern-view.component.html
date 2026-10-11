@@ -44,7 +44,7 @@
         <section class="sc-stat-row" aria-label="Pattern details">
           <div class="sc-stat">
             <span class="sc-stat__value">{{ s.total }}</span>
-            <span class="sc-stat__label">{{ p.type === 'diamond' ? 'Drills' : 'Stitches' }}</span>
+            <span class="sc-stat__label">{{ cellNoun(p.type) }}</span>
           </div>
           <div class="sc-stat">
             <span class="sc-stat__value">{{ s.colorsUsed }}</span>
@@ -103,7 +103,7 @@
         <aside class="view__legend">
           <sc-legend
             [rows]="legendRows()"
-            [countLabel]="p.type === 'diamond' ? 'Drills' : 'Stitches'"
+            [countLabel]="cellNoun(p.type)"
             [buyLabel]="buyLabel()"
           />
         </aside>

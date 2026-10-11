@@ -239,7 +239,7 @@
         <section class="editor-page__panel">
           <sc-legend
             [rows]="store.legendRows()"
-            [countLabel]="store.type() === 'diamond' ? 'Drills' : 'Stitches'"
+            [countLabel]="cellNoun(store.type())"
             [buyLabel]="store.buyLabel()"
             [showProgress]="store.stitchMode()"
             [highlightedIndex]="store.highlightIndex()"

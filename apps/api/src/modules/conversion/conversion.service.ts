@@ -1,12 +1,14 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ConversionJob, ConversionParams } from '@stitchcraft/types';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
+
+import { ConversionJob, ConversionParams } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
-import { CONVERSIONS_QUEUE, ConversionJobData } from './conversion-job-data';
 import { toConversionJobDto } from './conversion.mapper';
+import { ConversionJobData,CONVERSIONS_QUEUE } from './conversion-job-data';
 import { CreateConversionDto } from './dto/create-conversion.dto';
 
 @Injectable()

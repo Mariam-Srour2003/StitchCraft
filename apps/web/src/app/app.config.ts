@@ -2,10 +2,12 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import type { ApplicationConfig } from '@angular/core';
 import { APP_INITIALIZER, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { routes } from './app.routes';
-import { AuthStore } from '@app/core/auth/auth.store';
+
 import { authInterceptor } from '@app/core/auth/auth.interceptor';
+import { AuthStore } from '@app/core/auth/auth.store';
 import { errorInterceptor } from '@app/core/error/error.interceptor';
+
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [

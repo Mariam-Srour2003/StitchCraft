@@ -1,15 +1,24 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
   computed,
   effect,
+  HostListener,
   inject,
   input,
   signal,
 } from '@angular/core';
-import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
+
+import { ExportResponse, isDmcColor } from '@stitchcraft/types';
+
+import { ConfirmService } from '@app/core/dialog/confirm.service';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { ExportApiService } from '@app/data-access/export-api.service';
+import { SHORTCUTS } from '@app/domain/editor/shortcuts';
+import { measureText,SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
+import { Symmetry } from '@app/domain/grid/shapes';
+import { cellNoun, physicalUnit } from '@app/domain/pattern/pattern-rules';
 import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
 import {
   CellPosition,
@@ -18,7 +27,7 @@ import {
   LIGHT_GRID_THEME,
   RenderMode,
 } from '@app/shared/canvas/grid-render-math';
-import { SettingsStore } from '@app/core/settings/settings.store';
+import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
 import { Button } from '@app/shared/ui/button/button';
 import { ColorPicker } from '@app/shared/ui/color-picker/color-picker';
 import { IconButton } from '@app/shared/ui/icon-button/icon-button';
@@ -33,12 +42,8 @@ import {
 import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
 import { Slider } from '@app/shared/ui/slider/slider';
 import { Toolbar } from '@app/shared/ui/toolbar/toolbar';
-import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
+
 import { EditorStore, EditorTool } from './editor.store';
-import { ExportApiService } from '@app/data-access/export-api.service';
-import { SUPPORTED_CHARACTERS, measureText } from '@app/domain/grid/pixel-font';
-import { Symmetry } from '@app/domain/grid/shapes';
-import { SHORTCUTS } from '@app/domain/editor/shortcuts';
 
 const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },
@@ -91,8 +96,6 @@ const TOOL_KEYS: Record<string, EditorTool> = {
   o: 'ellipse',
 };
 
-const DEFAULT_FABRIC_COUNT = 14;
-const DEFAULT_DRILL_SIZE_MM = 2.8;
 const ZOOM_STEP = 25;
 
 @Component({
@@ -125,6 +128,7 @@ export class EditorComponent {
   readonly mode = input<string | undefined>(undefined);
 
   protected readonly store = inject(EditorStore);
+  private readonly confirmer = inject(ConfirmService);
   private readonly exportApi = inject(ExportApiService);
   private readonly settings = inject(SettingsStore);
 
@@ -145,12 +149,14 @@ export class EditorComponent {
   protected readonly workModeOptions = WORK_MODE_OPTIONS;
   protected readonly shortcuts = SHORTCUTS;
   /** The font's non-alphanumeric characters, listed as a hint under the lettering box. */
+  protected readonly cellNoun = cellNoun;
   protected readonly lettering = SUPPORTED_CHARACTERS.replace(/[A-Z0-9 ]/g, '');
 
   protected readonly unitSize = computed(() =>
-    this.store.type() === 'diamond'
-      ? (this.store.meta().drillSizeMm ?? DEFAULT_DRILL_SIZE_MM)
-      : (this.store.meta().fabricCount ?? DEFAULT_FABRIC_COUNT),
+    physicalUnit(this.store.type(), this.store.meta(), {
+      fabricCount: this.settings.fabricCount(),
+      drillSizeMm: this.settings.drillSizeMm(),
+    }),
   );
 
   protected readonly paletteDmcCodes = computed(() =>
@@ -234,12 +240,14 @@ export class EditorComponent {
     const index = this.store.selectedPaletteIndex();
     if (index === null) return;
     const count = this.store.legendRows()[index]?.count ?? 0;
-    if (count > 0 && !confirm(`Delete this color and erase its ${count} stitches?`)) return;
+    if (count > 0 && !this.confirmer.confirm(`Delete this color and erase its ${count} stitches?`))
+      return;
     this.store.deleteColor(index);
   }
 
   resetProgress(): void {
-    if (confirm('Clear all stitching progress for this pattern?')) this.store.resetProgress();
+    if (this.confirmer.confirm('Clear all stitching progress for this pattern?'))
+      this.store.resetProgress();
   }
 
   save(): void {
@@ -269,7 +277,10 @@ export class EditorComponent {
 
   /** Used by the route's canDeactivate guard. */
   canLeave(): boolean {
-    return !this.store.dirty() || confirm('You have unsaved changes. Leave without saving?');
+    return (
+      !this.store.dirty() ||
+      this.confirmer.confirm('You have unsaved changes. Leave without saving?')
+    );
   }
 
   @HostListener('window:beforeunload', ['$event'])

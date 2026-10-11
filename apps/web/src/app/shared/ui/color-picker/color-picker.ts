@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+
 import { hexToRgb } from '@stitchcraft/color';
 import { CustomColor } from '@stitchcraft/types';
+
 import { Button } from '@app/shared/ui/button/button';
 
 @Component({

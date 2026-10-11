@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
+
+import { DmcColor } from '@stitchcraft/types';
+
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 
 const PAGE_SIZE = 60;

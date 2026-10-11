@@ -1,27 +1,29 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
-  DestroyRef,
   computed,
+  DestroyRef,
   effect,
+  ElementRef,
   inject,
   input,
   output,
   signal,
   viewChild,
 } from '@angular/core';
+
 import { PaletteEntry } from '@stitchcraft/types';
+
 import {
   CellPosition,
+  cellSizeForZoom,
   DARK_GRID_THEME,
   GridTheme,
   LIGHT_GRID_THEME,
-  RenderMode,
-  cellSizeForZoom,
   pixelToCell,
+  RenderMode,
 } from './grid-render-math';
-import { GridRenderParams, GridRenderingService } from './grid-rendering.service';
+import { GridRenderingService,GridRenderParams } from './grid-rendering.service';
 
 const BASE_CELL_SIZE = 20;
 

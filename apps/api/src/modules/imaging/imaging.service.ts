@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Rgb } from '@stitchcraft/types';
 import sharp from 'sharp';
+
+import { Rgb } from '@stitchcraft/types';
+
 import { AI_PROVIDER, AiProvider } from './ai-provider';
-import { BuildGridResult, buildGridFromPixels } from './build-grid-from-pixels';
+import { buildGridFromPixels,BuildGridResult } from './build-grid-from-pixels';
 
 export interface ConvertImageOptions {
   width: number;

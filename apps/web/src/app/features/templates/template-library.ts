@@ -1,6 +1,7 @@
 import { assignSymbols, findDmcByCode } from '@stitchcraft/color';
 import type { PaletteEntry, PatternType } from '@stitchcraft/types';
 import { EMPTY_CELL } from '@stitchcraft/types';
+
 import type { CellPosition } from '@app/domain/grid/cell';
 import { measureText, textPoints } from '@app/domain/grid/pixel-font';
 import { ellipsePoints, linePoints, mirrorPoints, rectPoints } from '@app/domain/grid/shapes';

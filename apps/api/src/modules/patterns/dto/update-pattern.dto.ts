@@ -1,14 +1,15 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  Max,
   IsInt,
   IsObject,
   IsOptional,
   IsString,
+  Max,
   Min,
   MinLength,
 } from 'class-validator';
+
 import { UpdatePatternDto as UpdatePatternDtoShape } from '@stitchcraft/types';
 import { MAX_PATTERN_DIMENSION } from '@stitchcraft/types';
 

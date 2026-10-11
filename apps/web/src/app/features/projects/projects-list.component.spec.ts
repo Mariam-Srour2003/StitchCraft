@@ -1,11 +1,14 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import type { Pattern, Project } from '@stitchcraft/types';
+import { provideRouter,Router } from '@angular/router';
 import { of } from 'rxjs';
+
+import type { Pattern, Project } from '@stitchcraft/types';
+
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
-import { ProjectsListComponent } from './projects-list.component';
 import { ProjectsApiService } from '@app/data-access/projects-api.service';
+
+import { ProjectsListComponent } from './projects-list.component';
 
 const project: Project = {
   id: 'proj-1',

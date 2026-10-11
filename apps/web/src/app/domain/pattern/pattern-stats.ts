@@ -1,5 +1,5 @@
-import type { Pattern } from '@stitchcraft/types';
-import { decodeGrid } from '@stitchcraft/types';
+import type { EncodedRow, Pattern } from '@stitchcraft/types';
+import { countCellsByIndex } from '@stitchcraft/types';
 
 export interface PatternStats {
   /** Painted cells (stitches / drills / painted squares). */
@@ -13,25 +13,21 @@ export interface PatternStats {
   perColor: number[];
 }
 
-/** Counts and stitching progress for a pattern, decoded from its RLE grid and `meta.progress`. */
+/**
+ * Counts and stitching progress for a pattern, computed directly on the RLE
+ * runs (no decoding to cell arrays), so a dashboard full of large patterns
+ * stays cheap.
+ */
 export function patternStats(pattern: Pattern): PatternStats {
-  const grid = decodeGrid(pattern.grid, pattern.width);
-  const progress =
-    pattern.meta.progress && pattern.meta.progress.length === pattern.height
-      ? decodeGrid(pattern.meta.progress, pattern.width)
-      : null;
-  const perColor = new Array(pattern.palette.length).fill(0);
-  let total = 0;
+  const perColor = countCellsByIndex(pattern.grid, pattern.palette.length);
+  const total = perColor.reduce((sum, n) => sum + n, 0);
+  const progress = pattern.meta.progress;
   let done = 0;
-  grid.forEach((row, y) => {
-    for (let x = 0; x < row.length; x++) {
-      const value = row[x];
-      if (value < 0) continue;
-      total++;
-      if (value < perColor.length) perColor[value]++;
-      if (progress?.[y][x] === 1) done++;
-    }
-  });
+  if (progress && progress.length === pattern.height) {
+    pattern.grid.forEach((row, y) => {
+      done += countDoneInRow(row, progress[y], pattern.palette.length);
+    });
+  }
   return {
     total,
     done,
@@ -41,15 +37,37 @@ export function patternStats(pattern: Pattern): PatternStats {
   };
 }
 
+/**
+ * Painted cells in a row that are also marked done, by walking both rows'
+ * runs in step (two pointers) and adding the overlap of each painted run with
+ * each done run.
+ */
+function countDoneInRow(
+  gridRow: EncodedRow,
+  progressRow: EncodedRow,
+  paletteLength: number,
+): number {
+  let done = 0;
+  let g = 0;
+  let p = 0;
+  let gLeft = gridRow[0]?.[1] ?? 0;
+  let pLeft = progressRow[0]?.[1] ?? 0;
+  while (g < gridRow.length && p < progressRow.length) {
+    const step = Math.min(gLeft, pLeft);
+    const index = gridRow[g][0];
+    const painted = index !== null && index >= 0 && index < paletteLength;
+    if (painted && progressRow[p][0] === 1) done += step;
+    gLeft -= step;
+    pLeft -= step;
+    if (gLeft === 0 && ++g < gridRow.length) gLeft = gridRow[g][1];
+    if (pLeft === 0 && ++p < progressRow.length) pLeft = progressRow[p][1];
+  }
+  return done;
+}
+
 /** Hours of stitching left at a given speed, rounded up to the nearest half hour. */
 export function hoursRemaining(stats: PatternStats, stitchesPerHour: number): number {
   const remaining = stats.total - stats.done;
   if (remaining <= 0 || stitchesPerHour <= 0) return 0;
   return Math.ceil((remaining / stitchesPerHour) * 2) / 2;
 }
-
-export const PATTERN_TYPE_LABELS: Record<Pattern['type'], string> = {
-  cross_stitch: 'Cross-stitch',
-  color_by_number: 'Paint by number',
-  diamond: 'Diamond painting',
-};

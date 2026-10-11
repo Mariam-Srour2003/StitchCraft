@@ -6,8 +6,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { ConversionProgressEvent } from '@stitchcraft/types';
 import { Server, Socket } from 'socket.io';
+
+import { ConversionProgressEvent } from '@stitchcraft/types';
 
 /**
  * Progress push for an in-flight conversion job. Optional enhancement over

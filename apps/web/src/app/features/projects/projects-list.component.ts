@@ -1,16 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Pattern, PatternType, Project } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
+
+import { Pattern, PatternType, Project } from '@stitchcraft/types';
+
+import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import { ProjectsApiService } from '@app/data-access/projects-api.service';
+import { PATTERN_TYPE_LABELS, PATTERN_TYPES, sizingMeta } from '@app/domain/pattern/pattern-rules';
 import { Button } from '@app/shared/ui/button/button';
 import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
 import { Modal } from '@app/shared/ui/modal/modal';
-import { SettingsStore } from '@app/core/settings/settings.store';
-import { ProjectsApiService } from '@app/data-access/projects-api.service';
-
-const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
 
 @Component({
   selector: 'sc-projects-list',
@@ -27,6 +28,7 @@ export class ProjectsListComponent {
   private readonly settings = inject(SettingsStore);
 
   protected readonly patternTypes = PATTERN_TYPES;
+  protected readonly typeLabels = PATTERN_TYPE_LABELS;
 
   protected readonly projects = signal<Project[]>([]);
   protected readonly loading = signal(true);
@@ -113,7 +115,7 @@ export class ProjectsListComponent {
 
     const { name, type, width, height, fabricCount, drillSizeMm } =
       this.newPatternForm.getRawValue();
-    const meta = type === 'diamond' ? { drillSizeMm } : { fabricCount };
+    const meta = sizingMeta(type, { fabricCount, drillSizeMm });
     const pattern = await firstValueFrom(
       this.patternsApi.create({ projectId, name, type, width, height, meta }),
     );

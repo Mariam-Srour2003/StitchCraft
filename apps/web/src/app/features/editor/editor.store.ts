@@ -1,23 +1,24 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { assignSymbols, estimateMaterial } from '@stitchcraft/color';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+
+import { assignSymbols, estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import {
   CustomColor,
+  decodeGrid,
   DmcColor,
   EMPTY_CELL,
-  Pattern,
-  PaletteEntry,
-  decodeGrid,
   encodeGrid,
   isDmcColor,
+  PaletteEntry,
+  Pattern,
 } from '@stitchcraft/types';
-import { firstValueFrom } from 'rxjs';
-import { CellPosition, RenderMode } from '@app/shared/canvas/grid-render-math';
-import { LegendRow } from '@app/shared/ui/legend/legend';
+
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import type { CellPosition } from '@app/domain/grid/cell';
 import {
-  CellChange,
   applyChanges,
+  CellChange,
   compactPalette,
   flipHorizontal,
   flipVertical,
@@ -28,13 +29,15 @@ import {
 } from '@app/domain/grid/grid-ops';
 import { textPoints } from '@app/domain/grid/pixel-font';
 import {
-  Symmetry,
   clipToGrid,
   ellipsePoints,
   linePoints,
   mirrorPoints,
   rectPoints,
+  Symmetry,
 } from '@app/domain/grid/shapes';
+import { defaultRenderMode,RenderMode } from '@app/domain/pattern/pattern-rules';
+import { LegendRow } from '@app/shared/ui/legend/legend';
 
 export type EditorTool =
   | 'paint'
@@ -155,12 +158,7 @@ export class EditorStore {
   readonly canRedo = computed(() => this.redoStackSignal().length > 0);
 
   /** "Skeins" / "Drill bags" for the legend's buy column, or null when the type isn't bought by count. */
-  readonly buyLabel = computed(() => {
-    const type = this.typeSignal();
-    if (type === 'diamond') return 'Drill bags';
-    if (type === 'cross_stitch') return 'Skeins';
-    return null;
-  });
+  readonly buyLabel = computed(() => materialColumnLabel(this.typeSignal()));
 
   readonly legendRows = computed<LegendRow[]>(() => {
     const palette = this.paletteSignal();
@@ -207,13 +205,7 @@ export class EditorStore {
       // on first open; save() re-applies the (possibly updated) pattern too,
       // but must never do this or it would reset the user's chosen view on
       // every save.
-      this.renderModeSignal.set(
-        pattern.type === 'diamond'
-          ? 'diamond'
-          : pattern.type === 'color_by_number'
-            ? 'paint-by-number'
-            : 'block',
-      );
+      this.renderModeSignal.set(defaultRenderMode(pattern.type, 'edit'));
     } finally {
       this.loadingSignal.set(false);
     }

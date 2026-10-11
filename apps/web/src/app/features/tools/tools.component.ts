@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+
 import { SettingsStore } from '@app/core/settings/settings.store';
+
 import {
   COMMON_COUNTS,
   drillEstimate,

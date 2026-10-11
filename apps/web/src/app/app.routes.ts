@@ -1,4 +1,5 @@
 import type { Routes } from '@angular/router';
+
 import { authGuard } from '@app/core/auth/auth.guard';
 import { unsavedChangesGuard } from '@app/features/editor/unsaved-changes.guard';
 

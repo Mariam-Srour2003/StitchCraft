@@ -77,7 +77,7 @@
           Type
           <select formControlName="type">
             @for (type of patternTypes; track type) {
-              <option [value]="type">{{ type }}</option>
+              <option [value]="type">{{ typeLabels[type] }}</option>
             }
           </select>
         </label>

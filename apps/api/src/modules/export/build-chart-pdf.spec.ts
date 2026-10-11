@@ -1,5 +1,6 @@
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
+
 import { buildChartPdf } from './build-chart-pdf';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {

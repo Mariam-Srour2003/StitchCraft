@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
 import { SHORTCUTS } from '@app/domain/editor/shortcuts';
 
 export const GLOSSARY: readonly { term: string; definition: string }[] = [

@@ -1,6 +1,7 @@
+import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { isDmcColor, toCsv } from '@stitchcraft/types';
-import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
+
 import { countPaletteUsage } from './count-palette-usage';
 
 /**

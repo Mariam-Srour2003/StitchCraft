@@ -1,7 +1,10 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { AuthResponse, LoginDto, RegisterDto, User } from '@stitchcraft/types';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+
+import { AuthResponse, LoginDto, RegisterDto, User } from '@stitchcraft/types';
+
 import { ApiClient } from '@app/core/api/api-client.service';
+
 import { TokenStorageService } from './token-storage.service';
 
 /**

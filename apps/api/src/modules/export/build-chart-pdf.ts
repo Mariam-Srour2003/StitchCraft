@@ -1,7 +1,9 @@
+import PDFDocument from 'pdfkit';
+
 import { contrastTextColor } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { decodeGrid, isDmcColor } from '@stitchcraft/types';
-import PDFDocument from 'pdfkit';
+
 import { countPaletteUsage } from './count-palette-usage';
 
 const PAGE_WIDTH = 612; // US Letter, points

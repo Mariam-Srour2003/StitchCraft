@@ -1,9 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
 import { findDmcByCode } from '@stitchcraft/color';
+
 import { AuthStore } from '@app/core/auth/auth.store';
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
+
 import { StashComponent } from './stash.component';
 
 describe('StashComponent', () => {

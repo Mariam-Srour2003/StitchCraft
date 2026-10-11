@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+
 import type { Pattern } from '@stitchcraft/types';
 import { EMPTY_CELL, encodeGrid } from '@stitchcraft/types';
-import { of } from 'rxjs';
+
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
+
 import { EditorStore } from './editor.store';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {

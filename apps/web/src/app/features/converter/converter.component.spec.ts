@@ -1,9 +1,12 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import type { ConversionJob } from '@stitchcraft/types';
 import { of, throwError } from 'rxjs';
+
+import type { ConversionJob } from '@stitchcraft/types';
+
 import { ConversionsApiService } from '@app/data-access/conversions-api.service';
+
 import { ConverterComponent, POLL_INTERVAL_MS } from './converter.component';
 
 function makeJob(overrides: Partial<ConversionJob> = {}): ConversionJob {

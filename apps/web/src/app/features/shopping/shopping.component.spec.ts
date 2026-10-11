@@ -1,12 +1,15 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
 import { findDmcByCode } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
+
 import { AuthStore } from '@app/core/auth/auth.store';
 import { PatternLibraryService } from '@app/data-access/pattern-library.service';
 import { StashStore } from '@app/data-access/stash.store';
+
 import { ShoppingComponent } from './shopping.component';
 
 function pattern(id: string, row: (number | null)[], done = false): Pattern {

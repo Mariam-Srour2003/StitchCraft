@@ -1,16 +1,9 @@
-import type { CellPosition } from '@app/domain/grid/cell';
 import type { PaletteEntry } from '@stitchcraft/types';
 
-export type { CellPosition };
+import type { CellPosition } from '@app/domain/grid/cell';
+import type { RenderMode } from '@app/domain/pattern/pattern-rules';
 
-export type RenderMode =
-  | 'x-stitch'
-  | 'block'
-  | 'symbol'
-  | 'number'
-  | 'diamond'
-  /** White canvas, outlined regions, one number per region - like a real paint-by-number board. */
-  | 'paint-by-number';
+export type { CellPosition, RenderMode };
 
 export interface GridTheme {
   /** Background painted behind an empty (unpainted) cell. */
