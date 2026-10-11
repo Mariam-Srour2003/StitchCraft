@@ -1,0 +1,76 @@
+.photo-cropper {
+  position: relative;
+  overflow: hidden;
+  touch-action: none; // let drags crop instead of scrolling the page
+  cursor: crosshair;
+  user-select: none;
+  border: 1px solid var(--sc-color-border);
+  border-radius: var(--sc-radius-md);
+  line-height: 0;
+
+  &__canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  &__crop {
+    position: absolute;
+    cursor: move;
+    outline: 2px solid #fff;
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 0 0 9999px rgba(0, 0, 0, 0.45);
+    // rule-of-thirds guides
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: 33.333% 33.333%;
+    background-position: -1px -1px;
+
+    &:focus-visible {
+      outline: 3px solid var(--sc-color-focus-ring);
+    }
+  }
+
+  &__face {
+    position: absolute;
+    pointer-events: none;
+    border: 2px solid;
+    border-radius: 4px;
+    line-height: 1.2;
+
+    span {
+      position: absolute;
+      left: -2px;
+      bottom: 100%;
+      padding: 1px 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+      color: #fff;
+      border-radius: 3px 3px 0 0;
+    }
+
+    &--good {
+      border-color: #2e9e5b;
+      span {
+        background: #2e9e5b;
+      }
+    }
+
+    &--warning {
+      border-color: #d48806;
+      span {
+        background: #b06f00;
+      }
+    }
+
+    &--problem {
+      border-color: #d93025;
+      span {
+        background: #c5221f;
+      }
+    }
+  }
+}

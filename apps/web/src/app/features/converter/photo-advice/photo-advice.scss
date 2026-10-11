@@ -1,0 +1,138 @@
+.photo-advice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sc-space-3);
+  padding: var(--sc-space-4);
+  border: 1px solid var(--sc-color-border);
+  border-radius: var(--sc-radius-md);
+  background: var(--sc-color-surface);
+
+  &__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    h2 {
+      margin: 0;
+      font-size: var(--sc-font-size-lg);
+    }
+  }
+
+  &__status,
+  &__muted {
+    color: var(--sc-color-text-muted);
+    font-size: var(--sc-font-size-sm);
+    margin: 0;
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--sc-color-danger);
+  }
+
+  &__link {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: var(--sc-color-primary);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  &__verdict {
+    display: flex;
+    gap: var(--sc-space-3);
+    align-items: center;
+    transition: opacity var(--sc-motion-fast);
+
+    p {
+      margin: var(--sc-space-1) 0 0;
+      font-size: var(--sc-font-size-sm);
+      color: var(--sc-color-text-muted);
+    }
+
+    &--great,
+    &--good {
+      --verdict-color: #2e9e5b;
+    }
+    &--fair {
+      --verdict-color: #b06f00;
+    }
+    &--poor {
+      --verdict-color: #c5221f;
+    }
+
+    &--stale {
+      opacity: 0.55;
+    }
+  }
+
+  &__score {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 3px solid var(--verdict-color);
+    color: var(--verdict-color);
+    font-weight: 700;
+    font-size: var(--sc-font-size-lg);
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sc-space-3);
+    transition: opacity var(--sc-motion-fast);
+
+    &--stale {
+      opacity: 0.55;
+    }
+  }
+
+  &__item {
+    display: flex;
+    gap: var(--sc-space-2);
+
+    p {
+      margin: var(--sc-space-1) 0 var(--sc-space-2);
+      font-size: var(--sc-font-size-sm);
+      color: var(--sc-color-text-muted);
+    }
+
+    &--good {
+      --item-color: #2e9e5b;
+    }
+    &--info {
+      --item-color: #3b6fd8;
+    }
+    &--warning {
+      --item-color: #b06f00;
+    }
+    &--problem {
+      --item-color: #c5221f;
+    }
+  }
+
+  &__icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 50%;
+    background: var(--item-color);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  &__body {
+    min-width: 0;
+  }
+}

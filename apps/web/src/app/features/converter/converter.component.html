@@ -1,24 +1,144 @@
 <div class="converter-page">
-  <h1>Convert an image</h1>
+  <h1>Convert a photo</h1>
 
   @switch (phase()) {
     @case ('select') {
       <sc-file-drop (filesSelected)="onFilesSelected($event)" />
+      <section class="converter-page__tips" aria-labelledby="tips-title">
+        <h2 id="tips-title">What makes a photo stitch well</h2>
+        <ul>
+          <li>
+            <strong>Get close.</strong> The subject should fill the frame. A face needs to be about
+            30 stitches tall to look like someone.
+          </li>
+          <li>
+            <strong>Keep it simple.</strong> A plain background turns into clean stitching; a busy
+            one turns into scattered single stitches.
+          </li>
+          <li>
+            <strong>Good, even light.</strong> Dark or washed-out photos lose detail to one or two
+            threads.
+          </li>
+          <li><strong>Sharp and in focus.</strong> Blur becomes bands of in-between colours.</li>
+        </ul>
+        <p>
+          After you choose a photo, the photo check tells you how well it will work and how to
+          improve it.
+        </p>
+      </section>
+    }
+
+    @case ('loading') {
+      <p class="converter-page__loading">Opening your photo…</p>
     }
 
     @case ('configure') {
-      <div class="converter-page__configure">
-        @if (previewUrl(); as url) {
-          <img class="converter-page__preview" [src]="url" alt="Selected image preview" />
-        }
+      <div class="converter-page__workspace">
+        <section class="converter-page__photo" aria-label="Prepare the photo">
+          <sc-segmented-toggle
+            [options]="previewOptions"
+            [value]="previewMode()"
+            (valueChange)="previewMode.set($event)"
+            ariaLabel="Show"
+          />
 
-        <div class="converter-page__settings">
+          @if (previewMode() === 'photo') {
+            @if (previewImage(); as image) {
+              <sc-photo-cropper
+                [image]="image"
+                [crop]="edits().crop"
+                [aspect]="cropAspect()"
+                [faces]="faceMarkers()"
+                (cropChange)="setCrop($event)"
+              />
+            }
+            <p class="converter-page__hint">
+              Drag on the photo to crop. Drag the box to move it; click outside it to remove it.
+            </p>
+          } @else {
+            <div class="converter-page__pattern-preview">
+              @if (analysis(); as result) {
+                <img
+                  [src]="result.preview.dataUrl"
+                  [class.converter-page__stale]="analysisState() === 'loading'"
+                  alt="Preview of the pattern in thread colours"
+                />
+                <p class="converter-page__hint">
+                  Thread colours, {{ result.metrics.colorsUsed }} used.
+                  @if (result.preview.width < width()) {
+                    Shown at {{ result.preview.width }}×{{ result.preview.height }}; the pattern is
+                    {{ width() }}×{{ height() }}.
+                  }
+                </p>
+              } @else {
+                <p class="converter-page__hint">
+                  The preview appears once the photo check has run.
+                </p>
+              }
+            </div>
+          }
+
+          <div class="converter-page__tools" role="toolbar" aria-label="Photo tools">
+            <sc-icon-button label="Rotate left" (pressed)="rotate(-90)">⟲</sc-icon-button>
+            <sc-icon-button label="Rotate right" (pressed)="rotate(90)">⟳</sc-icon-button>
+            <sc-icon-button
+              label="Flip horizontally"
+              [toggled]="edits().flipH"
+              (pressed)="flip('h')"
+              >⇋</sc-icon-button
+            >
+            <sc-icon-button label="Flip vertically" [toggled]="edits().flipV" (pressed)="flip('v')"
+              >⇵</sc-icon-button
+            >
+            <span class="converter-page__tools-label">Crop</span>
+            <sc-segmented-toggle
+              [options]="cropShapeOptions"
+              [value]="cropShape()"
+              (valueChange)="setCropShape($event)"
+              ariaLabel="Crop shape"
+            />
+            @if (edits().crop) {
+              <sc-button variant="secondary" (pressed)="setCrop(null)">Remove crop</sc-button>
+            }
+          </div>
+
+          <div class="converter-page__adjust">
+            <sc-slider
+              label="Brightness"
+              [min]="-100"
+              [max]="100"
+              [value]="adjustments().brightness"
+              (valueChange)="setAdjustment('brightness', $event)"
+            />
+            <sc-slider
+              label="Contrast"
+              [min]="-100"
+              [max]="100"
+              [value]="adjustments().contrast"
+              (valueChange)="setAdjustment('contrast', $event)"
+            />
+            <sc-slider
+              label="Saturation"
+              [min]="-100"
+              [max]="100"
+              [value]="adjustments().saturation"
+              (valueChange)="setAdjustment('saturation', $event)"
+            />
+            @if (isEdited()) {
+              <sc-button variant="secondary" (pressed)="resetEdits()"
+                >Undo all photo changes</sc-button
+              >
+            }
+          </div>
+        </section>
+
+        <section class="converter-page__settings" aria-label="Pattern settings">
           <div class="converter-page__field">
             <span>Pattern type</span>
             <sc-segmented-toggle
               [options]="targetTypeOptions"
               [value]="targetType()"
-              (valueChange)="targetType.set($event)"
+              (valueChange)="setTargetType($event)"
               ariaLabel="Pattern type"
             />
           </div>
@@ -29,9 +149,9 @@
               <input
                 type="number"
                 min="1"
-                max="500"
+                [max]="maxDimension"
                 [value]="width()"
-                (change)="width.set(+$any($event.target).value)"
+                (change)="setWidth(+$any($event.target).value)"
               />
             </label>
             <label class="converter-page__field">
@@ -39,12 +159,20 @@
               <input
                 type="number"
                 min="1"
-                max="500"
+                [max]="maxDimension"
                 [value]="height()"
-                (change)="height.set(+$any($event.target).value)"
+                (change)="setHeight(+$any($event.target).value)"
               />
             </label>
           </div>
+          <label class="converter-page__check">
+            <input
+              type="checkbox"
+              [checked]="keepProportions()"
+              (change)="setKeepProportions($any($event.target).checked)"
+            />
+            Keep the photo's proportions
+          </label>
 
           <sc-slider
             label="Colors"
@@ -52,14 +180,48 @@
             [max]="60"
             [step]="1"
             [value]="colorCount()"
-            (valueChange)="colorCount.set($event)"
+            (valueChange)="setColorCount($event)"
+          />
+
+          <label class="converter-page__check">
+            <input
+              type="checkbox"
+              [checked]="enhance()"
+              (change)="setEnhance($any($event.target).checked)"
+            />
+            <span
+              ><strong>Auto-enhance</strong> - stretch contrast, richer colours, less noise</span
+            >
+          </label>
+          <label class="converter-page__check">
+            <input
+              type="checkbox"
+              [checked]="cleanup()"
+              (change)="setCleanup($any($event.target).checked)"
+            />
+            <span
+              ><strong>Clean up</strong> - remove scattered single stitches and barely-used
+              colours</span
+            >
+          </label>
+
+          <sc-photo-advice
+            [analysis]="analysis()"
+            [state]="analysisState()"
+            (applyFix)="applyFix($event)"
+            (applyAll)="applyAllSuggestions()"
+            (retry)="requestAnalysis()"
           />
 
           <div class="converter-page__actions">
-            <sc-button variant="secondary" (pressed)="reset()">Choose a different image</sc-button>
+            <sc-button variant="secondary" (pressed)="reset()">Choose a different photo</sc-button>
             <sc-button (pressed)="startConversion()">Convert</sc-button>
           </div>
-        </div>
+          <p class="converter-page__hint">
+            The pattern opens in the editor, where you can draw, erase, fill, add and remove
+            colours.
+          </p>
+        </section>
       </div>
     }
 

@@ -1,0 +1,57 @@
+<section class="photo-advice" aria-labelledby="photo-advice-title" aria-live="polite">
+  <header class="photo-advice__header">
+    <h2 id="photo-advice-title">Photo check</h2>
+    @if (state() === 'loading') {
+    <span class="photo-advice__status">Checking…</span>
+    }
+  </header>
+
+  @switch (state()) { @case ('error') {
+  <p class="photo-advice__error">
+    Couldn't check this photo. You can still convert it.
+    <button type="button" class="photo-advice__link" (click)="retry.emit()">Try again</button>
+  </p>
+  } @default { @if (analysis(); as result) {
+  <div
+    class="photo-advice__verdict"
+    [class]="'photo-advice__verdict photo-advice__verdict--' + result.verdict"
+    [class.photo-advice__verdict--stale]="state() === 'loading'"
+  >
+    <span class="photo-advice__score" [attr.aria-label]="'Score ' + result.score + ' out of 100'">
+      {{ result.score }}
+    </span>
+    <div>
+      <strong>{{ verdictLabel[result.verdict] }}</strong>
+      <p>{{ result.summary }}</p>
+    </div>
+  </div>
+
+  @if (result.advice.length > 0) {
+  <ul class="photo-advice__list" [class.photo-advice__list--stale]="state() === 'loading'">
+    @for (item of result.advice; track item.code) {
+    <li
+      class="photo-advice__item"
+      [class]="'photo-advice__item photo-advice__item--' + item.severity"
+    >
+      <span class="photo-advice__icon" aria-hidden="true">{{ icon[item.severity] }}</span>
+      <div class="photo-advice__body">
+        <strong>
+          <span class="sc-visually-hidden">{{ severityLabel[item.severity] }}: </span>
+          {{ item.title }}
+        </strong>
+        <p>{{ item.detail }}</p>
+        @if (item.fix && item.fixLabel) {
+        <sc-button variant="secondary" (pressed)="applyFix.emit(item.fix)">
+          {{ item.fixLabel }}
+        </sc-button>
+        }
+      </div>
+    </li>
+    }
+  </ul>
+  } @if (fixCount() > 1) {
+  <sc-button (pressed)="applyAll.emit()">Apply all suggestions</sc-button>
+  } } @else if (state() === 'loading') {
+  <p class="photo-advice__muted">Looking at sharpness, light, faces and detail…</p>
+  } } }
+</section>

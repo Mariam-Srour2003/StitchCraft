@@ -3,6 +3,7 @@ import {
   AuthResponse,
   EncodedRow,
   ExportResponse,
+  ImageAnalysis,
   Pattern,
   Project,
   User,
@@ -138,6 +139,46 @@ export async function mockApi(page: Page): Promise<void> {
   // loop against a real state transition, not just a single fixed response.
   let conversionPollCount = 0;
   const conversionJobId = 'job-1';
+
+  // Image advisor: a photo with one far-away face, so the advice panel has a
+  // problem to show and a crop to offer.
+  await page.route('**/api/conversions/analyze', (route) =>
+    route.fulfill({
+      json: {
+        source: { width: 64, height: 64 },
+        target: { type: 'cross_stitch', width: 60, height: 60, colorCount: 24 },
+        score: 58,
+        verdict: 'fair',
+        summary: 'This will work, with compromises: the face will be too small to recognise.',
+        metrics: {
+          sharpness: 300,
+          brightness: 0.5,
+          contrast: 0.8,
+          clipped: 0,
+          confetti: 0.04,
+          colorsUsed: 4,
+        },
+        faces: [{ box: { x: 0.4, y: 0.3, width: 0.15, height: 0.15 }, stitchHeight: 9 }],
+        advice: [
+          {
+            code: 'face-too-small',
+            severity: 'problem',
+            title: 'The face will be too small to recognise',
+            detail: 'It will be only about 9 stitches tall.',
+            fix: { kind: 'crop', box: { x: 0.25, y: 0.15, width: 0.45, height: 0.45 } },
+            fixLabel: 'Crop to the face',
+          },
+        ],
+        suggested: { width: 60, height: 60, colorCount: 24, enhance: false, cleanup: true },
+        preview: {
+          width: 1,
+          height: 1,
+          dataUrl:
+            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        },
+      } satisfies ImageAnalysis,
+    }),
+  );
 
   await page.route('**/api/conversions', async (route) => {
     if (route.request().method() !== 'POST') return route.fulfill({ json: {} });
