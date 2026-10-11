@@ -23,6 +23,10 @@ export class PatternsApiService {
     return this.api.patch<Pattern>(`/patterns/${id}`, dto);
   }
 
+  duplicate(id: string): Observable<Pattern> {
+    return this.api.post<Pattern>(`/patterns/${id}/duplicate`, {});
+  }
+
   remove(id: string): Observable<void> {
     return this.api.delete<void>(`/patterns/${id}`);
   }

@@ -153,4 +153,51 @@ describe('PatternsService', () => {
       );
     });
   });
+
+  describe('duplicate', () => {
+    const source = {
+      id: 'pat-1',
+      projectId: 'proj-1',
+      name: 'Roses',
+      type: 'cross_stitch',
+      width: 2,
+      height: 1,
+      palette: [{ index: 0, symbol: 'A', color: { hex: '#000000', rgb: { r: 0, g: 0, b: 0 } } }],
+      grid: [[[0, 2]]],
+      meta: { createdFrom: 'blank', fabricCount: 16, progress: [[[1, 2]]] },
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+      project: { id: 'proj-1', userId: 'user-1' },
+    };
+
+    it('copies grid, palette and sizing into the same project without progress', async () => {
+      prisma.pattern.findUnique.mockResolvedValueOnce(source);
+      prisma.pattern.create.mockImplementationOnce(({ data }) =>
+        Promise.resolve({ ...source, ...data, id: 'pat-2' }),
+      );
+
+      const copy = await service.duplicate('user-1', 'pat-1');
+
+      const { data } = prisma.pattern.create.mock.calls[0][0];
+      expect(data).toMatchObject({
+        projectId: 'proj-1',
+        name: 'Roses (copy)',
+        width: 2,
+        height: 1,
+        grid: source.grid,
+        palette: source.palette,
+      });
+      expect(data.meta).toEqual({ createdFrom: 'blank', fabricCount: 16 });
+      expect(copy.id).toBe('pat-2');
+    });
+
+    it("refuses to duplicate someone else's pattern", async () => {
+      prisma.pattern.findUnique.mockResolvedValueOnce({
+        ...source,
+        project: { id: 'proj-1', userId: 'someone-else' },
+      });
+      await expect(service.duplicate('user-1', 'pat-1')).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.pattern.create).not.toHaveBeenCalled();
+    });
+  });
 });

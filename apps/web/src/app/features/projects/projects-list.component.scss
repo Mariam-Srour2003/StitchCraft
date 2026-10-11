@@ -120,4 +120,27 @@
       flex: 1;
     }
   }
+
+  &__pattern {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sc-space-2);
+  }
+
+  &__pattern-actions {
+    display: inline-flex;
+    gap: var(--sc-space-2);
+    font-size: var(--sc-font-size-sm);
+
+    button {
+      border: none;
+      background: none;
+      padding: 0;
+      color: var(--sc-color-primary);
+      text-decoration: underline;
+      cursor: pointer;
+      font: inherit;
+    }
+  }
 }

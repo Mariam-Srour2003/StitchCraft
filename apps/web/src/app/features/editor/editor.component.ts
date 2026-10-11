@@ -11,7 +11,14 @@ import {
 import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
 import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
-import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
+import {
+  CellPosition,
+  DARK_GRID_THEME,
+  GridTheme,
+  LIGHT_GRID_THEME,
+  RenderMode,
+} from '../../shared/canvas/grid-render-math';
+import { SettingsStore } from '../../core/settings/settings.store';
 import { Button } from '../../shared/ui/button/button';
 import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
 import { IconButton } from '../../shared/ui/icon-button/icon-button';
@@ -31,6 +38,7 @@ import { EditorStore, EditorTool } from './editor.store';
 import { ExportApiService } from './export-api.service';
 import { SUPPORTED_CHARACTERS, measureText } from './pixel-font';
 import { Symmetry } from './shapes';
+import { SHORTCUTS } from './shortcuts';
 
 const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },
@@ -83,18 +91,6 @@ const TOOL_KEYS: Record<string, EditorTool> = {
   o: 'ellipse',
 };
 
-export const SHORTCUTS: readonly { keys: string; action: string }[] = [
-  { keys: 'Ctrl/⌘ Z', action: 'Undo' },
-  { keys: 'Ctrl/⌘ Shift Z, Ctrl Y', action: 'Redo' },
-  { keys: 'Ctrl/⌘ S', action: 'Save' },
-  { keys: 'B / E / G / I / T', action: 'Paint, Erase, Fill, Pick, Text' },
-  { keys: 'L / R / O', action: 'Line, Box, Oval' },
-  { keys: 'H', action: 'Highlight the selected color' },
-  { keys: 'K', action: 'Toggle stitching mode' },
-  { keys: '+ / −', action: 'Zoom in / out' },
-  { keys: 'Esc', action: 'Clear highlight' },
-];
-
 const DEFAULT_FABRIC_COUNT = 14;
 const DEFAULT_DRILL_SIZE_MM = 2.8;
 const ZOOM_STEP = 25;
@@ -125,9 +121,22 @@ const ZOOM_STEP = 25;
 export class EditorComponent {
   /** Bound from the `:id` route param via withComponentInputBinding(). */
   readonly id = input.required<string>();
+  /** Optional `?mode=stitch` query param (also bound via withComponentInputBinding) opens straight into stitching mode. */
+  readonly mode = input<string | undefined>(undefined);
 
   protected readonly store = inject(EditorStore);
   private readonly exportApi = inject(ExportApiService);
+  private readonly settings = inject(SettingsStore);
+
+  /** Canvas theme from Settings; null lets the canvas follow the OS light/dark setting. */
+  protected readonly canvasTheme = computed<GridTheme | null>(() => {
+    const preference = this.settings.canvasTheme();
+    return preference === 'light'
+      ? LIGHT_GRID_THEME
+      : preference === 'dark'
+        ? DARK_GRID_THEME
+        : null;
+  });
 
   protected readonly drawTools = DRAW_TOOLS;
   protected readonly shapeTools = SHAPE_TOOLS;
@@ -174,7 +183,11 @@ export class EditorComponent {
     effect(
       () => {
         const id = this.id();
-        if (id) this.store.load(id);
+        if (!id) return;
+        const startInStitchMode = this.mode() === 'stitch';
+        this.store.load(id).then(() => {
+          if (startInStitchMode) this.store.setStitchMode(true);
+        });
       },
       // store.load() writes several signals (loading, pattern data, default
       // render mode) after its internal await - Angular disallows signal

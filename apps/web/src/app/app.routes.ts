@@ -3,35 +3,69 @@ import { authGuard } from './core/auth/auth.guard';
 import { unsavedChangesGuard } from './features/editor/unsaved-changes.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'projects' },
+  {
+    path: '',
+    pathMatch: 'full',
+    title: 'StitchCraft',
+    loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+  },
   {
     path: 'sign-in',
+    title: 'Sign in · StitchCraft',
     loadComponent: () => import('./features/auth/sign-in.component').then((m) => m.SignInComponent),
   },
   {
     path: 'register',
+    title: 'Create account · StitchCraft',
     loadComponent: () =>
       import('./features/auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'projects',
+    title: 'Projects · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/projects/projects-list.component').then((m) => m.ProjectsListComponent),
   },
   {
+    path: 'templates',
+    title: 'Templates · StitchCraft',
+    loadComponent: () =>
+      import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
+  },
+  {
+    path: 'tools',
+    title: 'Calculators · StitchCraft',
+    loadComponent: () => import('./features/tools/tools.component').then((m) => m.ToolsComponent),
+  },
+  {
+    path: 'threads',
+    title: 'My threads · StitchCraft',
+    loadComponent: () => import('./features/stash/stash.component').then((m) => m.StashComponent),
+  },
+  {
+    path: 'shopping',
+    title: 'Shopping list · StitchCraft',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/shopping/shopping.component').then((m) => m.ShoppingComponent),
+  },
+  {
     path: 'palettes',
+    title: 'DMC colors · StitchCraft',
     loadComponent: () =>
       import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
   },
   {
     path: 'my-palettes',
+    title: 'My palettes · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
   },
   {
     path: 'editor/:id',
+    title: 'Editor · StitchCraft',
     canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
@@ -39,17 +73,33 @@ export const routes: Routes = [
   },
   {
     path: 'converter/:projectId',
+    title: 'Convert an image · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/converter/converter.component').then((m) => m.ConverterComponent),
   },
   {
     path: 'patterns/:id',
+    title: 'Pattern · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/pattern-view/pattern-view-placeholder.component').then(
-        (m) => m.PatternViewPlaceholderComponent,
-      ),
+      import('./features/pattern-view/pattern-view.component').then((m) => m.PatternViewComponent),
   },
-  { path: '**', redirectTo: 'projects' },
+  {
+    path: 'help',
+    title: 'Help · StitchCraft',
+    loadComponent: () => import('./features/help/help.component').then((m) => m.HelpComponent),
+  },
+  {
+    path: 'settings',
+    title: 'Settings · StitchCraft',
+    loadComponent: () =>
+      import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+  },
+  {
+    path: '**',
+    title: 'Not found · StitchCraft',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];

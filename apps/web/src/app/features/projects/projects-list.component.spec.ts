@@ -1,6 +1,6 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import type { Pattern, Project } from '@stitchcraft/types';
 import { of } from 'rxjs';
 import { PatternsApiService } from '../patterns/patterns-api.service';
@@ -33,8 +33,8 @@ const pattern: Pattern = {
 describe('ProjectsListComponent', () => {
   let fixture: ComponentFixture<ProjectsListComponent>;
   let projectsApi: { list: jest.Mock; create: jest.Mock; remove: jest.Mock };
-  let patternsApi: { listForProject: jest.Mock; create: jest.Mock };
-  let router: { navigate: jest.Mock };
+  let patternsApi: { listForProject: jest.Mock; create: jest.Mock; duplicate: jest.Mock };
+  let router: { navigate: jest.SpyInstance };
 
   beforeEach(async () => {
     projectsApi = {
@@ -42,17 +42,22 @@ describe('ProjectsListComponent', () => {
       create: jest.fn(),
       remove: jest.fn(),
     };
-    patternsApi = { listForProject: jest.fn().mockReturnValue(of([pattern])), create: jest.fn() };
-    router = { navigate: jest.fn() };
+    patternsApi = {
+      listForProject: jest.fn().mockReturnValue(of([pattern])),
+      create: jest.fn(),
+      duplicate: jest.fn().mockReturnValue(of({ ...pattern, id: 'copy' })),
+    };
 
     await TestBed.configureTestingModule({
       imports: [ProjectsListComponent],
       providers: [
         { provide: ProjectsApiService, useValue: projectsApi },
         { provide: PatternsApiService, useValue: patternsApi },
-        { provide: Router, useValue: router },
+        provideRouter([]),
       ],
     }).compileComponents();
+    // A real Router (routerLink needs createUrlTree), with navigation stubbed.
+    router = { navigate: jest.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) };
 
     fixture = TestBed.createComponent(ProjectsListComponent);
     fixture.detectChanges();
@@ -135,5 +140,11 @@ describe('ProjectsListComponent', () => {
   it('opening the converter navigates to /converter/:projectId', () => {
     fixture.componentInstance.openConverter('proj-1');
     expect(router.navigate).toHaveBeenCalledWith(['/converter', 'proj-1']);
+  });
+
+  it('duplicates a pattern and refreshes the project list', async () => {
+    await fixture.componentInstance.duplicatePattern('proj-1', 'pat-1');
+    expect(patternsApi.duplicate).toHaveBeenCalledWith('pat-1');
+    expect(patternsApi.listForProject).toHaveBeenCalledWith('proj-1');
   });
 });

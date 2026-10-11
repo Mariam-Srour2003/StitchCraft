@@ -1,0 +1,188 @@
+<div class="sc-page shopping">
+  <header class="sc-page__header">
+    <div>
+      <h1>Shopping list</h1>
+      <p class="sc-page__lede">
+        Everything the selected patterns need, minus the threads in
+        <a routerLink="/threads">My threads</a>.
+      </p>
+    </div>
+    <div class="sc-actions sc-no-print">
+      <sc-button variant="secondary" (pressed)="copy()">{{
+        copied() ? 'Copied' : 'Copy as text'
+      }}</sc-button>
+      <sc-button variant="secondary" (pressed)="download()">Download</sc-button>
+      <sc-button variant="secondary" (pressed)="print()">Print</sc-button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="sc-muted">Loading your patterns…</p>
+  } @else if (failed()) {
+    <p role="alert">
+      Couldn't load your patterns. <button type="button" (click)="load()">Try again</button>
+    </p>
+  } @else if (patterns().length === 0) {
+    <div class="sc-card">
+      <p>You don't have any patterns yet.</p>
+      <div class="sc-actions">
+        <a routerLink="/templates">Start from a template</a
+        ><a routerLink="/projects">Go to projects</a>
+      </div>
+    </div>
+  } @else {
+    <div class="shopping__layout">
+      <aside class="sc-card shopping__patterns sc-no-print">
+        <h2>Patterns</h2>
+        <div class="sc-actions">
+          <button type="button" class="shopping__link" (click)="selectAll(true)">All</button>
+          <button type="button" class="shopping__link" (click)="selectAll(false)">None</button>
+        </div>
+        <ul>
+          @for (item of patterns(); track item.pattern.id) {
+            <li>
+              <label>
+                <input
+                  type="checkbox"
+                  [checked]="selected().has(item.pattern.id)"
+                  (change)="toggle(item.pattern.id)"
+                />
+                <span>
+                  {{ item.pattern.name }}
+                  <span class="sc-muted">· {{ typeLabels[item.pattern.type] }}</span>
+                </span>
+              </label>
+            </li>
+          }
+        </ul>
+      </aside>
+
+      <div class="shopping__lists">
+        <section class="sc-stat-row" aria-label="Summary">
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ totals().skeinsToBuy }}</span
+            ><span class="sc-stat__label">Skeins to buy</span>
+          </div>
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ totals().covered }}</span
+            ><span class="sc-stat__label">Colors you already have</span>
+          </div>
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ totals().bags }}</span
+            ><span class="sc-stat__label">Drill bags</span>
+          </div>
+        </section>
+
+        <section class="sc-card">
+          <div class="shopping__section-head">
+            <h2>Floss</h2>
+            <label class="shopping__toggle sc-no-print">
+              <input
+                type="checkbox"
+                [checked]="hideOwned()"
+                (change)="hideOwned.set($any($event.target).checked)"
+              />
+              Hide colors I have enough of
+            </label>
+          </div>
+          @if (list().threads.length === 0) {
+            <p class="sc-muted">No cross-stitch patterns selected.</p>
+          } @else if (threadLines().length === 0) {
+            <p>You have everything you need. Happy stitching!</p>
+          } @else {
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th scope="col">Bought</th>
+                  <th scope="col">Thread</th>
+                  <th scope="col" class="sc-num">Stitches</th>
+                  <th scope="col" class="sc-num">Need</th>
+                  <th scope="col" class="sc-num">Have</th>
+                  <th scope="col" class="sc-num">Buy</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of threadLines(); track line.key) {
+                  <tr [class.shopping__bought]="bought().has(line.key)">
+                    <td>
+                      <input
+                        type="checkbox"
+                        [attr.aria-label]="'Bought ' + lineLabel(line)"
+                        [checked]="bought().has(line.key)"
+                        (change)="toggleBought(line.key)"
+                      />
+                    </td>
+                    <td>
+                      <span class="sc-chip" [style.background]="line.hex"></span>
+                      {{ lineLabel(line) }} {{ line.label }}
+                      <div class="sc-muted">{{ line.patterns.join(', ') }}</div>
+                    </td>
+                    <td class="sc-num">{{ line.count }}</td>
+                    <td class="sc-num">{{ line.needed }}</td>
+                    <td class="sc-num">{{ line.dmc ? line.owned : '–' }}</td>
+                    <td class="sc-num">
+                      <strong>{{ line.toBuy }}</strong>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            @if (bought().size > 0) {
+              <div class="sc-actions sc-no-print">
+                <sc-button (pressed)="moveBoughtToStash()"
+                  >Add bought threads to My threads</sc-button
+                >
+              </div>
+            }
+          }
+        </section>
+
+        @if (list().drills.length > 0) {
+          <section class="sc-card">
+            <h2>Diamond painting drills</h2>
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th scope="col">Drill</th>
+                  <th scope="col" class="sc-num">Drills</th>
+                  <th scope="col" class="sc-num">Bags of 200</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of list().drills; track line.key) {
+                  <tr>
+                    <td>
+                      <span class="sc-chip" [style.background]="line.hex"></span>
+                      {{ lineLabel(line) }} {{ line.label }}
+                    </td>
+                    <td class="sc-num">{{ line.count }}</td>
+                    <td class="sc-num">
+                      <strong>{{ line.needed }}</strong>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </section>
+        }
+
+        @if (list().paints.length > 0) {
+          <section class="sc-card">
+            <h2>Paints</h2>
+            <p class="sc-muted">
+              Paint-by-number colors used (amounts depend on your paint and brush).
+            </p>
+            <ul class="shopping__paints">
+              @for (line of list().paints; track line.key) {
+                <li>
+                  <span class="sc-chip" [style.background]="line.hex"></span> {{ lineLabel(line) }}
+                  {{ line.label }}
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</div>
