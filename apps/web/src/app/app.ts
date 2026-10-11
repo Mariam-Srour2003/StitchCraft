@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { AuthStore } from './core/auth/auth.store';
-import { Button } from './shared/ui/button/button';
+
+import { AuthStore } from '@app/core/auth/auth.store';
+import { Button } from '@app/shared/ui/button/button';
 
 export const NAV_LINKS: readonly { path: string; label: string }[] = [
   { path: '/', label: 'Home' },

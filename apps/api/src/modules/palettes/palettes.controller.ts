@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+
 import { DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
+
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';

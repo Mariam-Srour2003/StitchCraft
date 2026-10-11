@@ -1,5 +1,6 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+
 import { TokenStorageService } from './token-storage.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {

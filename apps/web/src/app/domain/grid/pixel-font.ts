@@ -1,4 +1,4 @@
-import type { CellPosition } from '../../shared/canvas/grid-render-math';
+import type { CellPosition } from './cell';
 
 /**
  * A 7-row bitmap font for stamping lettering (names, dates, "Home sweet

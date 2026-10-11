@@ -1,4 +1,5 @@
 import type { ConfigService } from '@nestjs/config';
+
 import { HttpAiProvider } from './http-ai-provider';
 
 describe('HttpAiProvider', () => {

@@ -28,6 +28,81 @@
       }
     },
     {
+      // Layering: domain/ is pure logic: only other domain/ code and @stitchcraft/* packages
+      "files": ["src/app/domain/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["../*"], "message": "Use a layer alias (@app/...) instead of reaching up with ../" },
+              { "group": ["@angular/*", "rxjs", "rxjs/*", "@app/core/*", "@app/data-access/*", "@app/shared/*", "@app/features/*"], "message": "domain/ is pure logic: only other domain/ code and @stitchcraft/* packages" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Layering: core/ holds app-wide singletons and may only use core/ and domain/
+      "files": ["src/app/core/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["../*"], "message": "Use a layer alias (@app/...) instead of reaching up with ../" },
+              { "group": ["@app/data-access/*", "@app/shared/*", "@app/features/*"], "message": "core/ holds app-wide singletons and may only use core/ and domain/" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Layering: data-access/ may only use core/ and domain/
+      "files": ["src/app/data-access/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["../*"], "message": "Use a layer alias (@app/...) instead of reaching up with ../" },
+              { "group": ["@app/shared/*", "@app/features/*"], "message": "data-access/ may only use core/ and domain/" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Layering: shared/ is reusable UI and must not depend on a feature
+      "files": ["src/app/shared/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["../*"], "message": "Use a layer alias (@app/...) instead of reaching up with ../" },
+              { "group": ["@app/features/*"], "message": "shared/ is reusable UI and must not depend on a feature" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      // Layering: features must not import other features; move shared code to domain/, data-access/ or shared/
+      "files": ["src/app/features/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              { "group": ["../*"], "message": "Use a layer alias (@app/...) instead of reaching up with ../" },
+              { "group": ["@app/features/*"], "message": "features must not import other features; move shared code to domain/, data-access/ or shared/" }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["*.html"],
       "extends": [
         "plugin:@angular-eslint/template/recommended",

@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { SettingsStore } from '../../core/settings/settings.store';
+
+import { SettingsStore } from '@app/core/settings/settings.store';
+
 import { SettingsComponent } from './settings.component';
 
 describe('SettingsComponent', () => {

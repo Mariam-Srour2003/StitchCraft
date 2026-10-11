@@ -10,6 +10,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+
 import { CreatePaletteDto as CreatePaletteDtoShape, CustomColor } from '@stitchcraft/types';
 
 class RgbInput {

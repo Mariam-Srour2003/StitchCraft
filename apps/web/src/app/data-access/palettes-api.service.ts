@@ -1,13 +1,19 @@
-import { Injectable, inject } from '@angular/core';
-import { CreatePaletteDto, DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiClient } from '../../core/api/api-client.service';
+
+import { CreatePaletteDto, DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
+
+import { ApiClient } from '@app/core/api/api-client.service';
 
 @Injectable({ providedIn: 'root' })
 export class PalettesApiService {
   private readonly api = inject(ApiClient);
 
-  searchDmc(search: string, page: number, pageSize: number): Observable<PaginatedResponse<DmcColor>> {
+  searchDmc(
+    search: string,
+    page: number,
+    pageSize: number,
+  ): Observable<PaginatedResponse<DmcColor>> {
     return this.api.get<PaginatedResponse<DmcColor>>('/palettes/dmc', { search, page, pageSize });
   }
 

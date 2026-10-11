@@ -13,7 +13,16 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "useDefineForClassFields": false,
-    "lib": ["es2022", "dom"]
+    "lib": ["es2022", "dom"],
+    // Web-only layer alias (domain/, core/, data-access/, shared/, features/).
+    // Kept out of tsconfig.base.json so Nx doesn't treat it as another project.
+    // Redefining "paths" replaces the base's, so the shared packages are
+    // repeated here; both resolve from the repo root via the inherited baseUrl.
+    "paths": {
+      "@stitchcraft/types": ["packages/types/src/index.ts"],
+      "@stitchcraft/color": ["packages/color/src/index.ts"],
+      "@app/*": ["apps/web/src/app/*"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

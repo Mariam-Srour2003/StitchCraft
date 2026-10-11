@@ -1,12 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   computed,
   effect,
+  ElementRef,
   input,
   viewChild,
 } from '@angular/core';
+
 import type { EncodedRow, PaletteEntry } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
 

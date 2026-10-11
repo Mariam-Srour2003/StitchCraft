@@ -1,4 +1,4 @@
-import { GLYPH_HEIGHT, SUPPORTED_CHARACTERS, measureText, textPoints } from './pixel-font';
+import { GLYPH_HEIGHT, measureText, SUPPORTED_CHARACTERS, textPoints } from './pixel-font';
 
 describe('pixel font', () => {
   it('measures a single letter as 5x7', () => {

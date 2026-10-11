@@ -1,10 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AuthStore } from '../../core/auth/auth.store';
-import { PatternsApiService } from '../patterns/patterns-api.service';
-import { ProjectsApiService } from '../projects/projects-api.service';
+
+import { AuthStore } from '@app/core/auth/auth.store';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import { ProjectsApiService } from '@app/data-access/projects-api.service';
+
 import { TEMPLATES } from './template-library';
 import { TemplatesComponent } from './templates.component';
 

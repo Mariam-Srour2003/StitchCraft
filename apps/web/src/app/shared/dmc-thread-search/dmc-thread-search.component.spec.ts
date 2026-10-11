@@ -1,8 +1,11 @@
 import type { ComponentFixture } from '@angular/core/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { of, Subject, throwError } from 'rxjs';
+
 import type { DmcColor, PaginatedResponse } from '@stitchcraft/types';
-import { Subject, of, throwError } from 'rxjs';
-import { PalettesApiService } from '../palettes/palettes-api.service';
+
+import { PalettesApiService } from '@app/data-access/palettes-api.service';
+
 import { DMC_SEARCH_DEBOUNCE_MS, DmcThreadSearchComponent } from './dmc-thread-search.component';
 
 const black: DmcColor = {

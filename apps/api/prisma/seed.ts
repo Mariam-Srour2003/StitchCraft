@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import { PrismaClient } from '@prisma/client';
-import { encodeGrid } from '@stitchcraft/types';
 import * as bcrypt from 'bcrypt';
+
+import { encodeGrid } from '@stitchcraft/types';
 
 const prisma = new PrismaClient();
 

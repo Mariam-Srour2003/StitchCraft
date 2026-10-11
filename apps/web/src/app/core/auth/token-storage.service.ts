@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { AuthTokens } from '@stitchcraft/types';
 
 const ACCESS_TOKEN_KEY = 'stitchcraft.accessToken';

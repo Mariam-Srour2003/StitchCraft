@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
-import { of, throwError } from 'rxjs';
-import { PatternsApiService } from '../patterns/patterns-api.service';
+
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
+
 import { PatternViewComponent } from './pattern-view.component';
 
 const pattern: Pattern = {

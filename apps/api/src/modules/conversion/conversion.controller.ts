@@ -1,4 +1,3 @@
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   BadRequestException,
   Body,
@@ -10,8 +9,11 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ConversionJob } from '@stitchcraft/types';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+
+import { ConversionJob } from '@stitchcraft/types';
+
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -27,7 +29,9 @@ export class ConversionController {
   constructor(private readonly conversions: ConversionsService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
   async create(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File | undefined,

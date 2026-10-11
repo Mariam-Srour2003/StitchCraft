@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+
+import { stitchesPerSkein } from '@stitchcraft/color';
+
+import { ConfirmService } from '@app/core/dialog/confirm.service';
 import {
   CanvasThemePreference,
   SettingsStore,
   UserSettings,
-} from '../../core/settings/settings.store';
-import { stitchesPerSkein } from '@stitchcraft/color';
-import { Button } from '../../shared/ui/button/button';
+} from '@app/core/settings/settings.store';
+import { Button } from '@app/shared/ui/button/button';
 
 @Component({
   selector: 'sc-settings',
@@ -16,6 +19,7 @@ import { Button } from '../../shared/ui/button/button';
 })
 export class SettingsComponent {
   protected readonly store = inject(SettingsStore);
+  private readonly confirmer = inject(ConfirmService);
   protected readonly saved = signal(false);
 
   protected readonly themes: { value: CanvasThemePreference; label: string }[] = [
@@ -35,6 +39,6 @@ export class SettingsComponent {
   }
 
   reset(): void {
-    if (confirm('Reset all settings to their defaults?')) this.store.reset();
+    if (this.confirmer.confirm('Reset all settings to their defaults?')) this.store.reset();
   }
 }
