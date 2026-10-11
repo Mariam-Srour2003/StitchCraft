@@ -72,6 +72,8 @@ export interface ImageAnalysis {
     enhance: boolean;
     cleanup: boolean;
   };
+  /** What the conversion would look like (real thread colours), one pixel per stitch; may be scaled down for big patterns. */
+  preview: { width: number; height: number; dataUrl: string };
 }
 
 export interface AnalyzeImageParams {
@@ -79,4 +81,7 @@ export interface AnalyzeImageParams {
   width: number;
   height: number;
   colorCount: number;
+  /** As the conversion would run, so the preview and advice match. */
+  enhance?: boolean;
+  cleanup?: boolean;
 }

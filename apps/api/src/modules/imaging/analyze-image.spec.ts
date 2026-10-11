@@ -26,6 +26,7 @@ const goodPhoto = (over: Partial<ImageMeasurements> = {}): ImageMeasurements => 
   colorsUsed: 24,
   averageRegionSize: 20,
   faces: [],
+  preview: { width: 1, height: 1, dataUrl: 'data:image/png;base64,' },
   ...over,
 });
 
@@ -118,6 +119,17 @@ describe('adviseFromMeasurements', () => {
     );
   });
 
+  it('does not ask for settings that are already on', () => {
+    const t = target({ cleanup: true, enhance: true });
+    const result = adviseFromMeasurements(goodPhoto({ confetti: 0.2, brightness: 0.1 }), t);
+    expect(result.advice.map((a) => a.code)).toEqual(
+      expect.arrayContaining(['confetti-cleaned', 'too-dark']),
+    );
+    expect(result.advice.find((a) => a.code === 'too-dark')?.fix).toBeUndefined();
+    expect(result.advice.some((a) => a.fix?.kind === 'cleanup')).toBe(false);
+    expect(result.suggested).toMatchObject({ cleanup: true, enhance: true });
+  });
+
   it('for paint by number, warns about tiny regions instead of confetti', () => {
     const pbn = target({ targetType: 'color_by_number', colorCount: 30 });
     const result = adviseFromMeasurements(goodPhoto({ averageRegionSize: 2, confetti: 0.3 }), pbn);
@@ -168,6 +180,14 @@ describe('analyzeImage (real photo)', () => {
     expect(result.faces.map((f) => f.stitchHeight)).toContain(11);
     expect(result.advice.some((a) => a.code.startsWith('face-'))).toBe(true);
     expect(result.metrics.colorsUsed).toBeGreaterThan(1);
+    expect(result.preview).toMatchObject({ width: 60, height: 60 });
+    expect(result.preview.dataUrl).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it('shrinks the preview for big patterns but keeps proportions', async () => {
+    const result = await analyzeImage(photo, target({ width: 400, height: 200, cleanup: true }));
+    expect(result.preview.width * result.preview.height).toBeLessThanOrEqual(120 * 120 + 200);
+    expect(result.preview.width / result.preview.height).toBeCloseTo(2, 1);
   });
 
   it('rejects data that is not an image', async () => {

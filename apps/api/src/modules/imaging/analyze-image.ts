@@ -7,8 +7,8 @@ import type {
   ImageAdvice,
   ImageAnalysis,
   ImageMetrics,
+  PaletteEntry,
   RelativeBox,
-  Rgb,
 } from '@stitchcraft/types';
 import {
   computeRegions,
@@ -21,10 +21,15 @@ import { buildGridFromPixels } from './build-grid-from-pixels';
 import cascadeJson from './faces/frontalface-alt2.json';
 import type { Box, GrayImage, HaarCascade } from './faces/haar-cascade';
 import { detectMultiScale, toGray } from './faces/haar-cascade';
+import { stitchPixels } from './stitch-pixels';
 
 const FACE_CASCADE = cascadeJson as unknown as HaarCascade;
 
-/** Faces are searched for on a copy this big (long side); smaller faces than ~5% of it are missed. */
+/**
+ * Faces are searched for on a copy this big (long side). The detector's
+ * smallest window is 20 px, so faces under ~3% of the photo's long side are
+ * missed - by then they'd be a stitch or two in any pattern anyway.
+ */
 const FACE_SEARCH_SIZE = 640;
 /** The test conversion is capped at this many cells; metrics are proportions so they carry over. */
 const SIMULATION_CELLS = 120 * 120;
@@ -49,6 +54,7 @@ export interface ImageMeasurements {
   colorsUsed: number;
   averageRegionSize: number;
   faces: RelativeBox[];
+  preview: ImageAnalysis['preview'];
 }
 
 // --- measuring ---------------------------------------------------------------
@@ -170,25 +176,44 @@ export function laplacianVariance(img: GrayImage): number {
 async function simulateConversion(
   oriented: Buffer,
   target: AnalyzeImageParams,
-): Promise<Pick<ImageMeasurements, 'confetti' | 'colorsUsed' | 'averageRegionSize'>> {
+): Promise<Pick<ImageMeasurements, 'confetti' | 'colorsUsed' | 'averageRegionSize' | 'preview'>> {
   const shrink = Math.min(1, Math.sqrt(SIMULATION_CELLS / (target.width * target.height)));
   const width = Math.max(1, Math.round(target.width * shrink));
   const height = Math.max(1, Math.round(target.height * shrink));
-  const { data, channels } = await rawRgb(sharp(oriented).resize(width, height, { fit: 'fill' }));
-  const pixels: Rgb[] = new Array(width * height);
-  for (let i = 0; i < pixels.length; i++) {
-    const o = i * channels;
-    pixels[i] = { r: data[o], g: data[o + 1], b: data[o + 2] };
-  }
-  const { palette, grid } = buildGridFromPixels(pixels, width, height, target.colorCount);
-  const rows = decodeGrid(grid, width);
-  const { changed } = removeStrayStitches(rows);
+  const pixels = await stitchPixels(oriented, width, height, target.enhance);
+  const result = buildGridFromPixels(pixels, width, height, target.colorCount, {
+    cleanup: target.cleanup,
+  });
+  const rows = decodeGrid(result.grid, width);
+  // Confetti is measured before cleanup - it's what cleanup is for.
+  const stray = result.cleanup?.strayStitchesRemoved ?? removeStrayStitches(rows).changed;
   const { regions } = computeRegions(rows, width, height);
   return {
-    confetti: changed / (width * height),
-    colorsUsed: palette.length,
+    confetti: stray / (width * height),
+    colorsUsed: result.palette.length,
     averageRegionSize: (width * height) / Math.max(1, regions.length),
+    preview: await previewPng(rows, result.palette, width, height),
   };
+}
+
+/** The trial conversion as a PNG, one pixel per stitch, for the converter's preview. */
+async function previewPng(
+  rows: readonly Int16Array[],
+  palette: readonly PaletteEntry[],
+  width: number,
+  height: number,
+): Promise<ImageAnalysis['preview']> {
+  const data = Buffer.alloc(width * height * 3, 255);
+  rows.forEach((row, y) =>
+    row.forEach((index, x) => {
+      const rgb = palette[index]?.color.rgb;
+      if (rgb) data.set([rgb.r, rgb.g, rgb.b], (y * width + x) * 3);
+    }),
+  );
+  const png = await sharp(data, { raw: { width, height, channels: 3 } })
+    .png()
+    .toBuffer();
+  return { width, height, dataUrl: `data:image/png;base64,${png.toString('base64')}` };
 }
 
 // --- advising (pure) ----------------------------------------------------------
@@ -352,6 +377,9 @@ export function adviseFromMeasurements(
   }
 
   // 5. Light and contrast
+  const enhanceFix = target.enhance
+    ? {}
+    : { fix: { kind: 'enhance' } as const, fixLabel: 'Turn on Auto-enhance' };
   if (m.brightness < 0.25) {
     add({
       code: 'too-dark',
@@ -359,8 +387,7 @@ export function adviseFromMeasurements(
       title: 'The photo is dark',
       detail:
         'Dark areas merge into one or two near-black threads. Brighten the photo, or turn on Auto-enhance.',
-      fix: { kind: 'enhance' },
-      fixLabel: 'Turn on Auto-enhance',
+      ...enhanceFix,
     });
   } else if (m.brightness > 0.82) {
     add({
@@ -369,8 +396,7 @@ export function adviseFromMeasurements(
       title: 'The photo is very bright',
       detail:
         'Light areas will all become white or cream. Lower the brightness a little, or turn on Auto-enhance.',
-      fix: { kind: 'enhance' },
-      fixLabel: 'Turn on Auto-enhance',
+      ...enhanceFix,
     });
   }
   if (m.contrast < 0.3) {
@@ -380,8 +406,7 @@ export function adviseFromMeasurements(
       title: 'The photo looks flat',
       detail:
         'Low contrast means similar threads everywhere and a washed-out result. Auto-enhance stretches the contrast.',
-      fix: { kind: 'enhance' },
-      fixLabel: 'Turn on Auto-enhance',
+      ...enhanceFix,
     });
   }
   if (m.clipped > 0.2) {
@@ -410,13 +435,21 @@ export function adviseFromMeasurements(
     }
   } else {
     const confettiLimit = target.targetType === 'diamond' ? 0.2 : 0.12;
-    if (m.confetti > confettiLimit) {
+    const percent = Math.round(m.confetti * 100);
+    if (m.confetti > confettiLimit / 2 && target.cleanup) {
+      add({
+        code: 'confetti-cleaned',
+        severity: 'good',
+        title: 'Clean up will tidy scattered stitches',
+        detail: `About ${percent}% of the stitches would stand alone; Clean up gives each one its neighbours' colour.`,
+      });
+    } else if (m.confetti > confettiLimit) {
       add({
         code: 'confetti',
         severity: 'warning',
         title: 'Lots of single scattered stitches',
         detail:
-          `About ${Math.round(m.confetti * 100)}% of the stitches would be lone "confetti" stitches - slow to stitch and noisy to look at. ` +
+          `About ${percent}% of the stitches would be lone "confetti" stitches - slow to stitch and noisy to look at. ` +
           'Clean up removes them; a simpler photo or plain background helps too.',
         fix: { kind: 'cleanup' },
         fixLabel: 'Turn on Clean up',
@@ -426,7 +459,7 @@ export function adviseFromMeasurements(
         code: 'some-confetti',
         severity: 'info',
         title: 'Some scattered stitches',
-        detail: `About ${Math.round(m.confetti * 100)}% of the stitches would stand alone. Clean up will tidy them.`,
+        detail: `About ${percent}% of the stitches would stand alone. Clean up will tidy them.`,
         fix: { kind: 'cleanup' },
         fixLabel: 'Turn on Clean up',
       });
@@ -483,6 +516,7 @@ export function adviseFromMeasurements(
     faces,
     advice,
     suggested: suggestSettings(advice, target, proportionalHeight),
+    preview: m.preview,
   };
 }
 
@@ -495,8 +529,8 @@ function suggestSettings(
     width: target.width,
     height: proportionalHeight,
     colorCount: target.colorCount,
-    enhance: false,
-    cleanup: target.targetType !== 'diamond',
+    enhance: !!target.enhance,
+    cleanup: target.cleanup ?? target.targetType !== 'diamond',
   };
   for (const { fix } of advice) {
     if (!fix) continue;
