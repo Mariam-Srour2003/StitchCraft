@@ -39,13 +39,13 @@ function makePattern(overrides: Partial<Pattern> = {}): Pattern {
 describe('buildMaterialsListCsv', () => {
   it('includes a header row', () => {
     const csv = buildMaterialsListCsv(makePattern());
-    expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count');
+    expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count,Skeins');
   });
 
   it('counts stitches per color correctly', () => {
     const csv = buildMaterialsListCsv(makePattern());
-    expect(csv).toContain('A,310,Black,#000000,2');
-    expect(csv).toContain('B,,"Sky, Custom",#123456,1');
+    expect(csv).toContain('A,310,Black,#000000,2,1');
+    expect(csv).toContain('B,,"Sky, Custom",#123456,1,1');
   });
 
   it('sorts rows by count, most-needed color first', () => {
@@ -64,6 +64,17 @@ describe('buildMaterialsListCsv', () => {
     const csv = buildMaterialsListCsv(
       makePattern({ palette: [], grid: encodeGrid([[null, null, null]]) }),
     );
-    expect(csv.trim()).toBe('Symbol,DMC Code,Name,Hex,Count');
+    expect(csv.trim()).toBe('Symbol,DMC Code,Name,Hex,Count,Skeins');
+  });
+
+  it('uses a "Drill bags" column for diamond patterns', () => {
+    const csv = buildMaterialsListCsv(makePattern({ type: 'diamond' }));
+    expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count,Drill bags');
+    expect(csv).toContain('A,310,Black,#000000,2,1');
+  });
+
+  it('has no buy column for color-by-number (painted, not bought by count)', () => {
+    const csv = buildMaterialsListCsv(makePattern({ type: 'color_by_number' }));
+    expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count');
   });
 });

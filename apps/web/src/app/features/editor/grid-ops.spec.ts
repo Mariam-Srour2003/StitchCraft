@@ -1,4 +1,13 @@
-import { applyChanges, floodFill, resizeGrid } from './grid-ops';
+import {
+  applyChanges,
+  compactPalette,
+  flipHorizontal,
+  flipVertical,
+  floodFill,
+  replaceValue,
+  resizeGrid,
+  rotateClockwise,
+} from './grid-ops';
 
 const E = -1;
 
@@ -79,5 +88,77 @@ describe('resizeGrid', () => {
       [3, 4],
     ]);
     expect(asArrays(resizeGrid(grid, 2, 3, 1, E))).toEqual([[1, 2, E]]);
+  });
+});
+
+describe('transforms', () => {
+  const grid = () =>
+    toGrid([
+      [1, 2, 3],
+      [4, 5, 6],
+    ]);
+
+  it('flips horizontally and vertically', () => {
+    expect(asArrays(flipHorizontal(grid()))).toEqual([
+      [3, 2, 1],
+      [6, 5, 4],
+    ]);
+    expect(asArrays(flipVertical(grid()))).toEqual([
+      [4, 5, 6],
+      [1, 2, 3],
+    ]);
+  });
+
+  it('rotates 90 degrees clockwise, swapping dimensions', () => {
+    expect(asArrays(rotateClockwise(grid(), 3, 2))).toEqual([
+      [4, 1],
+      [5, 2],
+      [6, 3],
+    ]);
+  });
+
+  it('four clockwise rotations are the identity', () => {
+    let g = grid();
+    let w = 3;
+    let h = 2;
+    for (let i = 0; i < 4; i++) {
+      g = rotateClockwise(g, w, h);
+      [w, h] = [h, w];
+    }
+    expect(asArrays(g)).toEqual(asArrays(grid()));
+  });
+});
+
+describe('replaceValue', () => {
+  it('lists every cell of one color as a change to the other', () => {
+    const grid = toGrid([
+      [0, 1],
+      [1, E],
+    ]);
+    const changes = replaceValue(grid, 1, 0);
+    expect(changes).toHaveLength(2);
+    expect(asArrays(applyChanges(grid, changes, 'after'))).toEqual([
+      [0, 0],
+      [0, E],
+    ]);
+    expect(replaceValue(grid, 1, 1)).toEqual([]);
+  });
+});
+
+describe('compactPalette', () => {
+  it('drops unused entries and re-numbers the grid', () => {
+    const palette = [
+      { index: 0, symbol: 'A' },
+      { index: 1, symbol: 'B' },
+      { index: 2, symbol: 'C' },
+    ];
+    const grid = toGrid([[2, E, 0]]);
+    const result = compactPalette(palette, grid);
+    expect(result.palette).toEqual([
+      { index: 0, symbol: 'A' },
+      { index: 1, symbol: 'C' },
+    ]);
+    expect(asArrays(result.grid)).toEqual([[1, E, 0]]);
+    expect(Array.from(result.remap)).toEqual([0, -1, 1]);
   });
 });

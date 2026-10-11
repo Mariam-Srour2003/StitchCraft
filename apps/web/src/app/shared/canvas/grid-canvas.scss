@@ -20,4 +20,12 @@
   &--pick canvas {
     cursor: copy;
   }
+
+  &--text canvas {
+    cursor: text;
+  }
+
+  &--stitch canvas {
+    cursor: pointer;
+  }
 }

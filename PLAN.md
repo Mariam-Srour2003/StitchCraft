@@ -50,10 +50,8 @@ Proceeding with these; flag if any should change:
 10. **Editor scope cuts, to revisit in a later milestone**: ~~resize clears undo/redo history rather
     than being itself undoable; there's no DMC-search-and-add-to-palette flow inside the editor yet~~
     (both closed in M7, see §6); pan is native
-    browser scroll rather than a custom space-drag gesture; devicePixelRatio scaling isn't applied
-    to the canvas bitmap; `grid-canvas`'s theme colors are a static JS constant rather than read
-    from the CSS custom properties at render time, so the canvas doesn't follow dark mode the way
-    the rest of the UI does yet. None of these block the milestone's stated scope.
+    browser scroll rather than a custom space-drag gesture; ~~devicePixelRatio scaling isn't applied
+    to the canvas bitmap; the canvas doesn't follow dark mode~~ (both closed in M8). None of these block the milestone's stated scope.
 11. **Converter scope cuts, to revisit in a later milestone**: no crop/rotate/brightness/contrast
     adjustment step (the spec lists these as optional; M2 is the "classic" deterministic pipeline
     per PLAN.md's own M2 description); target sizing is stitch-count only, not physical
@@ -358,6 +356,51 @@ typed against `packages/types`, but do no real work yet.
     typed, and marks threads already in the palette. `EditorStore.addColorToPalette` now selects
     an existing entry instead of adding the same DMC code twice, which would otherwise split one
     floss's count across two legend/shopping-list rows.
+
+- **M8 — Pro editor & stitching companion** _(done)_: the features people expect from a serious
+  pattern app, plus tools for actually stitching a pattern, not just designing it.
+  - **Shape tools** (line, box, filled box, oval, filled oval) with a live preview while dragging:
+    each move reverts the previous preview and redraws to the new corner; releasing commits one
+    undo step. Rasterizers are pure (`features/editor/shapes.ts`): Bresenham lines, and ellipses
+    whose outline is "inside cells with an outside neighbour", so outlines never have diagonal-only
+    gaps a stitcher would have to jump.
+  - **Mirror drawing** (left/right, top/bottom, both) for paint, erase, fill and shapes - the usual
+    way samplers, borders and mandalas are designed.
+  - **Lettering**: a hand-made 5x7 stitch font (`pixel-font.ts`: A-Z, 0-9, common punctuation and a
+    heart) stamped with the Text tool; the sidebar shows the stitch size before you place it.
+  - **Whole-pattern transforms**: flip horizontal/vertical, rotate 90 degrees. These and resize use
+    a generalized `snapshot` undo step (dimensions, grid, palette and progress).
+  - **Palette management**: highlight one color (others dim - "where does the 310 go?"),
+    replace one color with another everywhere, delete a color (erasing its stitches), and remove
+    unused colors (re-numbering the rest). All undoable.
+  - **Stitching mode** (a Design / Stitch switch): click or drag to mark stitches done; a drag sets
+    every cell to the opposite of where it started, so one gesture marks or un-marks a run. Mark a
+    whole color done, clear progress, see overall and per-color % in the legend. Progress is saved
+    RLE-encoded in `pattern.meta.progress` - `meta` is already free-form JSON merged on update, so
+    no database migration was needed. Done stitches get a dark overlay. Assumption: progress is
+    part of snapshot undo steps (so undoing a flip also reverts progress marked after it); marking
+    progress itself isn't an undo step, since it's a separate activity from editing.
+  - **Paint-by-number view** (the "upaint"-style mode from the original brief): white canvas,
+    thick outlines around every 4-connected same-color region and **one number per region**,
+    placed at the region's deepest cell via a multi-source BFS distance transform
+    (`shared/canvas/regions.ts`), not one per cell. In stitching mode, "painted" regions fill with
+    their color and drop their number. Color-by-number patterns open in this view by default.
+  - **Shopping quantities**: skeins per color (cross-stitch) and 200-drill bags (diamond), from a
+    documented thread-length model in `packages/color/src/materials` (~1900 stitches/skein at
+    14-count with 2 strands, matching the usual 1800-2000 rule of thumb; 10% spare drills). Shared
+    by the legend and the export CSV so both always agree; the CSV gains a "Skeins"/"Drill bags"
+    column.
+  - **Canvas polish**: centre-line markers (toggleable), devicePixelRatio-scaled bitmap for crisp
+    stitches on high-DPI screens, and a dark canvas theme that follows the OS setting like the rest
+    of the UI. Closes those three items from assumption #10.
+  - **Keyboard shortcuts** (undo/redo/save, tool keys, zoom, highlight, stitching mode), listed in a
+    collapsible sidebar panel and ignored while typing in a field. An **unsaved-changes guard**
+    (route `canDeactivate` + `beforeunload`) stops accidental loss of work.
+  - Fixed along the way: the editor's resize form used `(ngSubmit)` without `FormsModule`, so the
+    Angular event never fired and pressing Enter/"Apply" did a native form submit that reloaded the
+    page. It now handles the plain `submit` event. The shared `segmented-toggle` also gives its
+    first option the tab stop when no option matches its value, so two toggles can share one
+    setting (draw tools / shape tools) without one becoming keyboard-unreachable.
 
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 
