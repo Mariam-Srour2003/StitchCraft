@@ -1,6 +1,7 @@
 export * from './dto/auth.dto';
 export * from './dto/conversion.dto';
 export * from './dto/export.dto';
+export * from './dto/image-analysis.dto';
 export * from './dto/palette.dto';
 export * from './dto/pattern.dto';
 export * from './dto/project.dto';
@@ -13,3 +14,4 @@ export * from './models/pattern.model';
 export * from './models/project.model';
 export * from './utils/csv';
 export * from './utils/stray-stitches';
+export * from './utils/regions';

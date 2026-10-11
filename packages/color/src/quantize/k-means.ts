@@ -30,13 +30,26 @@ export function kMeansQuantize(
   let centroids = seedCentroids(labPoints, k);
 
   for (let iter = 0; iter < maxIterations; iter++) {
-    const clusters: Lab[][] = Array.from({ length: k }, () => []);
+    // Running sums per cluster instead of collecting points: same means,
+    // no per-iteration allocation.
+    const sums = new Float64Array(k * 3);
+    const counts = new Int32Array(k);
     for (const point of labPoints) {
-      clusters[nearestCentroidIndex(point, centroids)].push(point);
+      const c = nearestCentroidIndex(point, centroids);
+      sums[c * 3] += point.l;
+      sums[c * 3 + 1] += point.a;
+      sums[c * 3 + 2] += point.b;
+      counts[c]++;
     }
 
-    const next = clusters.map((cluster, i) =>
-      cluster.length > 0 ? meanLab(cluster) : centroids[i],
+    const next = centroids.map((centroid, i) =>
+      counts[i] > 0
+        ? {
+            l: sums[i * 3] / counts[i],
+            a: sums[i * 3 + 1] / counts[i],
+            b: sums[i * 3 + 2] / counts[i],
+          }
+        : centroid,
     );
 
     const maxShift = Math.max(...next.map((c, i) => labDistance(c, centroids[i])));
@@ -73,27 +86,23 @@ function seedCentroids(points: readonly Lab[], k: number): Lab[] {
 }
 
 function nearestCentroidIndex(point: Lab, centroids: readonly Lab[]): number {
+  // Squared distance has the same argmin as distance, without the sqrt.
   let bestIndex = 0;
   let bestDistance = Infinity;
-  centroids.forEach((centroid, index) => {
-    const distance = labDistance(point, centroid);
+  for (let index = 0; index < centroids.length; index++) {
+    const c = centroids[index];
+    const dl = point.l - c.l;
+    const da = point.a - c.a;
+    const db = point.b - c.b;
+    const distance = dl * dl + da * da + db * db;
     if (distance < bestDistance) {
       bestDistance = distance;
       bestIndex = index;
     }
-  });
+  }
   return bestIndex;
 }
 
 function labDistance(a: Lab, b: Lab): number {
   return Math.hypot(a.l - b.l, a.a - b.a, a.b - b.b);
-}
-
-function meanLab(points: readonly Lab[]): Lab {
-  const sum = points.reduce((acc, p) => ({ l: acc.l + p.l, a: acc.a + p.a, b: acc.b + p.b }), {
-    l: 0,
-    a: 0,
-    b: 0,
-  });
-  return { l: sum.l / points.length, a: sum.a / points.length, b: sum.b / points.length };
 }

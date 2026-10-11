@@ -2,7 +2,7 @@ import sharp from 'sharp';
 
 import { decodeGrid } from '@stitchcraft/types';
 
-import { AiProvider } from './ai-provider';
+import type { AiProvider } from './ai-provider';
 import { ImagingService } from './imaging.service';
 
 const noAi: AiProvider = {

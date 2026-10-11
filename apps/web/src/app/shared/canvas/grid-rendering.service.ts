@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 
-import { Backstitch, PaletteEntry } from '@stitchcraft/types';
-
-import { computeRegions, isRegionEdge, RegionMap } from '@app/domain/grid/regions';
+import {
+  Backstitch,
+  computeRegions,
+  isRegionEdge,
+  PaletteEntry,
+  RegionMap,
+} from '@stitchcraft/types';
 
 import {
   colorHexForCell,

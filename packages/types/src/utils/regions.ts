@@ -1,7 +1,8 @@
 /**
- * Connected-region analysis for the paint-by-number view: every 4-connected
- * run of same-colored cells is one region to paint, numbered once (like a
- * real paint-by-number canvas) instead of once per cell.
+ * Connected-region analysis for paint by number (the editor view, the
+ * printable PDF and the image advisor): every 4-connected run of same-colored
+ * cells is one region to paint, numbered once (like a real paint-by-number
+ * canvas) instead of once per cell.
  */
 
 export interface Region {

@@ -9,3 +9,6 @@ pnpm-lock.yaml
 # Generated - regenerate via tools/generate-dmc-colors.js instead of hand-formatting
 packages/color/src/dmc/dmc-colors.json
 packages/color/src/dmc/source.csv
+
+# Generated - regenerate via tools/face-cascade/haar-to-json.py
+apps/api/src/modules/imaging/faces/frontalface-alt2.json

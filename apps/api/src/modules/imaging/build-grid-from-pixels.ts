@@ -1,8 +1,8 @@
 import {
   assignSymbols,
+  createNearestColorMatcher,
   DMC_COLORS,
   kMeansQuantize,
-  nearestColorIndex,
   nearestDmc,
   planRareColorMerge,
   srgbToLab,
@@ -84,11 +84,12 @@ export function buildGridFromPixels(
     return index;
   });
 
+  const nearestCentroid = createNearestColorMatcher(quantizedLabs, srgbToLab);
   let rows: Int16Array[] = [];
   for (let y = 0; y < height; y++) {
     const row = new Int16Array(width);
     for (let x = 0; x < width; x++) {
-      const centroidIndex = nearestColorIndex(srgbToLab(pixels[y * width + x]), quantizedLabs);
+      const centroidIndex = nearestCentroid(pixels[y * width + x]);
       row[x] = centroidToFinalIndex[centroidIndex];
     }
     rows.push(row);

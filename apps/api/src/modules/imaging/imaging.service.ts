@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import sharp from 'sharp';
 
-import { Rgb } from '@stitchcraft/types';
+import { AnalyzeImageParams, ImageAnalysis, Rgb } from '@stitchcraft/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
+import { analyzeImage } from './analyze-image';
 import { buildGridFromPixels, BuildGridResult } from './build-grid-from-pixels';
 
 export interface ConvertImageOptions {
@@ -41,6 +42,15 @@ export class ImagingService {
     return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount, {
       cleanup: opts.cleanup,
     });
+  }
+
+  /**
+   * The image advisor: how well will this photo stitch at these settings,
+   * and what would make it better? Runs the same pipeline as a conversion on
+   * a small copy, plus face detection.
+   */
+  analyze(imageBuffer: Buffer, params: AnalyzeImageParams): Promise<ImageAnalysis> {
+    return analyzeImage(imageBuffer, params);
   }
 
   /** Resizes to exactly width x height (one output pixel per stitch cell) and reads raw RGB bytes. */
