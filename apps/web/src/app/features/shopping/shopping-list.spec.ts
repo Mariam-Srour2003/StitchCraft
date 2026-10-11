@@ -76,4 +76,12 @@ describe('buildShoppingList', () => {
     expect(shoppingListText(list)).toContain('DMC 321 Red × 1');
     expect(shoppingListText(buildShoppingList([], () => 0))).toBe('Nothing to buy.\n');
   });
+
+  it('counts backstitch thread, including colors used only for lines', () => {
+    const p = pattern('A', 'cross_stitch', [0]);
+    p.meta.backstitches = [{ x1: 0, y1: 0, x2: 1, y2: 1, paletteIndex: 1 }];
+    const list = buildShoppingList([p], () => 0);
+    const red = list.threads.find((l) => l.key === '321');
+    expect(red).toMatchObject({ count: 0, needed: 1, toBuy: 1 });
+  });
 });

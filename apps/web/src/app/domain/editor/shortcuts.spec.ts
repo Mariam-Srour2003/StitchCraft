@@ -1,4 +1,4 @@
-import type { KeyPress} from './shortcuts';
+import type { KeyPress } from './shortcuts';
 import { resolveShortcut } from './shortcuts';
 
 const press = (key: string, mods: Partial<KeyPress> = {}): KeyPress => ({
@@ -28,6 +28,7 @@ describe('resolveShortcut', () => {
   it('maps single keys to tools, case-insensitively', () => {
     expect(resolveShortcut(press('G'))).toEqual({ type: 'tool', tool: 'fill' });
     expect(resolveShortcut(press('o'))).toEqual({ type: 'tool', tool: 'ellipse' });
+    expect(resolveShortcut(press('j'))).toEqual({ type: 'tool', tool: 'backstitch' });
   });
 
   it('maps view and mode keys', () => {

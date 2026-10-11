@@ -8,7 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ImagingService } from '../imaging/imaging.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
 import { ConversionsGateway } from './conversion.gateway';
-import { ConversionJobData, ConversionJobResult,CONVERSIONS_QUEUE } from './conversion-job-data';
+import { ConversionJobData, ConversionJobResult, CONVERSIONS_QUEUE } from './conversion-job-data';
 
 @Processor(CONVERSIONS_QUEUE)
 export class ConversionsProcessor extends WorkerHost {

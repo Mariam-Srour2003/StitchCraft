@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { Rgb } from '@stitchcraft/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
-import { buildGridFromPixels,BuildGridResult } from './build-grid-from-pixels';
+import { buildGridFromPixels, BuildGridResult } from './build-grid-from-pixels';
 
 export interface ConvertImageOptions {
   width: number;

@@ -29,6 +29,24 @@
     cursor: pointer;
   }
 
+  // The overlay sits exactly on top of the cell canvas and never takes input.
+  position: relative;
+
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  &--line canvas {
+    cursor: crosshair;
+  }
+
+  &--line-erase canvas {
+    cursor: not-allowed;
+  }
+
   &--readonly canvas {
     cursor: default;
     touch-action: auto;

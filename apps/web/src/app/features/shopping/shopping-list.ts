@@ -1,6 +1,6 @@
-import { drillBagsNeeded, skeinFraction } from '@stitchcraft/color';
+import { backstitchSkeinFraction, drillBagsNeeded, skeinFraction } from '@stitchcraft/color';
 import type { DmcColor, Pattern } from '@stitchcraft/types';
-import { isDmcColor } from '@stitchcraft/types';
+import { backstitchLengthByIndex, isDmcColor } from '@stitchcraft/types';
 
 import { patternStats } from '@app/domain/pattern/pattern-stats';
 
@@ -38,9 +38,10 @@ interface Accumulator {
 
 /**
  * Totals what the selected patterns need, color by color, and subtracts
- * what's in the stash. Skeins are summed unrounded across patterns (which
- * may be on different fabrics) and rounded up once, so two patterns that
- * each need half a skein of black need one skein, not two.
+ * what's in the stash. Skeins (cross stitch plus backstitch) are summed
+ * unrounded across patterns (which may be on different fabrics) and rounded
+ * up once, so two patterns that each need half a skein of black need one
+ * skein, not two.
  *
  * The stash only tracks floss, so drills and paints aren't subtracted.
  */
@@ -64,10 +65,12 @@ export function buildShoppingList(
           ? groups.threads
           : groups.paints;
     const fabricCount = pattern.meta.fabricCount ?? options.defaultFabricCount ?? 14;
+    const lineLengths = backstitchLengthByIndex(pattern.meta.backstitches, pattern.palette.length);
 
     pattern.palette.forEach((entry, i) => {
       const count = stats.perColor[i] ?? 0;
-      if (count === 0) return;
+      const lineLength = lineLengths[i] ?? 0;
+      if (count === 0 && lineLength === 0) return;
       const color = entry.color;
       const dmc = isDmcColor(color) ? color : null;
       const key = dmc ? dmc.code : entry.color.hex.toLowerCase();
@@ -82,7 +85,9 @@ export function buildShoppingList(
           patterns: new Set<string>(),
         } satisfies Accumulator);
       acc.count += count;
-      acc.skeins += skeinFraction(count, fabricCount, options.strands);
+      acc.skeins +=
+        skeinFraction(count, fabricCount, options.strands) +
+        backstitchSkeinFraction(lineLength, fabricCount);
       acc.patterns.add(pattern.name);
       group.set(key, acc);
     });

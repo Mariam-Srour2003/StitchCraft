@@ -12,7 +12,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
-import { decodeGrid } from '@stitchcraft/types';
+import { backstitchLengthByIndex, decodeGrid } from '@stitchcraft/types';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';
@@ -128,16 +128,23 @@ export class PatternViewComponent {
     const p = this.pattern();
     const stats = this.stats();
     if (!p || !stats) return [];
-    return p.palette
-      .map((entry, i) => ({
-        entry,
-        count: stats.perColor[i] ?? 0,
-        buy: estimateMaterial(p.type, stats.perColor[i] ?? 0, {
-          fabricCount: p.meta.fabricCount,
-          strands: this.settings.strands(),
-        })?.quantity,
-      }))
-      .filter((row) => row.count > 0);
+    const lineLengths = backstitchLengthByIndex(p.meta.backstitches, p.palette.length);
+    return (
+      p.palette
+        .map((entry, i) => ({
+          entry,
+          count: stats.perColor[i] ?? 0,
+          lineLength: lineLengths[i],
+          buy: estimateMaterial(p.type, stats.perColor[i] ?? 0, {
+            fabricCount: p.meta.fabricCount,
+            strands: this.settings.strands(),
+            backstitchLength: lineLengths[i],
+          })?.quantity,
+        }))
+        // Colors used only for backstitch still belong in the legend.
+        .filter((row) => row.count > 0 || row.lineLength > 0)
+        .map(({ lineLength: _unused, ...row }) => row)
+    );
   });
 
   constructor() {

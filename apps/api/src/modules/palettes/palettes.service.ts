@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { DMC_COLORS } from '@stitchcraft/color';
-import { DmcColor, PaginatedResponse,Palette } from '@stitchcraft/types';
+import { DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePaletteDto } from './dto/create-palette.dto';
