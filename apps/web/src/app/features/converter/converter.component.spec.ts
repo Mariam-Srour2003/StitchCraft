@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -92,7 +93,13 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 5));
 describe('ConverterComponent', () => {
   let fixture: ComponentFixture<ConverterComponent>;
   let component: ConverterComponent;
-  let conversionsApi: { create: jest.Mock; get: jest.Mock; analyze: jest.Mock };
+  let conversionsApi: {
+    create: jest.Mock;
+    get: jest.Mock;
+    analyze: jest.Mock;
+    visionAdviceStatus: jest.Mock;
+    visionAdvice: jest.Mock;
+  };
   let router: { navigate: jest.Mock };
 
   beforeEach(async () => {
@@ -103,6 +110,8 @@ describe('ConverterComponent', () => {
       create: jest.fn(),
       get: jest.fn(),
       analyze: jest.fn(() => of(makeAnalysis())),
+      visionAdviceStatus: jest.fn(() => of({ enabled: false })),
+      visionAdvice: jest.fn(),
     };
     router = { navigate: jest.fn() };
 
@@ -290,6 +299,91 @@ describe('ConverterComponent', () => {
     pending.next(makeAnalysis());
     expect(component['analysis']()).toBeNull();
     expect(component['analysisState']()).toBe('idle');
+  });
+
+  describe('AI second opinion', () => {
+    const advice = {
+      subject: 'a woman in a spacesuit',
+      verdict: 'fair' as const,
+      summary: 'Her face is small in the frame.',
+      keep: ['the orange suit'],
+      lose: ['her expression'],
+      tips: ['Crop to her head and shoulders'],
+    };
+
+    /** A component created after the status call is mocked as enabled. */
+    async function enabledComponent() {
+      conversionsApi.visionAdviceStatus.mockReturnValue(of({ enabled: true }));
+      fixture = TestBed.createComponent(ConverterComponent);
+      fixture.componentRef.setInput('projectId', 'proj-1');
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      await selectPhoto();
+    }
+
+    it('is not offered unless the server has it switched on', async () => {
+      await selectPhoto();
+      expect(fixture.nativeElement.textContent).not.toContain('AI second opinion');
+    });
+
+    it('asks only when the user clicks, then shows what will and will not survive', async () => {
+      conversionsApi.visionAdvice.mockReturnValue(of(advice));
+      await enabledComponent();
+      expect(conversionsApi.visionAdvice).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.textContent).toContain('Sends this photo to Anthropic');
+
+      await component.askVision();
+      fixture.detectChanges();
+      expect(conversionsApi.visionAdvice).toHaveBeenCalledWith(expect.any(File), {
+        targetType: 'cross_stitch',
+        width: 60,
+        height: 40,
+        colorCount: 24,
+        enhance: false,
+        cleanup: true,
+      });
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('a woman in a spacesuit');
+      expect(text).toContain('her expression');
+      expect(text).toContain('Crop to her head and shoulders');
+    });
+
+    it('marks the advice out of date once the photo or settings change', async () => {
+      conversionsApi.visionAdvice.mockReturnValue(of(advice));
+      await enabledComponent();
+      await component.askVision();
+      component.setColorCount(12);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('for an earlier version');
+    });
+
+    it("shows the server's reason when it cannot help", async () => {
+      conversionsApi.visionAdvice.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 429,
+              error: { statusCode: 429, message: 'AI advice is busy - try again in a minute' },
+            }),
+        ),
+      );
+      await enabledComponent();
+      await component.askVision();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(
+        'AI advice is busy - try again in a minute',
+      );
+    });
+
+    it('drops an answer that arrives after a different photo was chosen', async () => {
+      const pending = new Subject<typeof advice>();
+      conversionsApi.visionAdvice.mockReturnValue(pending);
+      await enabledComponent();
+      await component.askVision();
+      await selectPhoto(); // a new photo
+      pending.next(advice);
+      expect(component['visionAdvice']()).toBeNull();
+    });
   });
 
   it('shows the advisor error state but still allows converting', async () => {

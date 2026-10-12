@@ -143,6 +143,11 @@ export async function mockApi(page: Page): Promise<void> {
 
   // Image advisor: a photo with one far-away face, so the advice panel has a
   // problem to show and a crop to offer.
+  // The optional AI second opinion is off unless the server enables it.
+  await page.route('**/api/conversions/vision-advice/status', (route) =>
+    route.fulfill({ json: { enabled: false } }),
+  );
+
   await page.route('**/api/conversions/analyze', (route) =>
     route.fulfill({
       json: {

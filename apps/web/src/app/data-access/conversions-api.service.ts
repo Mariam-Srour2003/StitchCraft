@@ -1,7 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AnalyzeImageParams, ConversionJob, ImageAnalysis } from '@stitchcraft/types';
+import {
+  AnalyzeImageParams,
+  ConversionJob,
+  ImageAnalysis,
+  VisionAdvice,
+  VisionAdviceStatus,
+} from '@stitchcraft/types';
 
 import { ApiClient } from '@app/core/api/api-client.service';
 
@@ -27,6 +33,19 @@ export class ConversionsApiService {
   analyze(file: Blob, params: AnalyzeImageParams): Observable<ImageAnalysis> {
     return this.api.post<ImageAnalysis>(
       '/conversions/analyze',
+      imageForm(file, file instanceof File ? file.name : 'photo.jpg', params),
+    );
+  }
+
+  /** Whether the optional AI second opinion is switched on for this server. */
+  visionAdviceStatus(): Observable<VisionAdviceStatus> {
+    return this.api.get<VisionAdviceStatus>('/conversions/vision-advice/status');
+  }
+
+  /** AI second opinion on a photo - sends the photo to an outside model, so only on request. */
+  visionAdvice(file: Blob, params: AnalyzeImageParams): Observable<VisionAdvice> {
+    return this.api.post<VisionAdvice>(
+      '/conversions/vision-advice',
       imageForm(file, file instanceof File ? file.name : 'photo.jpg', params),
     );
   }

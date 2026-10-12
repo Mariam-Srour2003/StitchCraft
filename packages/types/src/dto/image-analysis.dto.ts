@@ -85,3 +85,22 @@ export interface AnalyzeImageParams {
   enhance?: boolean;
   cleanup?: boolean;
 }
+
+/**
+ * An AI second opinion on a photo (optional - only when the AI service has it
+ * switched on, since it sends the photo to an outside model).
+ */
+export interface VisionAdvice {
+  subject: string;
+  verdict: 'great' | 'good' | 'fair' | 'poor';
+  summary: string;
+  /** Things that will come out well. */
+  keep: string[];
+  /** Things that will be lost or look wrong. */
+  lose: string[];
+  tips: string[];
+}
+
+export interface VisionAdviceStatus {
+  enabled: boolean;
+}

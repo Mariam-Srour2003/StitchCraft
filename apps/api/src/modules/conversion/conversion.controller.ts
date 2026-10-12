@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
   Param,
   Post,
   UploadedFile,
@@ -12,11 +13,12 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
-import { ConversionJob, ImageAnalysis } from '@stitchcraft/types';
+import { ConversionJob, ImageAnalysis, VisionAdvice, VisionAdviceStatus } from '@stitchcraft/types';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { VisionAdviceError } from '../imaging/ai-provider';
 import { ImagingService } from '../imaging/imaging.service';
 import { ConversionsService } from './conversion.service';
 import { AnalyzeImageDto } from './dto/analyze-image.dto';
@@ -49,6 +51,33 @@ export class ConversionController {
     try {
       return await this.imaging.analyze(file.buffer, dto);
     } catch {
+      throw new BadRequestException('Could not read that image');
+    }
+  }
+
+  /** Whether the optional AI second opinion can be asked for (the converter hides the button otherwise). */
+  @Get('vision-advice/status')
+  async visionAdviceStatus(): Promise<VisionAdviceStatus> {
+    return { enabled: await this.imaging.visionAdviceAvailable() };
+  }
+
+  /**
+   * AI second opinion on a photo. Only when the user asks for it - the photo
+   * is sent to an outside model - and only if the AI service has it enabled.
+   */
+  @Post('vision-advice')
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
+  async visionAdvice(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() dto: AnalyzeImageDto,
+  ): Promise<VisionAdvice> {
+    checkImage(file);
+    try {
+      return await this.imaging.visionAdvice(file.buffer, dto);
+    } catch (error) {
+      if (error instanceof VisionAdviceError) throw new HttpException(error.message, error.status);
       throw new BadRequestException('Could not read that image');
     }
   }

@@ -530,6 +530,17 @@ typed against `packages/types`, but do no real work yet.
     had `?` for a hyphen (606, 918, 919); the e2e fixture PNG was corrupt (Chromium couldn't decode
     it; the old flow never decoded it); the API's exception filter returned 500s without logging
     the cause.
+  - **AI second opinion (optional)**: `services/ai` gained `POST /vision-advice` - Claude
+    (`claude-opus-5-5`, official `anthropic` Python SDK, structured JSON output, `fallbacks:
+"default"`, refusal handling) looks at the photo with the pattern settings and says what the
+    subject is, what will come out well, what will be lost, and what to change. Off unless the AI
+    service runs with `VISION_ADVISOR_ENABLED=1` and Anthropic credentials, because it sends the
+    photo to Anthropic; the converter shows an "Ask AI for a second opinion" button (with a
+    privacy note) only then, and only calls it on click. It lives in the Python service rather
+    than `apps/api` because adding the Node SDK made pnpm re-resolve Angular onto TypeScript 5.7
+    (the same trap as M10). Not exercised against the real API from this workspace (no key):
+    tests use a fake client, and the full browser -> API -> AI service chain was run live up to
+    the credentials check.
   - **Assumption #15**: analysis runs on the request thread (~0.3-1.5 s of CPU per call, debounced
     in the UI). Fine for one server and a handful of users; move it onto the BullMQ worker if many
     people convert at once.

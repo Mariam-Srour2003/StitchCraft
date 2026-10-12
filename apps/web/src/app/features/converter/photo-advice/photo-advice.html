@@ -53,5 +53,53 @@
   <sc-button (pressed)="applyAll.emit()">Apply all suggestions</sc-button>
   } } @else if (state() === 'loading') {
   <p class="photo-advice__muted">Looking at sharpness, light, faces and detail…</p>
-  } } }
+  } } } @if (visionEnabled()) {
+  <div class="photo-advice__vision" aria-labelledby="vision-title">
+    <h3 id="vision-title">AI second opinion</h3>
+    @if (visionAdvice(); as ai) {
+    <div [class.photo-advice__list--stale]="visionStale() || visionState() === 'loading'">
+      <p><strong>{{ verdictLabel[ai.verdict] }}</strong> - {{ ai.subject }}. {{ ai.summary }}</p>
+      @if (ai.keep.length) {
+      <p class="photo-advice__muted">Will come out well:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.keep; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      } @if (ai.lose.length) {
+      <p class="photo-advice__muted">Will be lost or look wrong:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.lose; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      } @if (ai.tips.length) {
+      <p class="photo-advice__muted">To make it better:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.tips; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      }
+    </div>
+    @if (visionStale()) {
+    <p class="photo-advice__muted">This was for an earlier version of the photo or settings.</p>
+    } } @else {
+    <p class="photo-advice__muted">
+      A description of what will and won't survive as a pattern, from an AI that looks at the photo.
+    </p>
+    } @if (visionState() === 'error') {
+    <p class="photo-advice__error" role="alert">{{ visionError() }}</p>
+    }
+    <sc-button
+      variant="secondary"
+      [disabled]="visionState() === 'loading'"
+      (pressed)="askVision.emit()"
+    >
+      {{ visionState() === 'loading' ? 'Asking the AI…' : visionAdvice() ? 'Ask again' : 'Ask AI for
+      a second opinion' }}
+    </sc-button>
+    <p class="photo-advice__privacy">Sends this photo to Anthropic's Claude to look at.</p>
+  </div>
+  }
 </section>

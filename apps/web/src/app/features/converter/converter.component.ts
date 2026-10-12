@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
@@ -30,6 +31,7 @@ import {
   MAX_PATTERN_DIMENSION,
   PatternType,
   RelativeBox,
+  VisionAdvice,
 } from '@stitchcraft/types';
 
 import { encodeJpeg, loadImageFile } from '@app/core/browser/image-io';
@@ -168,6 +170,16 @@ export class ConverterComponent {
    */
   private analysisGeneration = 0;
 
+  /** Optional AI second opinion: only offered when the server has it switched on. */
+  protected readonly visionEnabled = signal(false);
+  protected readonly visionAdvice = signal<VisionAdvice | null>(null);
+  protected readonly visionState = signal<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  protected readonly visionError = signal('');
+  /** True once the photo or settings changed after the AI looked. */
+  protected readonly visionStale = signal(false);
+  /** Which photo the pending/received AI advice belongs to. */
+  private visionFile: File | null = null;
+
   protected readonly progress = signal(0);
   protected readonly statusMessage = signal('');
   protected readonly errorMessage = signal('');
@@ -198,6 +210,14 @@ export class ConverterComponent {
   private uploadCache: { edits: PhotoEdits; blob: Promise<Blob> } | null = null;
 
   constructor() {
+    this.conversionsApi
+      .visionAdviceStatus()
+      .pipe(
+        catchError(() => of({ enabled: false })),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ enabled }) => this.visionEnabled.set(enabled));
+
     this.analysisRequests
       .pipe(
         debounce(() => timer(this.analysisDebounceMs)),
@@ -241,6 +261,7 @@ export class ConverterComponent {
       this.cropShape.set('free');
       this.previewMode.set('photo');
       this.analysis.set(null);
+      this.clearVision();
       this.uploadCache = null;
       this.syncHeight();
       this.phase.set('configure');
@@ -259,6 +280,7 @@ export class ConverterComponent {
     this.edits.set(NO_EDITS);
     this.analysis.set(null);
     this.analysisState.set('idle');
+    this.clearVision();
     this.uploadCache = null;
     this.progress.set(0);
     this.errorMessage.set('');
@@ -412,7 +434,57 @@ export class ConverterComponent {
     this.requestAnalysis();
   }
 
+  /**
+   * Asks the AI for a second opinion on the photo as it is now. Only ever on
+   * the user's request - it sends the photo to an outside model.
+   */
+  async askVision(): Promise<void> {
+    const file = this.selectedFile();
+    if (!file || this.visionState() === 'loading') return;
+    this.visionFile = file;
+    this.visionState.set('loading');
+    this.visionError.set('');
+    const params = this.conversionParams();
+    let photo: Blob;
+    try {
+      photo = await this.photoForUpload();
+    } catch {
+      this.visionState.set('error');
+      this.visionError.set('Could not prepare the photo.');
+      return;
+    }
+    this.conversionsApi
+      .visionAdvice(photo, params)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (advice) => {
+          if (this.visionFile !== this.selectedFile()) return; // photo changed meanwhile
+          this.visionAdvice.set(advice);
+          this.visionStale.set(false);
+          this.visionState.set('ready');
+        },
+        error: (error: unknown) => {
+          if (this.visionFile !== this.selectedFile()) return;
+          const message =
+            error instanceof HttpErrorResponse && typeof error.error?.message === 'string'
+              ? error.error.message
+              : 'The AI could not look at this photo right now.';
+          this.visionError.set(message);
+          this.visionState.set('error');
+        },
+      });
+  }
+
+  private clearVision(): void {
+    this.visionFile = null;
+    this.visionAdvice.set(null);
+    this.visionState.set('idle');
+    this.visionError.set('');
+    this.visionStale.set(false);
+  }
+
   requestAnalysis(): void {
+    if (this.visionAdvice()) this.visionStale.set(true);
     if (!this.selectedFile()) return;
     this.analysisState.set('loading');
     this.analysisRequests.next(++this.analysisGeneration);

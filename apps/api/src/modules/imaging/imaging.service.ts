@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { AnalyzeImageParams, ImageAnalysis, PatternType } from '@stitchcraft/types';
+import sharp from 'sharp';
+
+import { AnalyzeImageParams, ImageAnalysis, PatternType, VisionAdvice } from '@stitchcraft/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
 import { analyzeImage } from './analyze-image';
@@ -57,5 +59,24 @@ export class ImagingService {
    */
   analyze(imageBuffer: Buffer, params: AnalyzeImageParams): Promise<ImageAnalysis> {
     return analyzeImage(imageBuffer, params);
+  }
+
+  /** Whether the optional AI second opinion is switched on. */
+  visionAdviceAvailable(): Promise<boolean> {
+    return this.aiProvider.visionAdviceAvailable();
+  }
+
+  /**
+   * AI second opinion on a photo. Sends a small, upright copy - plenty for a
+   * model to judge composition, and much less to upload.
+   */
+  async visionAdvice(imageBuffer: Buffer, params: AnalyzeImageParams): Promise<VisionAdvice> {
+    const small = await sharp(imageBuffer)
+      .rotate()
+      .flatten({ background: '#ffffff' })
+      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 88 })
+      .toBuffer();
+    return this.aiProvider.visionAdvice(small, params);
   }
 }

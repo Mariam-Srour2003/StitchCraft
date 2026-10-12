@@ -179,6 +179,11 @@ organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.m
   recognise (built-in face detection, no extra service), blur, darkness,
   stretching, busy backgrounds - with one-click fixes such as "Crop to the
   face", and a preview of the pattern in real thread colors.
+- **AI second opinion** (M12, optional): with the AI service running and
+  `VISION_ADVISOR_ENABLED=1` + an Anthropic API key, the photo check offers
+  "Ask AI for a second opinion" - Claude describes what will and won't
+  survive as a pattern and what to change. Off by default (it sends the
+  photo to Anthropic); see services/ai/README.md.
 - **Photo prep** (M12): rotate, flip, crop, brightness, contrast and
   saturation in the converter; Auto-enhance and Clean up options.
 - **Half and quarter stitches** (M12), and a **Tidy** panel in the editor

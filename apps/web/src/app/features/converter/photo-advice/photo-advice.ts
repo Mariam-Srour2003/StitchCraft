@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import type { AdviceFix, AdviceSeverity, ImageAnalysis } from '@stitchcraft/types';
+import type { AdviceFix, AdviceSeverity, ImageAnalysis, VisionAdvice } from '@stitchcraft/types';
 
 import { Button } from '@app/shared/ui/button/button';
 
@@ -42,6 +42,14 @@ export class PhotoAdvice {
   readonly applyFix = output<AdviceFix>();
   readonly applyAll = output<void>();
   readonly retry = output<void>();
+
+  /** Optional AI second opinion (shown only when the server offers it). */
+  readonly visionEnabled = input(false);
+  readonly visionAdvice = input<VisionAdvice | null>(null);
+  readonly visionState = input<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  readonly visionError = input('');
+  readonly visionStale = input(false);
+  readonly askVision = output<void>();
 
   protected readonly icon = SEVERITY_ICON;
   protected readonly severityLabel = SEVERITY_LABEL;

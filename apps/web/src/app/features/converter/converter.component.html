@@ -211,6 +211,12 @@
             (applyFix)="applyFix($event)"
             (applyAll)="applyAllSuggestions()"
             (retry)="requestAnalysis()"
+            [visionEnabled]="visionEnabled()"
+            [visionAdvice]="visionAdvice()"
+            [visionState]="visionState()"
+            [visionError]="visionError()"
+            [visionStale]="visionStale()"
+            (askVision)="askVision()"
           />
 
           <div class="converter-page__actions">
