@@ -1,5 +1,6 @@
 import type { Lab, Rgb } from '@stitchcraft/types';
 
+import { labHistogram, type WeightedLab } from '../palette/fill-palette';
 import { labToSrgb, srgbToLab } from '../space/srgb-lab';
 
 export interface KMeansOptions {
@@ -14,7 +15,19 @@ export interface KMeansOptions {
  * happens here rather than in raw sRGB). Deterministic: centroids are
  * seeded from evenly-spaced samples of the sorted input rather than random
  * picks, so the same image always quantizes to the same palette.
+ *
+ * Clusters the image's colour histogram (labHistogram, each group weighted
+ * by its pixel count) rather than every pixel, so pixels of the same colour
+ * are only visited once per iteration.
  */
+/**
+ * Histogram precision for clustering. Measured on the conversion benchmark
+ * (photos, 30 colours; 500x334 at 100 colours for time): 5 bits made k-means
+ * 12x faster but colour error 2% worse; 7 bits is 4x faster (2.4 s -> 0.6 s)
+ * and within 1% of clustering every pixel.
+ */
+const HISTOGRAM_BITS = 7;
+
 export function kMeansQuantize(
   pixels: readonly Rgb[],
   colorCount: number,
@@ -24,30 +37,30 @@ export function kMeansQuantize(
   if (pixels.length === 0) return [];
 
   const { maxIterations = 20, tolerance = 0.1 } = options;
-  const labPoints = pixels.map(srgbToLab);
-  const k = Math.min(colorCount, labPoints.length);
+  const points = labHistogram(pixels, srgbToLab, HISTOGRAM_BITS);
+  const k = Math.min(colorCount, points.length);
 
-  let centroids = seedCentroids(labPoints, k);
+  let centroids = seedCentroids(points, k);
 
   for (let iter = 0; iter < maxIterations; iter++) {
-    // Running sums per cluster instead of collecting points: same means,
-    // no per-iteration allocation.
+    // Running weighted sums per cluster: same means as averaging every
+    // pixel, without visiting every pixel.
     const sums = new Float64Array(k * 3);
-    const counts = new Int32Array(k);
-    for (const point of labPoints) {
-      const c = nearestCentroidIndex(point, centroids);
-      sums[c * 3] += point.l;
-      sums[c * 3 + 1] += point.a;
-      sums[c * 3 + 2] += point.b;
-      counts[c]++;
+    const weights = new Float64Array(k);
+    for (const { lab, weight } of points) {
+      const c = nearestCentroidIndex(lab, centroids);
+      sums[c * 3] += lab.l * weight;
+      sums[c * 3 + 1] += lab.a * weight;
+      sums[c * 3 + 2] += lab.b * weight;
+      weights[c] += weight;
     }
 
     const next = centroids.map((centroid, i) =>
-      counts[i] > 0
+      weights[i] > 0
         ? {
-            l: sums[i * 3] / counts[i],
-            a: sums[i * 3 + 1] / counts[i],
-            b: sums[i * 3 + 2] / counts[i],
+            l: sums[i * 3] / weights[i],
+            a: sums[i * 3 + 1] / weights[i],
+            b: sums[i * 3 + 2] / weights[i],
           }
         : centroid,
     );
@@ -76,13 +89,29 @@ function dedupeByLabDistance(points: readonly Lab[]): Lab[] {
   return deduped;
 }
 
-function seedCentroids(points: readonly Lab[], k: number): Lab[] {
-  const sorted = [...points].sort((a, b) => a.l - b.l || a.a - b.a || a.b - b.b);
-  const step = sorted.length / k;
-  return Array.from(
-    { length: k },
-    (_, i) => sorted[Math.min(sorted.length - 1, Math.floor(i * step))],
+/**
+ * Evenly spaced picks through the colours sorted by lightness, spaced by
+ * pixel count rather than by histogram entry, so a colour covering half the
+ * image gets about half the starting centres - as seeding from every pixel
+ * did.
+ */
+function seedCentroids(points: readonly WeightedLab[], k: number): Lab[] {
+  const sorted = [...points].sort(
+    (p, q) => p.lab.l - q.lab.l || p.lab.a - q.lab.a || p.lab.b - q.lab.b,
   );
+  const total = sorted.reduce((sum, p) => sum + p.weight, 0);
+  const seeds: Lab[] = [];
+  let cumulative = 0;
+  let next = 0;
+  for (const point of sorted) {
+    cumulative += point.weight;
+    while (next < k && (next * total) / k < cumulative) {
+      seeds.push(point.lab);
+      next++;
+    }
+  }
+  while (seeds.length < k) seeds.push(sorted[sorted.length - 1].lab);
+  return seeds;
 }
 
 function nearestCentroidIndex(point: Lab, centroids: readonly Lab[]): number {

@@ -7,13 +7,19 @@ export interface WeightedLab {
 }
 
 /**
- * Summarises pixels as at most 32,768 weighted colours: pixels are grouped by
- * the top 5 bits of each RGB channel and each group is represented by its
- * members' mean Lab. Choosing a palette then costs the same for a 500x500
- * photo as for a 50x50 one, and a group's members differ by at most 7 levels
- * per channel, well under a visible difference once matched to thread.
+ * Summarises pixels as weighted colours: pixels are grouped by the top
+ * `bits` bits of each RGB channel, and each group is represented by its
+ * members' mean Lab and their count. Choosing a palette then costs the same
+ * for a 500x500 photo as for a 50x50 one. With the default 5 bits (at most
+ * 32,768 groups) a group's members differ by at most 7 levels per channel,
+ * well under a visible difference once matched to thread.
  */
-export function labHistogram(pixels: readonly Rgb[], toLab: (rgb: Rgb) => Lab): WeightedLab[] {
+export function labHistogram(
+  pixels: readonly Rgb[],
+  toLab: (rgb: Rgb) => Lab,
+  bits = 5,
+): WeightedLab[] {
+  const drop = 8 - bits;
   const sums = new Map<number, { l: number; a: number; b: number; n: number }>();
   const labCache = new Map<number, Lab>();
   for (const p of pixels) {
@@ -23,7 +29,7 @@ export function labHistogram(pixels: readonly Rgb[], toLab: (rgb: Rgb) => Lab): 
       lab = toLab(p);
       labCache.set(exact, lab);
     }
-    const bin = ((p.r >> 3) << 10) | ((p.g >> 3) << 5) | (p.b >> 3);
+    const bin = ((p.r >> drop) << (2 * bits)) | ((p.g >> drop) << bits) | (p.b >> drop);
     const s = sums.get(bin);
     if (s) {
       s.l += lab.l;

@@ -65,3 +65,12 @@ describe.each([
     expect(result[0].b).toBeCloseTo(RED.b, 0);
   });
 });
+
+describe('kMeansQuantize on a lopsided image', () => {
+  it('still finds a colour that covers only a small share of the pixels', () => {
+    const pixels = [...repeat(RED, 900), ...repeat(BLUE, 100)];
+    const result = kMeansQuantize(pixels, 2);
+    expect(result).toHaveLength(2);
+    expect(result.some((c) => c.b > 150 && c.r < 60)).toBe(true);
+  });
+});

@@ -28,6 +28,15 @@ describe('labHistogram', () => {
     expect(hist[0].weight).toBe(2);
   });
 
+  it('groups more finely with more bits', () => {
+    const pixels: Rgb[] = [
+      { r: 200, g: 10, b: 10 },
+      { r: 201, g: 11, b: 12 },
+    ];
+    expect(labHistogram(pixels, srgbToLab, 5)).toHaveLength(1);
+    expect(labHistogram(pixels, srgbToLab, 8)).toHaveLength(2);
+  });
+
   it('is empty for no pixels', () => {
     expect(labHistogram([], srgbToLab)).toEqual([]);
   });
