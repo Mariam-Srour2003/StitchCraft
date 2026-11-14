@@ -5,6 +5,7 @@ export * from './dmc';
 export * from './match/nearest-color-index';
 export * from './match/nearest-dmc';
 export * from './materials/materials';
+export * from './palette/fill-palette';
 export * from './quantize/k-means';
 export * from './quantize/median-cut';
 export * from './space/srgb-lab';

@@ -2,7 +2,9 @@ import {
   assignSymbols,
   createNearestColorMatcher,
   DMC_COLORS,
+  fillPalette,
   kMeansQuantize,
+  labHistogram,
   nearestDmc,
   planRareColorMerge,
   srgbToLab,
@@ -65,8 +67,27 @@ export function minPaintAreaCells(cellCount: number): number {
 }
 
 /**
- * The deterministic core of image conversion: quantize -> DMC-match ->
- * dedupe -> (cleanup) -> assign symbols -> build the grid. Pure (no
+ * Picks up to `colorCount` DMC threads for these pixels: k-means finds the
+ * image's main colours, each snaps to its nearest thread, and when two snap
+ * to the same thread the palette is topped back up with the threads that
+ * reduce the colour error most (fillPalette). Before the top-up, asking for
+ * 30 colours delivered about 22 on photos. Fewer come back only when more
+ * would not change the picture, e.g. a six-colour logo.
+ */
+export function chooseThreads(pixels: readonly Rgb[], colorCount: number): DmcColor[] {
+  const snapped: DmcColor[] = [];
+  for (const centre of kMeansQuantize(pixels, colorCount)) {
+    const thread = nearestDmc(centre, DMC_COLORS).color;
+    if (!snapped.includes(thread)) snapped.push(thread);
+  }
+  if (snapped.length >= colorCount) return snapped;
+  return fillPalette(labHistogram(pixels, srgbToLab), snapped, DMC_COLORS, colorCount);
+}
+
+/**
+ * The deterministic core of image conversion: choose threads (quantize ->
+ * DMC-match -> dedupe -> top up) -> map pixels to threads ->
+ * (cleanup) -> assign symbols -> build the grid. Pure (no
  * sharp/I-O), so it's unit-testable against synthetic pixel arrays instead of
  * real image files. `ImagingService.convertImageToGrid` wraps this with the
  * sharp-based pixel extraction step.
@@ -82,31 +103,20 @@ export function buildGridFromPixels(
     throw new Error(`buildGridFromPixels: expected ${width * height} pixels, got ${pixels.length}`);
   }
 
-  const quantized = kMeansQuantize(pixels, colorCount);
-  const quantizedLabs = quantized.map(srgbToLab);
-  const dmcMatches = quantized.map((c) => nearestDmc(c, DMC_COLORS).color);
+  let colors = chooseThreads(pixels, colorCount);
 
-  // Two quantized centroids can snap to the same real DMC thread; dedupe so
-  // the legend/grid doesn't carry a redundant entry for the same color.
-  const codeToFinalIndex = new Map<string, number>();
-  let colors: DmcColor[] = [];
-  const centroidToFinalIndex = dmcMatches.map((dmc) => {
-    let index = codeToFinalIndex.get(dmc.code);
-    if (index === undefined) {
-      index = colors.length;
-      codeToFinalIndex.set(dmc.code, index);
-      colors.push(dmc);
-    }
-    return index;
-  });
-
-  const nearestCentroid = createNearestColorMatcher(quantizedLabs, srgbToLab);
+  // Every pixel goes to its nearest *thread*. (It used to go to its nearest
+  // k-means centre and inherit that centre's thread, which misplaces pixels
+  // whenever a centre sits between two threads.)
+  const nearestThread = createNearestColorMatcher(
+    colors.map((c) => c.lab),
+    srgbToLab,
+  );
   let rows: Int16Array[] = [];
   for (let y = 0; y < height; y++) {
     const row = new Int16Array(width);
     for (let x = 0; x < width; x++) {
-      const centroidIndex = nearestCentroid(pixels[y * width + x]);
-      row[x] = centroidToFinalIndex[centroidIndex];
+      row[x] = nearestThread(pixels[y * width + x]);
     }
     rows.push(row);
   }
