@@ -9,9 +9,11 @@ const MM_PER_INCH = 25.4;
 
 /**
  * Finished physical dimensions. Cross-stitch/color-by-number size by fabric
- * (Aida) count - stitches per inch. Diamond painting sizes by drill size in
- * millimetres, since drills are laid out edge-to-edge (typically 2.5-2.8mm
- * square, per the spec) rather than counted against a fabric mesh.
+ * (Aida) count - stitches per inch. Diamond painting and fuse beads size by
+ * the piece in millimetres (drill size, or bead size = peg spacing), since
+ * pieces sit edge to edge rather than being counted against a fabric mesh.
+ * Fused beads shrink a little as they melt together, so a fused piece can
+ * come out slightly smaller.
  */
 export function computeFinishedSize(
   type: PatternType,
@@ -22,7 +24,7 @@ export function computeFinishedSize(
   if (fabricCountOrDrillSizeMm <= 0) return null;
 
   const inches =
-    type === 'diamond'
+    type === 'diamond' || type === 'fuse_bead'
       ? {
           width: (gridWidth * fabricCountOrDrillSizeMm) / MM_PER_INCH,
           height: (gridHeight * fabricCountOrDrillSizeMm) / MM_PER_INCH,

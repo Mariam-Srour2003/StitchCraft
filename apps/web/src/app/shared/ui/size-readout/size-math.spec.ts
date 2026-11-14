@@ -20,6 +20,11 @@ describe('computeFinishedSize', () => {
     expect(size?.inches.height).toBeCloseTo(125 / 25.4, 5);
   });
 
+  it('sizes fuse beads by bead size, like drills', () => {
+    const size = computeFinishedSize('fuse_bead', 29, 29, 5);
+    expect(size?.cm.width).toBeCloseTo(14.5, 5);
+  });
+
   it('also reports centimetres', () => {
     const size = computeFinishedSize('cross_stitch', 14, 14, 14);
     expect(size?.cm.width).toBeCloseTo(2.54, 5);

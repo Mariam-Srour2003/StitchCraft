@@ -8,6 +8,7 @@ import type {
   ImageAnalysis,
   ImageMetrics,
   PaletteEntry,
+  PatternType,
   RelativeBox,
 } from '@stitchcraft/types';
 import {
@@ -17,7 +18,12 @@ import {
   removeStrayStitches,
 } from '@stitchcraft/types';
 
-import { buildGridFromPixels, effectiveDither, minPaintAreaCells } from './build-grid-from-pixels';
+import {
+  buildGridFromPixels,
+  conversionCatalogue,
+  effectiveDither,
+  minPaintAreaCells,
+} from './build-grid-from-pixels';
 import cascadeJson from './faces/frontalface-alt2.json';
 import type { Box, GrayImage, HaarCascade } from './faces/haar-cascade';
 import { detectMultiScale, toGray } from './faces/haar-cascade';
@@ -184,6 +190,7 @@ async function simulateConversion(
   const result = buildGridFromPixels(pixels, width, height, target.colorCount, {
     cleanup: target.cleanup,
     dither: effectiveDither(target.targetType, target.dither),
+    catalogue: conversionCatalogue(target.targetType, target.beadCatalogueId),
     // the trial grid can be smaller than the pattern; scale the area threshold with it
     minRegionSize:
       target.targetType === 'color_by_number'
@@ -440,7 +447,7 @@ export function adviseFromMeasurements(
       });
     }
   } else {
-    const confettiLimit = target.targetType === 'diamond' ? 0.2 : 0.12;
+    const confettiLimit = placedPieceByPiece(target.targetType) ? 0.2 : 0.12;
     const percent = Math.round(m.confetti * 100);
     if (effectiveDither(target.targetType, target.dither) !== 'none') {
       // Blending scatters stitches on purpose; warning about it would only
@@ -551,7 +558,7 @@ function suggestSettings(
     height: proportionalHeight,
     colorCount: target.colorCount,
     enhance: !!target.enhance,
-    cleanup: target.cleanup ?? target.targetType !== 'diamond',
+    cleanup: target.cleanup ?? !placedPieceByPiece(target.targetType),
   };
   for (const { fix } of advice) {
     if (!fix) continue;
@@ -614,3 +621,12 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const pickSize = ({ width, height }: AnalyzeImageParams) => ({ width, height });
+
+/**
+ * Diamond drills and fuse beads go on one at a time, so a lone colour costs
+ * no more than any other piece - unlike a lone cross stitch, which costs a
+ * thread change.
+ */
+function placedPieceByPiece(type: PatternType): boolean {
+  return type === 'diamond' || type === 'fuse_bead';
+}

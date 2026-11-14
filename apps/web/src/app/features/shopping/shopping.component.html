@@ -71,6 +71,12 @@
             <span class="sc-stat__value">{{ totals().bags }}</span
             ><span class="sc-stat__label">Drill bags</span>
           </div>
+          @if (list().beads.length > 0) {
+            <div class="sc-stat">
+              <span class="sc-stat__value">{{ totals().packs }}</span
+              ><span class="sc-stat__label">Bead packs</span>
+            </div>
+          }
         </section>
 
         <section class="sc-card">
@@ -163,6 +169,38 @@
                 }
               </tbody>
             </table>
+          </section>
+        }
+
+        @if (list().beads.length > 0) {
+          <section class="sc-card">
+            <h2>Fuse beads</h2>
+            <table class="sc-table">
+              <thead>
+                <tr>
+                  <th scope="col">Bead</th>
+                  <th scope="col" class="sc-num">Beads</th>
+                  <th scope="col" class="sc-num">Packs of 1,000</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (line of list().beads; track line.key) {
+                  <tr>
+                    <td>
+                      <span class="sc-chip" [style.background]="line.hex"></span>
+                      {{ line.key }} {{ line.label }}
+                    </td>
+                    <td class="sc-num">{{ line.count }}</td>
+                    <td class="sc-num">
+                      <strong>{{ line.needed }}</strong>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="sc-muted">
+              Includes 5% spare. Pack sizes vary by brand; the bead counts are exact.
+            </p>
           </section>
         }
 

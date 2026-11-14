@@ -73,6 +73,7 @@
         [width]="store.width()"
         [height]="store.height()"
         [unitSize]="unitSize()"
+        [boardPegs]="boardPegs()"
       />
     </header>
 
@@ -125,6 +126,7 @@
         [progress]="store.progress()"
         [highlightIndex]="store.highlightIndex()"
         [showCenter]="store.showCenter()"
+        [boldEvery]="boldEvery()"
         [theme]="canvasTheme()"
         [backstitches]="store.backstitches()"
         [partialStitches]="store.partialStitches()"
@@ -169,10 +171,18 @@
             [selectedIndex]="store.selectedPaletteIndex()"
             (selectIndex)="store.setSelectedPaletteIndex($event)"
           />
-          <sc-dmc-thread-search
-            [paletteCodes]="paletteDmcCodes()"
-            (threadSelected)="store.addColorToPalette($event)"
-          />
+          @if (beadCatalogue(); as catalogue) {
+            <sc-bead-color-search
+              [catalogue]="catalogue"
+              [paletteCodes]="paletteDmcCodes()"
+              (colorSelected)="store.addColorToPalette($event)"
+            />
+          } @else {
+            <sc-dmc-thread-search
+              [paletteCodes]="paletteDmcCodes()"
+              (threadSelected)="store.addColorToPalette($event)"
+            />
+          }
           <sc-color-picker (colorAdded)="store.addColorToPalette($event)" />
 
           @if (selectedEntry(); as entry) {

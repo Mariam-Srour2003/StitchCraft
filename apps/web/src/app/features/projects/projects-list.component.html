@@ -96,6 +96,23 @@
             Drill size (mm)
             <input type="number" step="0.1" min="0.1" formControlName="drillSizeMm" />
           </label>
+        } @else if (newPatternForm.controls.type.value === 'fuse_bead') {
+          <label>
+            Bead line
+            <select formControlName="beadCatalogueId">
+              @for (line of beadLines; track line.id) {
+                <option [value]="line.id">{{ line.line }} ({{ line.beadSizeMm }} mm)</option>
+              }
+            </select>
+          </label>
+          <label>
+            Pegboard
+            <select formControlName="boardPegs">
+              @for (board of boardPresets; track board.pegs) {
+                <option [ngValue]="board.pegs">{{ board.label }}</option>
+              }
+            </select>
+          </label>
         } @else {
           <label>
             Fabric count (Aida)

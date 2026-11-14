@@ -108,6 +108,28 @@ describe('ProjectsListComponent', () => {
     expect(fixture.componentInstance.newPatternProjectId()).toBeNull();
   });
 
+  it('creates a fuse-bead pattern with its bead line and pegboard', async () => {
+    patternsApi.create.mockReturnValueOnce(of(pattern));
+    fixture.componentInstance.openNewPattern('proj-1');
+    fixture.componentInstance.newPatternForm.patchValue({
+      name: 'Sprite',
+      type: 'fuse_bead',
+      width: 29,
+      height: 29,
+      beadCatalogueId: 'hama-midi',
+      boardPegs: 14,
+    });
+
+    await fixture.componentInstance.createPattern();
+
+    expect(patternsApi.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'fuse_bead',
+        meta: { beadCatalogueId: 'hama-midi', boardPegs: 14 },
+      }),
+    );
+  });
+
   it('creates a cross-stitch pattern with a fabricCount meta field', async () => {
     patternsApi.create.mockReturnValueOnce(of(pattern));
     fixture.componentInstance.openNewPattern('proj-1');

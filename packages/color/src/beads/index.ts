@@ -11,6 +11,12 @@ export const BEAD_CATALOGUES: readonly BeadCatalogue[] = raw as BeadCatalogue[];
 
 const byId = new Map(BEAD_CATALOGUES.map((c) => [c.id, c]));
 
+/** Every bead catalogue id, for validating requests. */
+export const BEAD_CATALOGUE_IDS: readonly string[] = BEAD_CATALOGUES.map((c) => c.id);
+
+/** The bead line used when a fuse-bead pattern doesn't name one. */
+export const DEFAULT_BEAD_CATALOGUE_ID = 'perler';
+
 export function findBeadCatalogue(id: string): BeadCatalogue | undefined {
   return byId.get(id);
 }
@@ -28,4 +34,25 @@ export function beadColorsForConversion(
   return includeSpecialFinishes
     ? catalogue.colors
     : catalogue.colors.filter((c) => (c.finish ?? 'solid') === 'solid');
+}
+
+/** How many square pegboards a design covers: boards across, down, and in total. */
+export function boardsNeeded(
+  width: number,
+  height: number,
+  boardPegs: number,
+): { across: number; down: number; total: number } {
+  const pegs = Math.max(1, Math.floor(boardPegs));
+  const across = Math.max(1, Math.ceil(width / pegs));
+  const down = Math.max(1, Math.ceil(height / pegs));
+  return { across, down, total: across * down };
+}
+
+/**
+ * Pegs along one side of the usual large square board for a bead size:
+ * 29 x 29 for 5 mm beads, 57 x 57 for mini beads (Hama's large square mini
+ * board has 3,249 pegs). People can change it per pattern.
+ */
+export function defaultBoardPegs(beadSizeMm: number): number {
+  return beadSizeMm >= 4 ? 29 : 57;
 }

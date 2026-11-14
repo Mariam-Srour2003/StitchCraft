@@ -2,7 +2,8 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
-import { ConversionParams } from '@stitchcraft/types';
+import { DEFAULT_BEAD_CATALOGUE_ID, defaultBoardPegs, findBeadCatalogue } from '@stitchcraft/color';
+import { ConversionParams, PatternMeta } from '@stitchcraft/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImagingService } from '../imaging/imaging.service';
@@ -43,6 +44,7 @@ export class ConversionsProcessor extends WorkerHost {
       enhance: params.enhance,
       cleanup: params.cleanup,
       dither: params.dither,
+      beadCatalogueId: params.beadCatalogueId,
       targetType: params.targetType,
     });
 
@@ -60,6 +62,7 @@ export class ConversionsProcessor extends WorkerHost {
           createdFrom: 'conversion',
           sourceConversionJobId: conversionJobId,
           ...(cleanup ? { conversionCleanup: { ...cleanup } } : {}),
+          ...beadMeta(params),
         },
       },
     });
@@ -126,4 +129,14 @@ export class ConversionsProcessor extends WorkerHost {
       error: error.message,
     });
   }
+}
+
+/** Fuse-bead patterns remember their bead line and pegboard size. */
+function beadMeta(params: ConversionParams): Pick<PatternMeta, 'beadCatalogueId' | 'boardPegs'> {
+  if (params.targetType !== 'fuse_bead') return {};
+  const catalogue =
+    findBeadCatalogue(params.beadCatalogueId ?? DEFAULT_BEAD_CATALOGUE_ID) ??
+    findBeadCatalogue(DEFAULT_BEAD_CATALOGUE_ID);
+  if (!catalogue) return {};
+  return { beadCatalogueId: catalogue.id, boardPegs: defaultBoardPegs(catalogue.beadSizeMm) };
 }

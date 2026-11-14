@@ -43,6 +43,7 @@ export class ConversionsService {
       enhance: dto.enhance,
       cleanup: dto.cleanup,
       dither: dto.dither,
+      beadCatalogueId: dto.targetType === 'fuse_bead' ? dto.beadCatalogueId : undefined,
     };
 
     const conversionJob = await this.prisma.conversionJob.create({

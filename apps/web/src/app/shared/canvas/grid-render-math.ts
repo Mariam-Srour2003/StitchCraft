@@ -55,8 +55,8 @@ export const DARK_GRID_THEME: GridTheme = {
 /** Grid lines are bold every 10th line (line index 0, 10, 20, ...), matching cross-stitch chart convention. */
 export const BOLD_LINE_INTERVAL = 10;
 
-export function isBoldGridLine(lineIndex: number): boolean {
-  return lineIndex % BOLD_LINE_INTERVAL === 0;
+export function isBoldGridLine(lineIndex: number, interval = BOLD_LINE_INTERVAL): boolean {
+  return lineIndex % interval === 0;
 }
 
 /** Converts a zoom percentage (e.g. 100 = 1:1) into a pixel cell size, clamped to stay paintable/visible. */

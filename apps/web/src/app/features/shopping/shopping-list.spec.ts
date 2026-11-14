@@ -1,4 +1,4 @@
-import { findDmcByCode } from '@stitchcraft/color';
+import { findBeadCatalogue, findDmcByCode } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
 
@@ -69,6 +69,27 @@ describe('buildShoppingList', () => {
     expect(list.drills[0]).toMatchObject({ key: '321', count: 300, needed: 2, owned: 0, toBuy: 2 });
     expect(list.paints[0]).toMatchObject({ key: '310', needed: 0 });
     expect(list.threads).toEqual([]);
+  });
+
+  it('puts fuse beads under beads, per bead line, in packs of 1,000', () => {
+    const hama = findBeadCatalogue('hama-midi')!;
+    const white = hama.colors.find((c) => c.code === 'H01')!;
+    const beads = (name: string, beadCatalogueId: string, cells: number): Pattern => ({
+      ...pattern(name, 'fuse_bead', Array(cells).fill(0)),
+      palette: [{ index: 0, symbol: 'A', color: white }],
+      meta: { createdFrom: 'blank', beadCatalogueId },
+    });
+    const list = buildShoppingList(
+      [beads('a', 'hama-midi', 600), beads('b', 'hama-midi', 400), beads('c', 'hama-mini', 10)],
+      () => 0,
+    );
+    expect(list.threads).toEqual([]);
+    expect(list.paints).toEqual([]);
+    expect(list.beads.map((l) => [l.key, l.count, l.needed])).toEqual([
+      ['Hama Midi H01', 1000, 2], // 1000 + 5% spare -> 2 packs
+      ['Hama Mini H01', 10, 1],
+    ]);
+    expect(shoppingListText(list)).toContain('- Hama Midi H01 White × 2');
   });
 
   it('formats a plain-text list', () => {

@@ -24,6 +24,7 @@ import {
   timer,
 } from 'rxjs';
 
+import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@stitchcraft/color';
 import {
   AdviceFix,
   AnalyzeImageParams,
@@ -51,6 +52,7 @@ import {
   RgbaImage,
   Rotation,
 } from '@app/domain/image/image-ops';
+import { cellNoun } from '@app/domain/pattern/pattern-rules';
 import { Button } from '@app/shared/ui/button/button';
 import { FileDrop } from '@app/shared/ui/file-drop/file-drop';
 import { IconButton } from '@app/shared/ui/icon-button/icon-button';
@@ -68,6 +70,7 @@ const TARGET_TYPE_OPTIONS: SegmentedToggleOption<PatternType>[] = [
   { value: 'cross_stitch', label: 'Cross-Stitch' },
   { value: 'color_by_number', label: 'Color by Number' },
   { value: 'diamond', label: 'Diamond' },
+  { value: 'fuse_bead', label: 'Fuse Beads' },
 ];
 
 const DITHER_OPTIONS: SegmentedToggleOption<DitherMode>[] = [
@@ -78,8 +81,14 @@ const DITHER_OPTIONS: SegmentedToggleOption<DitherMode>[] = [
 
 /** Blending suits crafts placed piece by piece; stitching wants solid areas. */
 function defaultDither(type: PatternType): DitherMode {
-  return type === 'diamond' ? 'light' : 'none';
+  return type === 'diamond' || type === 'fuse_bead' ? 'light' : 'none';
 }
+
+/** Bead lines to convert into, e.g. "Hama Midi (5 mm)". */
+const BEAD_LINE_OPTIONS = BEAD_CATALOGUES.map((c) => ({
+  id: c.id,
+  label: `${c.line} (${c.beadSizeMm} mm)`,
+}));
 
 type CropShape = 'free' | 'square' | 'landscape' | 'portrait';
 const CROP_SHAPE_OPTIONS: SegmentedToggleOption<CropShape>[] = [
@@ -147,6 +156,7 @@ export class ConverterComponent {
 
   protected readonly targetTypeOptions = TARGET_TYPE_OPTIONS;
   protected readonly ditherOptions = DITHER_OPTIONS;
+  protected readonly beadLineOptions = BEAD_LINE_OPTIONS;
   protected readonly cropShapeOptions = CROP_SHAPE_OPTIONS;
   protected readonly previewOptions = PREVIEW_OPTIONS;
   protected readonly maxDimension = MAX_PATTERN_DIMENSION;
@@ -170,6 +180,9 @@ export class ConverterComponent {
   protected readonly enhance = signal(false);
   protected readonly cleanup = signal(true);
   protected readonly dither = signal<DitherMode>('none');
+  protected readonly beadCatalogueId = signal(DEFAULT_BEAD_CATALOGUE_ID);
+  /** What one cell is, for the size labels: stitches, drills or beads. */
+  protected readonly cellWord = computed(() => cellNoun(this.targetType()).toLowerCase());
   /** Once the user picks a blending level, changing pattern type stops resetting it. */
   private ditherChosen = false;
 
@@ -360,6 +373,11 @@ export class ConverterComponent {
     this.requestAnalysis();
   }
 
+  setBeadCatalogue(id: string): void {
+    this.beadCatalogueId.set(id);
+    this.requestAnalysis();
+  }
+
   setDither(mode: DitherMode): void {
     this.dither.set(mode);
     this.ditherChosen = true;
@@ -522,6 +540,7 @@ export class ConverterComponent {
       enhance: this.enhance(),
       cleanup: this.cleanup(),
       dither: this.dither(),
+      ...(this.targetType() === 'fuse_bead' ? { beadCatalogueId: this.beadCatalogueId() } : {}),
     };
   }
 

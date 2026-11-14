@@ -1,7 +1,11 @@
 import type { Rgb } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
 
-import { buildGridFromPixels, effectiveDither } from './build-grid-from-pixels';
+import {
+  buildGridFromPixels,
+  conversionCatalogue,
+  effectiveDither,
+} from './build-grid-from-pixels';
 
 function solidBlock(color: Rgb, count: number): Rgb[] {
   return Array.from({ length: count }, () => ({ ...color }));
@@ -107,6 +111,33 @@ describe('buildGridFromPixels', () => {
       expect(effectiveDither('color_by_number', 'full')).toBe('none');
       expect(effectiveDither('diamond', 'light')).toBe('light');
       expect(effectiveDither('cross_stitch', undefined)).toBe('none');
+    });
+  });
+
+  describe('fuse beads', () => {
+    const pixels = [
+      ...solidBlock({ r: 230, g: 30, b: 30 }, 6),
+      ...solidBlock({ r: 250, g: 250, b: 250 }, 6),
+    ];
+
+    it('matches against the chosen bead line, opaque beads only', () => {
+      const catalogue = conversionCatalogue('fuse_bead', 'hama-midi');
+      const { palette } = buildGridFromPixels(pixels, 4, 3, 2, { catalogue });
+      for (const entry of palette) {
+        const color = entry.color as { brand?: string; finish?: string; code: string };
+        expect(color.brand).toBe('Hama');
+        expect(color.finish).toBe('solid');
+        expect(color.code).toMatch(/^H\d+/);
+      }
+    });
+
+    it('uses Perler when no bead line is named, and DMC for every other craft', () => {
+      expect(conversionCatalogue('fuse_bead', undefined).every((c) => c.brand === 'Perler')).toBe(
+        true,
+      );
+      expect(
+        conversionCatalogue('cross_stitch', 'hama-midi').every((c) => c.brand === undefined),
+      ).toBe(true);
     });
   });
 

@@ -42,6 +42,7 @@ enum PatternType {
   cross_stitch
   color_by_number
   diamond
+  fuse_bead
 }
 
 model Pattern {

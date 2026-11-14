@@ -1,9 +1,12 @@
 import {
   assignSymbols,
+  beadColorsForConversion,
   createNearestColorMatcher,
   ditherToPalette,
+  DEFAULT_BEAD_CATALOGUE_ID,
   DMC_COLORS,
   fillPalette,
+  findBeadCatalogue,
   kMeansQuantize,
   labHistogram,
   nearestDmc,
@@ -41,10 +44,28 @@ export interface BuildGridOptions {
   minRegionSize?: number;
   /** Colour blending (error diffusion) when mapping pixels to threads. */
   dither?: DitherMode;
+  /** Colours to match against: DMC thread by default, or a bead line's colours. */
+  catalogue?: readonly DmcColor[];
 }
 
 /** Share of each stitch's colour miss passed on to its neighbours, per mode. */
 export const DITHER_STRENGTH: Record<DitherMode, number> = { none: 0, light: 0.5, full: 1 };
+
+/**
+ * The colours a conversion matches against: the chosen bead line's opaque
+ * beads for fuse beads (Perler when none is named), DMC thread otherwise.
+ */
+export function conversionCatalogue(
+  targetType: PatternType | undefined,
+  beadCatalogueId: string | undefined,
+): readonly DmcColor[] {
+  if (targetType !== 'fuse_bead') return DMC_COLORS;
+  const catalogue =
+    findBeadCatalogue(beadCatalogueId ?? DEFAULT_BEAD_CATALOGUE_ID) ??
+    findBeadCatalogue(DEFAULT_BEAD_CATALOGUE_ID);
+  if (!catalogue) throw new Error('The default bead catalogue is missing');
+  return beadColorsForConversion(catalogue);
+}
 
 /** Paint by number needs solid areas to paint, so it never blends colours. */
 export function effectiveDither(
@@ -95,14 +116,18 @@ export function minPaintAreaCells(cellCount: number): number {
  * 30 colours delivered about 22 on photos. Fewer come back only when more
  * would not change the picture, e.g. a six-colour logo.
  */
-export function chooseThreads(pixels: readonly Rgb[], colorCount: number): DmcColor[] {
+export function chooseThreads(
+  pixels: readonly Rgb[],
+  colorCount: number,
+  catalogue: readonly DmcColor[] = DMC_COLORS,
+): DmcColor[] {
   const snapped: DmcColor[] = [];
   for (const centre of kMeansQuantize(pixels, colorCount)) {
-    const thread = nearestDmc(centre, DMC_COLORS).color;
+    const thread = nearestDmc(centre, catalogue).color;
     if (!snapped.includes(thread)) snapped.push(thread);
   }
   if (snapped.length >= colorCount) return snapped;
-  return fillPalette(labHistogram(pixels, srgbToLab), snapped, DMC_COLORS, colorCount);
+  return fillPalette(labHistogram(pixels, srgbToLab), snapped, catalogue, colorCount);
 }
 
 /**
@@ -125,7 +150,7 @@ export function buildGridFromPixels(
     throw new Error(`buildGridFromPixels: expected ${width * height} pixels, got ${pixels.length}`);
   }
 
-  let colors = chooseThreads(pixels, colorCount);
+  let colors = chooseThreads(pixels, colorCount, options.catalogue);
 
   // Every pixel goes to its nearest *thread* (or, with blending on, to the
   // thread error diffusion picks). It used to go to its nearest k-means

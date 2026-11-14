@@ -68,6 +68,17 @@
     opacity: 0.55;
   }
 
+  &__select {
+    height: 2.25rem;
+    padding: 0 var(--sc-space-2);
+    border: 1px solid var(--sc-color-border);
+    border-radius: var(--sc-radius-md);
+    font: inherit;
+    color: var(--sc-color-text);
+    background: var(--sc-color-surface);
+    max-width: 16rem;
+  }
+
   &__hint {
     margin: 0;
     font-size: var(--sc-font-size-sm);

@@ -51,6 +51,7 @@ export class ShoppingComponent {
     skeinsToBuy: this.list().threads.reduce((sum, l) => sum + l.toBuy, 0),
     covered: this.list().threads.filter((l) => l.toBuy === 0).length,
     bags: this.list().drills.reduce((sum, l) => sum + l.needed, 0),
+    packs: this.list().beads.reduce((sum, l) => sum + l.needed, 0),
   }));
 
   constructor() {

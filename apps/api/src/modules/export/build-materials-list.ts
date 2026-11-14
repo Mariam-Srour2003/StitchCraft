@@ -13,7 +13,8 @@ import { countPaletteUsage } from './count-palette-usage';
 /**
  * A CSV shopping list: symbol, DMC code, name, hex, and stitch/drill count
  * per color, sorted by count descending (buy the most-needed thread first).
- * Cross-stitch and diamond patterns get a final "Skeins"/"Drill bags" column
+ * Cross-stitch, diamond and fuse-bead patterns get a final "Skeins" /
+ * "Drill bags" / "Bead packs" column
  * from the shared `estimateMaterial` model in `@stitchcraft/color`.
  */
 export function buildMaterialsListCsv(pattern: Pattern): string {
@@ -52,7 +53,13 @@ export function buildMaterialsListCsv(pattern: Pattern): string {
       return fields;
     });
 
-  const headerFields: string[] = ['Symbol', 'DMC Code', 'Name', 'Hex', 'Count'];
+  // "DMC Code" for thread and drills, "Hama Code" etc. for a bead pattern.
+  const brand =
+    pattern.palette
+      .map((e) => e.color)
+      .filter(isDmcColor)
+      .find((c) => c.brand)?.brand ?? 'DMC';
+  const headerFields: string[] = ['Symbol', `${brand} Code`, 'Name', 'Hex', 'Count'];
   if (hasPartials) headerFields.push('Partial stitches');
   if (hasBackstitch) headerFields.push('Backstitch (cm)');
   if (buyHeader) headerFields.push(buyHeader);
