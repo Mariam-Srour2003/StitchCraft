@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 
 import type { Pattern, RegionMap } from '@stitchcraft/types';
-import { computeRegions, decodeGrid, isDmcColor } from '@stitchcraft/types';
+import { catalogueLabel, computeRegions, decodeGrid } from '@stitchcraft/types';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -156,7 +156,7 @@ function drawReferencePage(
     doc.rect(x, cursorY, 16, 16).fill(entry.color.hex);
     doc.lineWidth(0.5).strokeColor('#999999').rect(x, cursorY, 16, 16).stroke();
     const { color } = entry;
-    const name = isDmcColor(color) ? `DMC ${color.code} ${color.name}` : (color.label ?? color.hex);
+    const name = catalogueLabel(color);
     const count = areas[entry.index];
     doc
       .fontSize(10)

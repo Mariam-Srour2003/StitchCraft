@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { isDmcColor, PaletteEntry } from '@stitchcraft/types';
+import { catalogueLabel, PaletteEntry } from '@stitchcraft/types';
 
 export interface LegendRow {
   entry: PaletteEntry;
@@ -40,6 +40,6 @@ export class Legend {
 
   protected labelFor(row: LegendRow): string {
     const { color } = row.entry;
-    return isDmcColor(color) ? `DMC ${color.code} — ${color.name}` : (color.label ?? color.hex);
+    return catalogueLabel(color);
   }
 }

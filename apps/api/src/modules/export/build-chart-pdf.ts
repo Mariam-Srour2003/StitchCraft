@@ -5,7 +5,7 @@ import type { Pattern } from '@stitchcraft/types';
 import {
   backstitchLengthByIndex,
   decodeGrid,
-  isDmcColor,
+  catalogueLabel,
   PART_SEGMENT,
   partialCountByIndex,
 } from '@stitchcraft/types';
@@ -242,9 +242,7 @@ function drawLegendPage(doc: PdfDoc, pattern: Pattern, counts: number[]): void {
 
     doc.rect(PAGE_MARGIN, cursorY, 14, 14).fill(entry.color.hex);
     const { color } = entry;
-    const label = isDmcColor(color)
-      ? `DMC ${color.code} — ${color.name}`
-      : (color.label ?? color.hex);
+    const label = catalogueLabel(color);
     doc
       .fillColor('#000000')
       .text(

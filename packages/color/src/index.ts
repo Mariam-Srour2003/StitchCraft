@@ -2,6 +2,7 @@ export * from './cleanup/merge-rare-colors';
 export * from './contrast/contrast-text-color';
 export * from './difference/ciede2000';
 export * from './dither/error-diffusion';
+export * from './beads';
 export * from './dmc';
 export * from './match/nearest-color-index';
 export * from './match/nearest-dmc';

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 import { contrastTextColor } from '@stitchcraft/color';
-import { isDmcColor, PaletteEntry } from '@stitchcraft/types';
+import { catalogueLabel, PaletteEntry } from '@stitchcraft/types';
 
 @Component({
   selector: 'sc-palette-swatch',
@@ -17,7 +17,7 @@ export class PaletteSwatch {
 
   protected readonly tooltip = computed(() => {
     const { color } = this.entry();
-    return isDmcColor(color) ? `DMC ${color.code} — ${color.name}` : (color.label ?? color.hex);
+    return catalogueLabel(color);
   });
 
   protected readonly glyphColor = computed(() => contrastTextColor(this.entry().color.rgb));
