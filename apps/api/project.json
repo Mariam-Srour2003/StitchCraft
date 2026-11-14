@@ -53,6 +53,12 @@
         "command": "npm run prisma:seed",
         "cwd": "apps/api"
       }
+    },
+    "bench": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "jest --config apps/api/bench/jest.bench.config.ts"
+      }
     }
   }
 }

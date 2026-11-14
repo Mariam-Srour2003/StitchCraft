@@ -63,3 +63,6 @@ test-results/
 
 # Local agent/tooling state
 .claude/
+
+# conversion benchmark output
+apps/api/bench/out/
