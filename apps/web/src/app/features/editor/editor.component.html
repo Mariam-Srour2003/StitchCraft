@@ -32,6 +32,12 @@
             (valueChange)="selectTool($event)"
             ariaLabel="Shape tool"
           />
+          <sc-segmented-toggle
+            [options]="lineTools"
+            [value]="store.tool()"
+            (valueChange)="selectTool($event)"
+            ariaLabel="Backstitch tool"
+          />
         }
         <sc-segmented-toggle
           [options]="modeOptions"
@@ -83,8 +89,12 @@
         [highlightIndex]="store.highlightIndex()"
         [showCenter]="store.showCenter()"
         [theme]="canvasTheme()"
+        [backstitches]="store.backstitches()"
+        [previewColor]="selectedEntry()?.color?.hex ?? null"
         (cellEdit)="onCellEdit($event)"
         (strokeEnd)="store.endStroke()"
+        (lineDraw)="store.addBackstitch($event.from, $event.to)"
+        (lineErase)="store.removeBackstitchAt($event.x, $event.y)"
       />
 
       <aside class="editor-page__sidebar">
@@ -235,6 +245,13 @@
             Show centre lines
           </label>
         </section>
+
+        @if (backstitchSummary().lines > 0) {
+          <p class="editor-page__muted" role="status">
+            Backstitch: {{ backstitchSummary().lines }} line(s), about
+            {{ backstitchSummary().cm }} cm (included in the skein counts)
+          </p>
+        }
 
         <section class="editor-page__panel">
           <sc-legend

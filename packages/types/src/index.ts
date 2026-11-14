@@ -7,6 +7,7 @@ export * from './dto/project.dto';
 export * from './models/color.model';
 export * from './models/conversion.model';
 export * from './models/grid';
+export * from './models/backstitch';
 export * from './models/palette.model';
 export * from './models/pattern.model';
 export * from './models/project.model';

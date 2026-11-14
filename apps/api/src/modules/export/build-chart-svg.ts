@@ -59,6 +59,16 @@ export function buildChartSvg(pattern: Pattern, options: BuildChartSvgOptions = 
     parts.push(gridLine(0, j * cellSize, width, j * cellSize, j % BOLD_EVERY === 0));
   }
 
+  // Backstitch goes on top of everything, like on the fabric.
+  const lineWidth = Math.max(1.5, cellSize * 0.12);
+  for (const line of pattern.meta.backstitches ?? []) {
+    const entry = pattern.palette[line.paletteIndex];
+    if (!entry) continue;
+    parts.push(
+      `<line x1="${line.x1 * cellSize}" y1="${line.y1 * cellSize}" x2="${line.x2 * cellSize}" y2="${line.y2 * cellSize}" stroke="${entry.color.hex}" stroke-width="${lineWidth}" stroke-linecap="round" />`,
+    );
+  }
+
   parts.push('</svg>');
   return parts.join('');
 }

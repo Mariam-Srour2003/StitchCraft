@@ -67,14 +67,18 @@ export interface MaterialEstimate {
 export function estimateMaterial(
   type: 'cross_stitch' | 'color_by_number' | 'diamond',
   count: number,
-  options: { fabricCount?: number; strands?: number } = {},
+  options: { fabricCount?: number; strands?: number; backstitchLength?: number } = {},
 ): MaterialEstimate | null {
   if (type === 'diamond') return { quantity: drillBagsNeeded(count), unit: 'bag' };
   if (type === 'cross_stitch') {
-    return {
-      quantity: skeinsNeeded(count, options.fabricCount ?? 14, options.strands),
-      unit: 'skein',
-    };
+    const fabricCount = options.fabricCount ?? 14;
+    // Cross stitches and backstitch in the same color come off the same skeins,
+    // so their fractions are added before rounding up once.
+    const skeins =
+      skeinFraction(count, fabricCount, options.strands) +
+      backstitchSkeinFraction(options.backstitchLength ?? 0, fabricCount);
+    // The epsilon absorbs float noise so an exact skein doesn't round up to two.
+    return { quantity: skeins <= 0 ? 0 : Math.ceil(skeins - 1e-9), unit: 'skein' };
   }
   return null;
 }
@@ -96,4 +100,23 @@ export function materialColumnLabel(
   if (type === 'diamond') return 'Drill bags';
   if (type === 'cross_stitch') return 'Skeins';
   return null;
+}
+
+/**
+ * Thread for backstitch, as an unrounded skein fraction. A backstitch line
+ * uses about three times its length in thread (the front line plus
+ * overlapping double-length stitches on the back), usually with a single
+ * strand; the same 30% waste allowance as cross stitches applies.
+ */
+export const BACKSTITCH_THREAD_FACTOR = 3;
+
+export function backstitchSkeinFraction(
+  lengthInCells: number,
+  fabricCount: number,
+  strands = 1,
+): number {
+  if (lengthInCells <= 0) return 0;
+  const strandCm = (lengthInCells * 2.54 * BACKSTITCH_THREAD_FACTOR * strands) / fabricCount;
+  const usableStrandCm = SKEIN_LENGTH_CM * SKEIN_STRANDS * (1 - THREAD_WASTE_FRACTION);
+  return strandCm / usableStrandCm;
 }

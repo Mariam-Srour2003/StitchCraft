@@ -27,7 +27,7 @@ function createMockCtx() {
     [];
   const clearRectCalls: Array<{ x: number; y: number; w: number; h: number }> = [];
   const fillTextCalls: Array<{ text: string; fillStyle: string }> = [];
-  const strokeCalls: Array<{ strokeStyle: string; lineWidth: number }> = [];
+  const strokeCalls: Array<{ strokeStyle: string; lineWidth: number; alpha?: number }> = [];
   const fillPathCalls: Array<{ fillStyle: string }> = [];
 
   const ctx = {
@@ -49,9 +49,17 @@ function createMockCtx() {
     lineTo: jest.fn(),
     closePath: jest.fn(),
     stroke: jest.fn(() =>
-      strokeCalls.push({ strokeStyle: ctx.strokeStyle, lineWidth: ctx.lineWidth }),
+      strokeCalls.push({
+        strokeStyle: ctx.strokeStyle,
+        lineWidth: ctx.lineWidth,
+        alpha: ctx.globalAlpha,
+      }),
     ),
     fill: jest.fn(() => fillPathCalls.push({ fillStyle: ctx.fillStyle })),
+    setLineDash: jest.fn(),
+    arc: jest.fn(),
+    lineCap: '',
+    globalAlpha: 1,
   };
 
   return {
@@ -232,6 +240,49 @@ describe('GridRenderingService', () => {
       );
       expect(mock.fillRectCalls.some((c) => c.fillStyle === '#00FF00')).toBe(true);
       expect(mock.fillTextCalls.map((c) => c.text)).toEqual(['1']);
+    });
+  });
+
+  describe('renderLines', () => {
+    const lineParams = (overrides = {}) => ({
+      width: 4,
+      height: 4,
+      cellSize: 10,
+      lines: [
+        { x1: 0, y1: 0, x2: 2, y2: 2, paletteIndex: 0 },
+        { x1: 0, y1: 4, x2: 4, y2: 4, paletteIndex: 1 },
+      ],
+      palette,
+      ...overrides,
+    });
+
+    it('strokes each line in its palette color', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderLines(mock.ctx, lineParams());
+      expect(mock.strokeCalls.map((c) => c.strokeStyle)).toEqual(['#FF0000', '#00FF00']);
+      expect(mock.ctx.moveTo).toHaveBeenCalledWith(0, 40);
+      expect(mock.ctx.lineTo).toHaveBeenCalledWith(40, 40);
+    });
+
+    it('fades other colors while one is highlighted', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderLines(mock.ctx, lineParams({ highlightIndex: 1 }));
+      expect(mock.strokeCalls.map((c) => c.alpha)).toEqual([0.25, 1]);
+    });
+
+    it('draws a dashed preview and a snap marker', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderLines(
+        mock.ctx,
+        lineParams({
+          lines: [],
+          preview: { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, color: '#123456' },
+          marker: { x: 1, y: 0 },
+        }),
+      );
+      expect(mock.strokeCalls.map((c) => c.strokeStyle)).toEqual(['#123456']);
+      expect(mock.ctx.setLineDash).toHaveBeenCalledWith([3, 2]);
+      expect(mock.ctx.arc).toHaveBeenCalled();
     });
   });
 });

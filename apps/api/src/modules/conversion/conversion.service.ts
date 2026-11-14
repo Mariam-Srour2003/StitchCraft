@@ -8,7 +8,7 @@ import { ConversionJob, ConversionParams } from '@stitchcraft/types';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
 import { toConversionJobDto } from './conversion.mapper';
-import { ConversionJobData,CONVERSIONS_QUEUE } from './conversion-job-data';
+import { ConversionJobData, CONVERSIONS_QUEUE } from './conversion-job-data';
 import { CreateConversionDto } from './dto/create-conversion.dto';
 
 @Injectable()

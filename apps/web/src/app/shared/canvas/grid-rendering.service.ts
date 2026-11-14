@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { PaletteEntry } from '@stitchcraft/types';
+import { Backstitch, PaletteEntry } from '@stitchcraft/types';
 
 import { computeRegions, isRegionEdge, RegionMap } from '@app/domain/grid/regions';
 
@@ -29,6 +29,21 @@ export interface GridRenderParams {
   showCenter?: boolean;
   /** Precomputed regions for paint-by-number mode; computed on demand when omitted. */
   regions?: RegionMap;
+}
+
+export interface LineRenderParams {
+  width: number;
+  height: number;
+  cellSize: number;
+  lines: readonly Backstitch[];
+  palette: readonly PaletteEntry[];
+  /** When set, lines in other colors are faded so this color's lines stand out. */
+  highlightIndex?: number | null;
+  /** The line being dragged right now, drawn dashed. */
+  preview?: { from: { x: number; y: number }; to: { x: number; y: number }; color: string } | null;
+  /** A grid corner to mark (where the next line will snap). */
+  marker?: { x: number; y: number } | null;
+  markerColor?: string;
 }
 
 /**
@@ -313,5 +328,53 @@ export class GridRenderingService {
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
+  }
+
+  /** Draws backstitch lines (plus any drag preview and snap marker) on the overlay canvas. */
+  renderLines(ctx: CanvasRenderingContext2D, params: LineRenderParams): void {
+    const { width, height, cellSize, lines, palette, highlightIndex } = params;
+    ctx.clearRect(0, 0, width * cellSize, height * cellSize);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = Math.max(2, cellSize * 0.15);
+
+    for (const line of lines) {
+      const entry = palette[line.paletteIndex];
+      if (!entry) continue;
+      const faded =
+        highlightIndex !== null &&
+        highlightIndex !== undefined &&
+        highlightIndex !== line.paletteIndex;
+      ctx.globalAlpha = faded ? 0.25 : 1;
+      ctx.strokeStyle = entry.color.hex;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(line.x1 * cellSize, line.y1 * cellSize);
+      ctx.lineTo(line.x2 * cellSize, line.y2 * cellSize);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    const { preview, marker } = params;
+    if (preview && (preview.from.x !== preview.to.x || preview.from.y !== preview.to.y)) {
+      ctx.strokeStyle = preview.color;
+      ctx.setLineDash([cellSize * 0.3, cellSize * 0.2]);
+      ctx.beginPath();
+      ctx.moveTo(preview.from.x * cellSize, preview.from.y * cellSize);
+      ctx.lineTo(preview.to.x * cellSize, preview.to.y * cellSize);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (marker) {
+      ctx.fillStyle = params.markerColor ?? '#d0453a';
+      ctx.beginPath();
+      ctx.arc(
+        marker.x * cellSize,
+        marker.y * cellSize,
+        Math.max(2.5, cellSize * 0.14),
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+    }
   }
 }

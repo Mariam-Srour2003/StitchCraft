@@ -6,6 +6,8 @@
   [class.sc-grid-canvas--text]="tool() === 'text'"
   [class.sc-grid-canvas--stitch]="tool() === 'stitch'"
   [class.sc-grid-canvas--readonly]="!interactive()"
+  [class.sc-grid-canvas--line]="tool() === 'backstitch'"
+  [class.sc-grid-canvas--line-erase]="tool() === 'backstitch-erase'"
 >
   <canvas
     #canvas
@@ -15,5 +17,13 @@
     (pointermove)="onPointerMove($event)"
     (pointerup)="onPointerUp()"
     (pointercancel)="onPointerUp()"
+    (pointerleave)="onPointerLeave()"
+  ></canvas>
+  <canvas
+    #overlay
+    class="sc-grid-canvas__overlay"
+    aria-hidden="true"
+    [style.width.px]="canvasWidthPx()"
+    [style.height.px]="canvasHeightPx()"
   ></canvas>
 </div>

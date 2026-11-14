@@ -257,4 +257,17 @@ describe('EditorComponent', () => {
     await new Promise((resolve) => setTimeout(resolve)); // let load()'s .then() run
     expect(stitchFixture.componentInstance['store'].stitchMode()).toBe(true);
   });
+
+  it('wires the canvas backstitch events to the store and summarises lines', () => {
+    const store = fixture.componentInstance['store'];
+    store.setSelectedPaletteIndex(0);
+    const canvas = fixture.debugElement.query((el) => el.name === 'sc-grid-canvas');
+    canvas.triggerEventHandler('lineDraw', { from: { x: 0, y: 0 }, to: { x: 4, y: 0 } });
+    expect(store.backstitches()).toHaveLength(1);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Backstitch: 1 line(s)');
+
+    canvas.triggerEventHandler('lineErase', { x: 2, y: 0.1 });
+    expect(store.backstitches()).toHaveLength(0);
+  });
 });

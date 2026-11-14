@@ -1,4 +1,5 @@
 import {
+  backstitchSkeinFraction,
   defaultStrandsForCount,
   drillBagsNeeded,
   estimateMaterial,
@@ -57,5 +58,25 @@ describe('materials', () => {
     expect(materialColumnLabel('cross_stitch')).toBe('Skeins');
     expect(materialColumnLabel('diamond')).toBe('Drill bags');
     expect(materialColumnLabel('color_by_number')).toBeNull();
+  });
+
+  it('estimates backstitch thread from line length', () => {
+    expect(backstitchSkeinFraction(0, 14)).toBe(0);
+    // 1,000 cells on 14-count = 181 cm of line, ~544 cm of single strand: ~0.16 of a skein.
+    const part = backstitchSkeinFraction(1000, 14);
+    expect(part).toBeCloseTo(0.162, 2);
+    expect(backstitchSkeinFraction(1000, 14, 2)).toBeCloseTo(part * 2);
+  });
+
+  it("adds backstitch thread into the same color's skeins", () => {
+    const perSkein = stitchesPerSkein(14);
+    // Exactly one skein of cross stitches, plus some backstitch, needs a second skein.
+    expect(estimateMaterial('cross_stitch', perSkein, { fabricCount: 14 })?.quantity).toBe(1);
+    expect(
+      estimateMaterial('cross_stitch', perSkein, { fabricCount: 14, backstitchLength: 100 })?.quantity,
+    ).toBe(2);
+    expect(Object.is(estimateMaterial('cross_stitch', 0)?.quantity, 0)).toBe(true);
+    // A color used only for backstitch still needs a skein.
+    expect(estimateMaterial('cross_stitch', 0, { backstitchLength: 50 })?.quantity).toBe(1);
   });
 });

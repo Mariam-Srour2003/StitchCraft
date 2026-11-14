@@ -3,6 +3,8 @@ import { firstValueFrom } from 'rxjs';
 
 import { assignSymbols, estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import {
+  Backstitch,
+  backstitchLengthByIndex,
   CustomColor,
   decodeGrid,
   DmcColor,
@@ -15,8 +17,19 @@ import {
 
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
-import { EditorTool, isShapeTool } from '@app/domain/editor/tools';
+import { EditorTool, isLineTool, isShapeTool } from '@app/domain/editor/tools';
 import { UndoHistory } from '@app/domain/editor/undo-history';
+import {
+  clipLines,
+  flipLinesHorizontal,
+  flipLinesVertical,
+  nearestLine,
+  recolorLines,
+  remapLines,
+  rotateLinesClockwise,
+  sameLine,
+  usedLineColors,
+} from '@app/domain/grid/backstitch';
 import type { CellPosition } from '@app/domain/grid/cell';
 import {
   applyChanges,
@@ -58,6 +71,7 @@ interface PatternSnapshot {
   grid: Int16Array[];
   palette: PaletteEntry[];
   progress: Int16Array[];
+  backstitches: Backstitch[];
 }
 
 /**
@@ -68,6 +82,7 @@ interface PatternSnapshot {
  */
 type HistoryStep =
   | { kind: 'cells'; changes: CellChange[] }
+  | { kind: 'lines'; before: Backstitch[]; after: Backstitch[] }
   | { kind: 'snapshot'; before: PatternSnapshot; after: PatternSnapshot };
 
 /**
@@ -89,6 +104,7 @@ export class EditorStore {
   private readonly paletteSignal = signal<PaletteEntry[]>([]);
   private readonly gridSignal = signal<Int16Array[]>([]);
   private readonly progressSignal = signal<Int16Array[]>([]);
+  private readonly backstitchesSignal = signal<Backstitch[]>([]);
 
   private readonly toolSignal = signal<EditorTool>('paint');
   private readonly selectedPaletteIndexSignal = signal<number | null>(null);
@@ -123,6 +139,7 @@ export class EditorStore {
   readonly palette = this.paletteSignal.asReadonly();
   readonly grid = this.gridSignal.asReadonly();
   readonly progress = this.progressSignal.asReadonly();
+  readonly backstitches = this.backstitchesSignal.asReadonly();
 
   readonly tool = this.toolSignal.asReadonly();
   readonly selectedPaletteIndex = this.selectedPaletteIndexSignal.asReadonly();
@@ -154,11 +171,16 @@ export class EditorStore {
     const type = this.typeSignal();
     const fabricCount = this.metaSignal().fabricCount;
     const strands = this.settings.strands();
+    const lineLengths = backstitchLengthByIndex(this.backstitchesSignal(), palette.length);
     return palette.map((entry, i) => ({
       entry,
       count: counts[i],
       done: done[i],
-      buy: estimateMaterial(type, counts[i], { fabricCount, strands })?.quantity,
+      buy: estimateMaterial(type, counts[i], {
+        fabricCount,
+        strands,
+        backstitchLength: lineLengths[i],
+      })?.quantity,
     }));
   });
 
@@ -198,6 +220,7 @@ export class EditorStore {
     this.paletteSignal.set(pattern.palette);
     this.gridSignal.set(decodeGrid(pattern.grid, pattern.width));
     this.progressSignal.set(decodeProgress(pattern.meta.progress, pattern.width, pattern.height));
+    this.backstitchesSignal.set(pattern.meta.backstitches ?? []);
     this.history.clear();
     this.historyVersion.update((v) => v + 1);
     this.currentStroke = null;
@@ -267,6 +290,7 @@ export class EditorStore {
       return;
     }
     const tool = this.toolSignal();
+    if (isLineTool(tool)) return; // line tools act on corners: addBackstitch / removeBackstitchAt
     if (isShapeTool(tool)) {
       this.dragShape(x, y);
       return;
@@ -459,6 +483,43 @@ export class EditorStore {
     this.stitchStrokeValue = null;
   }
 
+  // ---- backstitch -----------------------------------------------------------
+
+  /**
+   * Adds a backstitch between two grid corners in the selected color, as one
+   * undo step. Redrawing an existing line in a new color recolors it; a
+   * zero-length line or an exact duplicate is ignored.
+   */
+  addBackstitch(from: CellPosition, to: CellPosition): void {
+    const paletteIndex = this.selectedPaletteIndexSignal();
+    if (paletteIndex === null || (from.x === to.x && from.y === to.y)) return;
+    const line: Backstitch = { x1: from.x, y1: from.y, x2: to.x, y2: to.y, paletteIndex };
+    const before = this.backstitchesSignal();
+    const existing = before.findIndex((l) => sameLine(l, line));
+    if (existing >= 0 && before[existing].paletteIndex === paletteIndex) return;
+    const after =
+      existing >= 0
+        ? before.map((l, i) => (i === existing ? { ...l, paletteIndex } : l))
+        : [...before, line];
+    this.commitLines(before, after);
+  }
+
+  /** Removes the backstitch nearest a point (fractional cells), if one is within half a cell. */
+  removeBackstitchAt(fx: number, fy: number): void {
+    const before = this.backstitchesSignal();
+    const index = nearestLine(before, fx, fy);
+    if (index < 0) return;
+    this.commitLines(
+      before,
+      before.filter((_, i) => i !== index),
+    );
+  }
+
+  private commitLines(before: Backstitch[], after: Backstitch[]): void {
+    this.backstitchesSignal.set(after);
+    this.pushHistory({ kind: 'lines', before, after });
+  }
+
   // ---- history -------------------------------------------------------------
 
   undo(): void {
@@ -487,6 +548,7 @@ export class EditorStore {
       height: newHeight,
       grid: resizeGrid(before.grid, before.width, newWidth, newHeight, EMPTY_CELL),
       progress: resizeGrid(before.progress, before.width, newWidth, newHeight, NOT_DONE),
+      backstitches: clipLines(before.backstitches, newWidth, newHeight),
     });
   }
 
@@ -496,6 +558,7 @@ export class EditorStore {
       ...before,
       grid: flipHorizontal(before.grid),
       progress: flipHorizontal(before.progress),
+      backstitches: flipLinesHorizontal(before.backstitches, before.width),
     });
   }
 
@@ -505,6 +568,7 @@ export class EditorStore {
       ...before,
       grid: flipVertical(before.grid),
       progress: flipVertical(before.progress),
+      backstitches: flipLinesVertical(before.backstitches, before.height),
     });
   }
 
@@ -517,27 +581,47 @@ export class EditorStore {
       height: before.width,
       grid: rotateClockwise(before.grid, before.width, before.height),
       progress: rotateClockwise(before.progress, before.width, before.height),
+      backstitches: rotateLinesClockwise(before.backstitches, before.height),
     });
   }
 
-  /** Recolors every stitch of one palette color with another, as one undo step. */
+  /** Recolors every stitch (and backstitch line) of one palette color with another, as one undo step. */
   replaceColor(from: number, to: number): void {
     const changes = replaceValue(this.gridSignal(), from, to);
-    if (changes.length === 0) return;
-    this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
-    this.pushHistory({ kind: 'cells', changes });
+    const linesChange = this.backstitchesSignal().some((l) => l.paletteIndex === from);
+    if (changes.length === 0 && !linesChange) return;
+    if (!linesChange) {
+      this.gridSignal.set(applyChanges(this.gridSignal(), changes, 'after'));
+      this.pushHistory({ kind: 'cells', changes });
+      return;
+    }
+    const before = this.snapshot();
+    this.commitSnapshot(before, {
+      ...before,
+      grid: applyChanges(before.grid, changes, 'after'),
+      backstitches: recolorLines(before.backstitches, from, to),
+    });
   }
 
   /** Drops palette colors no stitch uses, re-numbering the rest. Undoable. */
   removeUnusedColors(): void {
     const before = this.snapshot();
-    const { palette, grid, remap } = compactPalette(before.palette, before.grid);
+    const { palette, grid, remap } = compactPalette(
+      before.palette,
+      before.grid,
+      usedLineColors(before.backstitches),
+    );
     if (palette.length === before.palette.length) return;
     this.remapSelection(remap); // before restore(), which clears out-of-range selections
-    this.commitSnapshot(before, { ...before, palette, grid });
+    this.commitSnapshot(before, {
+      ...before,
+      palette,
+      grid,
+      backstitches: remapLines(before.backstitches, remap),
+    });
   }
 
-  /** Removes a color from the palette entirely, erasing its stitches. Undoable. */
+  /** Removes a color from the palette entirely, erasing its stitches and lines. Undoable. */
   deleteColor(index: number): void {
     const before = this.snapshot();
     if (index < 0 || index >= before.palette.length) return;
@@ -551,7 +635,12 @@ export class EditorStore {
       .map((entry, i) => ({ ...entry, index: i }));
     const grid = erased.map((row) => row.map((v) => (v >= 0 ? remap[v] : v)));
     this.remapSelection(remap); // before restore(), which clears out-of-range selections
-    this.commitSnapshot(before, { ...before, palette, grid });
+    this.commitSnapshot(before, {
+      ...before,
+      palette,
+      grid,
+      backstitches: remapLines(before.backstitches, remap),
+    });
   }
 
   private remapSelection(remap: Int16Array): void {
@@ -599,7 +688,7 @@ export class EditorStore {
           height: this.heightSignal(),
           palette: this.paletteSignal(),
           grid,
-          meta: { progress },
+          meta: { progress, backstitches: this.backstitchesSignal() },
         }),
       );
       this.applyPattern(updated);
@@ -655,6 +744,8 @@ export class EditorStore {
   private applyStep(step: HistoryStep, side: 'before' | 'after'): void {
     if (step.kind === 'cells') {
       this.gridSignal.set(applyChanges(this.gridSignal(), step.changes, side));
+    } else if (step.kind === 'lines') {
+      this.backstitchesSignal.set(step[side]);
     } else {
       this.restore(step[side]);
     }
@@ -667,6 +758,7 @@ export class EditorStore {
       grid: this.gridSignal(),
       palette: this.paletteSignal(),
       progress: this.progressSignal(),
+      backstitches: this.backstitchesSignal(),
     };
   }
 
@@ -676,6 +768,7 @@ export class EditorStore {
     this.gridSignal.set(snapshot.grid);
     this.paletteSignal.set(snapshot.palette);
     this.progressSignal.set(snapshot.progress);
+    this.backstitchesSignal.set(snapshot.backstitches);
     const selected = this.selectedPaletteIndexSignal();
     if (selected !== null && selected >= snapshot.palette.length) {
       this.selectedPaletteIndexSignal.set(null);

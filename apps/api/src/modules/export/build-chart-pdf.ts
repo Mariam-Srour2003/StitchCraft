@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit';
 
 import { contrastTextColor } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
-import { decodeGrid, isDmcColor } from '@stitchcraft/types';
+import { backstitchLengthByIndex, decodeGrid, isDmcColor } from '@stitchcraft/types';
 
 import { countPaletteUsage } from './count-palette-usage';
 
@@ -125,6 +125,7 @@ function drawTilePage(doc: PdfDoc, pattern: Pattern, decoded: Int16Array[], tile
 
   const tileWidthPt = (endX - startX) * CELL_PT;
   const tileHeightPt = (endY - startY) * CELL_PT;
+  drawBackstitches(doc, pattern, tile, originX, originY, tileWidthPt, tileHeightPt);
   for (let x = startX; x <= endX; x++) {
     const bold = x % 10 === 0;
     const px = originX + (x - startX) * CELL_PT;
@@ -145,6 +146,48 @@ function drawTilePage(doc: PdfDoc, pattern: Pattern, decoded: Int16Array[], tile
       .lineTo(originX + tileWidthPt, py)
       .stroke();
   }
+}
+
+/**
+ * Backstitch lines for one tile, clipped to it: a line crossing a page edge
+ * shows on both pages, cut at the border, like on a printed chart.
+ */
+function drawBackstitches(
+  doc: PdfDoc,
+  pattern: Pattern,
+  tile: Tile,
+  originX: number,
+  originY: number,
+  tileWidthPt: number,
+  tileHeightPt: number,
+): void {
+  const lines = pattern.meta.backstitches ?? [];
+  if (lines.length === 0) return;
+  doc.save();
+  doc.rect(originX, originY, tileWidthPt, tileHeightPt).clip();
+  doc.lineCap('round').lineWidth(1.6);
+  for (const line of lines) {
+    const entry = pattern.palette[line.paletteIndex];
+    if (!entry) continue;
+    const outside =
+      Math.max(line.x1, line.x2) < tile.startX ||
+      Math.min(line.x1, line.x2) > tile.endX ||
+      Math.max(line.y1, line.y2) < tile.startY ||
+      Math.min(line.y1, line.y2) > tile.endY;
+    if (outside) continue;
+    doc
+      .strokeColor(entry.color.hex)
+      .moveTo(
+        originX + (line.x1 - tile.startX) * CELL_PT,
+        originY + (line.y1 - tile.startY) * CELL_PT,
+      )
+      .lineTo(
+        originX + (line.x2 - tile.startX) * CELL_PT,
+        originY + (line.y2 - tile.startY) * CELL_PT,
+      )
+      .stroke();
+  }
+  doc.restore();
 }
 
 function drawLegendPage(doc: PdfDoc, pattern: Pattern, counts: number[]): void {
@@ -172,4 +215,25 @@ function drawLegendPage(doc: PdfDoc, pattern: Pattern, counts: number[]): void {
       );
     cursorY += 18;
   });
+
+  const lengths = backstitchLengthByIndex(pattern.meta.backstitches, pattern.palette.length);
+  if (lengths.some((length) => length > 0)) {
+    cursorY += 12;
+    doc.fontSize(11).fillColor('#000000').text('Backstitch', PAGE_MARGIN, cursorY);
+    cursorY += 18;
+    doc.fontSize(9);
+    lengths.forEach((length, index) => {
+      if (length <= 0) return;
+      if (cursorY > PAGE_HEIGHT - PAGE_MARGIN - 16) {
+        doc.addPage({ size: 'LETTER', margin: PAGE_MARGIN });
+        cursorY = PAGE_MARGIN;
+      }
+      const entry = pattern.palette[index];
+      doc.rect(PAGE_MARGIN, cursorY + 6, 14, 2).fill(entry.color.hex);
+      doc
+        .fillColor('#000000')
+        .text(`#${index + 1}  ${Math.round(length)} cells of line`, PAGE_MARGIN + 20, cursorY + 2);
+      cursorY += 18;
+    });
+  }
 }

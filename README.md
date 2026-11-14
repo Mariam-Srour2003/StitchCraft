@@ -136,7 +136,7 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M10) is built. How the code is
+Everything in PLAN.md's milestone list (M0-M11) is built. How the code is
 organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.md). Features:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
@@ -167,6 +167,9 @@ organised (and the rules lint enforces) is in [ARCHITECTURE.md](./ARCHITECTURE.m
   paint-by-number view (outlined regions, one number each), centre lines,
   crisp high-DPI rendering, a dark canvas theme, keyboard shortcuts, and an
   unsaved-changes guard.
+- **Backstitch** (M11): draw outline lines corner to corner, with live
+  preview, undo, and thread counted into the skeins; printed on the PDF/SVG
+  charts.
 - **Stitching mode** (M8): mark stitches done by click or drag, per-color
   and overall progress, saved with the pattern.
 - **Shopping quantities**: skeins (cross-stitch) or drill bags (diamond) per

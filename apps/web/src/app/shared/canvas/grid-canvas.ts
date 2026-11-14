@@ -12,9 +12,11 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { PaletteEntry } from '@stitchcraft/types';
+import { Backstitch, PaletteEntry } from '@stitchcraft/types';
 
 import type { EditorTool } from '@app/domain/editor/tools';
+import { isLineTool } from '@app/domain/editor/tools';
+import { nearestCorner } from '@app/domain/grid/backstitch';
 
 import {
   CellPosition,
@@ -71,6 +73,10 @@ export class GridCanvas {
   readonly showCenter = input(false);
   /** False for read-only viewers: no pointer input, default cursor. */
   readonly interactive = input(true);
+  /** Backstitch lines, drawn on an overlay above the cells. */
+  readonly backstitches = input<readonly Backstitch[]>([]);
+  /** Color of the line being drawn with the backstitch tool. */
+  readonly previewColor = input<string | null>(null);
 
   /**
    * Emitted for every cell touched during an active pointer-down drag
@@ -79,8 +85,17 @@ export class GridCanvas {
   readonly cellEdit = output<CellPosition>();
   /** Emitted once when a paint/erase drag ends, so the caller can close an undo transaction. */
   readonly strokeEnd = output<void>();
+  /** Backstitch tool: a line was dragged from one grid corner to another. */
+  readonly lineDraw = output<{ from: CellPosition; to: CellPosition }>();
+  /** Backstitch eraser: a click at this point, in fractional cells. */
+  readonly lineErase = output<{ x: number; y: number }>();
 
   private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  private readonly overlayRef = viewChild.required<ElementRef<HTMLCanvasElement>>('overlay');
+  /** In-progress backstitch drag (start corner and current end corner), drawn as a preview. */
+  private readonly lineDrag = signal<{ from: CellPosition; to: CellPosition } | null>(null);
+  /** Corner under the pointer while a line tool is active, so users see where a line will snap. */
+  private readonly hoverCorner = signal<CellPosition | null>(null);
   private readonly renderer = inject(GridRenderingService);
 
   protected readonly cellSize = computed(() => cellSizeForZoom(BASE_CELL_SIZE, this.zoomPercent()));
@@ -101,6 +116,7 @@ export class GridCanvas {
 
   constructor() {
     this.watchColorScheme();
+    this.renderOverlayOnChange();
 
     effect(() => {
       // Track every input this component's render depends on.
@@ -188,6 +204,47 @@ export class GridCanvas {
 
   private lastTheme: GridTheme | null = null;
 
+  /**
+   * The overlay canvas holds backstitch lines and the live line preview.
+   * Keeping them off the cell canvas means drawing a line never forces a
+   * full cell repaint, and painting cells never has to redraw lines.
+   */
+  private renderOverlayOnChange(): void {
+    effect(() => {
+      const width = this.width();
+      const height = this.height();
+      const cellSize = this.cellSize();
+      const lines = this.backstitches();
+      const palette = this.palette();
+      const highlightIndex = this.highlightIndex();
+      const drag = this.lineDrag();
+      const hover = isLineTool(this.tool() as EditorTool) ? this.hoverCorner() : null;
+      const theme = this.resolvedTheme();
+
+      const overlay = this.overlayRef().nativeElement;
+      const ctx = overlay.getContext('2d');
+      if (!ctx) return;
+      const dpr = Math.max(1, Math.min(3, globalThis.devicePixelRatio || 1));
+      const bitmapWidth = Math.round(width * cellSize * dpr);
+      const bitmapHeight = Math.round(height * cellSize * dpr);
+      if (overlay.width !== bitmapWidth) overlay.width = bitmapWidth;
+      if (overlay.height !== bitmapHeight) overlay.height = bitmapHeight;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      this.renderer.renderLines(ctx, {
+        width,
+        height,
+        cellSize,
+        lines,
+        palette,
+        highlightIndex,
+        preview: drag ? { ...drag, color: this.previewColor() ?? theme.centerLine } : null,
+        marker: hover,
+        markerColor: theme.centerLine,
+      });
+    });
+  }
+
   private watchColorScheme(): void {
     const media =
       typeof globalThis.matchMedia === 'function' ? globalThis.matchMedia(DARK_QUERY) : null;
@@ -200,30 +257,74 @@ export class GridCanvas {
 
   onPointerDown(event: PointerEvent): void {
     if (!this.interactive()) return;
+    const tool = this.tool();
+    if (tool === 'backstitch-erase') {
+      const point = this.pointerInCells(event);
+      this.lineErase.emit(point);
+      return;
+    }
     this.isPointerDown = true;
     this.canvasRef().nativeElement.setPointerCapture(event.pointerId);
+    if (tool === 'backstitch') {
+      const corner = this.cornerAt(event);
+      this.lineDrag.set({ from: corner, to: corner });
+      return;
+    }
     this.paintAt(event);
   }
 
   onPointerMove(event: PointerEvent): void {
-    if (this.isPointerDown && !SINGLE_CLICK_TOOLS.has(this.tool())) this.paintAt(event);
+    const tool = this.tool();
+    if (isLineTool(tool as EditorTool) && this.interactive()) {
+      const corner = this.cornerAt(event);
+      this.hoverCorner.set(corner);
+      const drag = this.lineDrag();
+      if (drag && (drag.to.x !== corner.x || drag.to.y !== corner.y)) {
+        this.lineDrag.set({ from: drag.from, to: corner });
+      }
+      return;
+    }
+    if (this.isPointerDown && !SINGLE_CLICK_TOOLS.has(tool)) this.paintAt(event);
   }
 
   onPointerUp(): void {
     if (!this.isPointerDown) return;
     this.isPointerDown = false;
+    const drag = this.lineDrag();
+    if (drag) {
+      this.lineDrag.set(null);
+      if (drag.from.x !== drag.to.x || drag.from.y !== drag.to.y) this.lineDraw.emit(drag);
+      return;
+    }
     this.lastPaintedCell = null;
     this.strokeEnd.emit();
   }
 
+  onPointerLeave(): void {
+    this.hoverCorner.set(null);
+  }
+
+  /** Pointer position in CSS pixels relative to the canvas (bitmap pixels are devicePixelRatio-scaled). */
+  private pointerPx(event: PointerEvent): { px: number; py: number } {
+    const rect = this.canvasRef().nativeElement.getBoundingClientRect();
+    return {
+      px: (event.clientX - rect.left) * (this.canvasWidthPx() / rect.width),
+      py: (event.clientY - rect.top) * (this.canvasHeightPx() / rect.height),
+    };
+  }
+
+  private pointerInCells(event: PointerEvent): { x: number; y: number } {
+    const { px, py } = this.pointerPx(event);
+    return { x: px / this.cellSize(), y: py / this.cellSize() };
+  }
+
+  private cornerAt(event: PointerEvent): CellPosition {
+    const { x, y } = this.pointerInCells(event);
+    return nearestCorner(x, y, this.width(), this.height());
+  }
+
   private paintAt(event: PointerEvent): void {
-    const canvasEl = this.canvasRef().nativeElement;
-    const rect = canvasEl.getBoundingClientRect();
-    // Map to CSS pixels (not bitmap pixels, which are devicePixelRatio-scaled).
-    const scaleX = this.canvasWidthPx() / rect.width;
-    const scaleY = this.canvasHeightPx() / rect.height;
-    const px = (event.clientX - rect.left) * scaleX;
-    const py = (event.clientY - rect.top) * scaleY;
+    const { px, py } = this.pointerPx(event);
 
     const cell = pixelToCell(px, py, this.cellSize(), this.width(), this.height());
     if (!cell) return;

@@ -46,4 +46,23 @@ describe('buildChartPdf', () => {
     const buffer = await buildChartPdf(pattern);
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
+
+  it('renders backstitch across page tiles and lists it in the legend', async () => {
+    // Wide enough to span two tiles, with a line crossing the tile boundary.
+    const width = 60;
+    const pattern = makePattern({
+      width,
+      height: 4,
+      grid: encodeGrid(Array.from({ length: 4 }, () => new Array(width).fill(null))),
+      meta: {
+        createdFrom: 'blank',
+        backstitches: [{ x1: 0, y1: 2, x2: 60, y2: 2, paletteIndex: 0 }],
+      },
+    });
+    const buffer = await buildChartPdf(pattern);
+    const text = buffer.toString('latin1');
+    expect(text.startsWith('%PDF-')).toBe(true);
+    // two chart pages + one legend page
+    expect((text.match(/\/Type \/Page\b/g) ?? []).length).toBe(3);
+  });
 });

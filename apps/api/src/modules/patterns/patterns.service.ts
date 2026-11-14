@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { encodeGrid, findGridProblem, Pattern } from '@stitchcraft/types';
+import { encodeGrid, findBackstitchProblem, findGridProblem, Pattern } from '@stitchcraft/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePatternDto } from './dto/create-pattern.dto';
@@ -115,7 +115,7 @@ export class PatternsService {
    * (editor, exports, shopping lists).
    */
   private assertConsistentGrid(
-    existing: { width: number; height: number; grid: unknown; palette: unknown },
+    existing: { width: number; height: number; grid: unknown; palette: unknown; meta: unknown },
     dto: UpdatePatternDto,
   ): void {
     const width = dto.width ?? existing.width;
@@ -133,7 +133,18 @@ export class PatternsService {
       if (problem) throw new BadRequestException(`Invalid pattern grid: ${problem}`);
     }
 
-    const progress = (dto.meta as { progress?: unknown } | undefined)?.progress;
+    // Backstitches are checked when they change, and also when the grid's size or
+    // palette changes underneath them (a shrink or a deleted color can strand lines).
+    const newMeta = dto.meta as { progress?: unknown; backstitches?: unknown } | undefined;
+    const backstitches =
+      newMeta?.backstitches ?? (existing.meta as { backstitches?: unknown } | null)?.backstitches;
+    if (backstitches !== undefined && (newMeta?.backstitches !== undefined || touchesGrid)) {
+      const paletteLength = (dto.palette ?? (existing.palette as unknown[]) ?? []).length;
+      const problem = findBackstitchProblem(backstitches, width, height, paletteLength);
+      if (problem) throw new BadRequestException(`Invalid backstitches: ${problem}`);
+    }
+
+    const progress = newMeta?.progress;
     if (progress !== undefined) {
       // Progress cells are 1 (done) or empty, so validate against a 2-entry "palette".
       const problem = findGridProblem(progress, width, height, 2);

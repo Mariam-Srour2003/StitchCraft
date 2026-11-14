@@ -72,4 +72,22 @@ describe('buildChartSvg', () => {
   it('skips a cell whose palette index has no matching entry rather than throwing', () => {
     expect(() => buildChartSvg(makePattern({ palette: [] }))).not.toThrow();
   });
+
+  it('draws backstitch lines on top, in their palette color', () => {
+    const svg = buildChartSvg(
+      makePattern({
+        meta: {
+          createdFrom: 'blank',
+          backstitches: [{ x1: 0, y1: 0, x2: 1, y2: 1, paletteIndex: 0 }],
+        },
+      }),
+      { cellSize: 10 },
+    );
+    const line = '<line x1="0" y1="0" x2="10" y2="10"';
+    expect(svg).toContain(line);
+    expect(svg.indexOf(line)).toBeGreaterThan(svg.lastIndexOf('stroke-width="0.5"'));
+    expect(svg).toMatch(
+      /x2="10" y2="10" stroke="#[0-9A-Fa-f]{6}" stroke-width="1.5" stroke-linecap="round"/,
+    );
+  });
 });

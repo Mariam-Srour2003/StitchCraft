@@ -75,6 +75,9 @@ packages, `@stitchcraft/*`, `@app/*`, then `./local`.
 - **Grids are run-length encoded on the wire and in the database**
   (`EncodedRow[]`), and decoded to one `Int16Array` per row in the editor.
   `-1` is an empty cell.
+- **Backstitch lives in `meta.backstitches`** as corner-to-corner lines and
+  is drawn on its own overlay canvas above the cells, so line edits and cell
+  edits never force each other to repaint.
 - **Rows are immutable in the editor.** An edit replaces only the touched
   rows with new arrays. This one rule is what makes three things cheap:
   the canvas repaints only rows whose reference changed, undo snapshots hold

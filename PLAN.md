@@ -467,6 +467,27 @@ typed against `packages/types`, but do no real work yet.
     Angular 18) despite the root pinning 5.5. Imports were sorted once and the convention is in
     CONTRIBUTING.md instead; the lockfile is unchanged.
 
+- **M11 — Backstitch** _(done)_: outline stitches, the main cross-stitch feature that was missing,
+  built end to end.
+  - **Data:** a `Backstitch` is a line between two grid corners (`0..width`, `0..height`) in a palette
+    color, stored in `pattern.meta.backstitches` - `meta` is free-form JSON, so no migration.
+    `findBackstitchProblem` (in `@stitchcraft/types`) checks corners, length, color and a 20,000-line
+    cap; the API runs it whenever lines change *and* whenever a resize or palette change could
+    strand existing lines.
+  - **Editor:** *Backstitch* tool (key `J`) drags corner to corner with a dashed live preview and a
+    snap marker; drawing over a line in a new color recolors it; *Remove line* deletes the nearest
+    line within half a cell. Lines live on a separate overlay canvas, so drawing them never repaints
+    cells. Every operation is undoable, and lines follow flips, rotation (verified against the cell
+    rotation), resize (lines that no longer fit are dropped), color replace/delete and
+    remove-unused (a color used only by lines is kept). Highlighting a color fades other lines.
+  - **Thread:** backstitch uses ~3x its length in single-strand thread (front line plus overlapping
+    back stitches); `estimateMaterial` adds it to the same color's cross-stitch skeins before
+    rounding once. Legend, viewer, shopping list and CSV all use it; the CSV gains a
+    "Backstitch (cm)" column when a pattern has lines.
+  - **Exports:** lines drawn on top in the SVG/PNG, and in the PDF clipped per page tile so a line
+    crossing a page edge prints on both pages; the PDF legend lists line length per color.
+    Checked visually by rasterizing a real chart through the export code.
+
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 
 ---

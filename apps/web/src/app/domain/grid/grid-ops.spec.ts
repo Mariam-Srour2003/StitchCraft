@@ -161,4 +161,12 @@ describe('compactPalette', () => {
     expect(asArrays(result.grid)).toEqual([[1, E, 0]]);
     expect(Array.from(result.remap)).toEqual([0, -1, 1]);
   });
+
+  it('keeps colors marked as used elsewhere', () => {
+    const palette = [
+      { index: 0, symbol: 'A' },
+      { index: 1, symbol: 'B' },
+    ];
+    expect(compactPalette(palette, toGrid([[0]]), [1]).palette).toHaveLength(2);
+  });
 });

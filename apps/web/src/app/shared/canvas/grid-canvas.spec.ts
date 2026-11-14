@@ -134,4 +134,41 @@ describe('GridCanvas', () => {
     component.onPointerUp();
     expect(spy).not.toHaveBeenCalled();
   });
+
+  describe('backstitch tools', () => {
+    it('drags a line between snapped corners and emits it on release, without editing cells', () => {
+      fixture.componentRef.setInput('tool', 'backstitch');
+      fixture.detectChanges();
+      const lines = jest.fn();
+      const cells = jest.fn();
+      component.lineDraw.subscribe(lines);
+      component.cellEdit.subscribe(cells);
+
+      component.onPointerDown(fakePointerEvent(21, 3)); // nearest corner (1, 0)
+      component.onPointerMove(fakePointerEvent(43, 18)); // nearest corner (2, 1)
+      component.onPointerUp();
+
+      expect(lines).toHaveBeenCalledWith({ from: { x: 1, y: 0 }, to: { x: 2, y: 1 } });
+      expect(cells).not.toHaveBeenCalled();
+    });
+
+    it('emits nothing for a click without movement', () => {
+      fixture.componentRef.setInput('tool', 'backstitch');
+      fixture.detectChanges();
+      const lines = jest.fn();
+      component.lineDraw.subscribe(lines);
+      component.onPointerDown(fakePointerEvent(21, 3));
+      component.onPointerUp();
+      expect(lines).not.toHaveBeenCalled();
+    });
+
+    it('reports eraser clicks in fractional cells', () => {
+      fixture.componentRef.setInput('tool', 'backstitch-erase');
+      fixture.detectChanges();
+      const erase = jest.fn();
+      component.lineErase.subscribe(erase);
+      component.onPointerDown(fakePointerEvent(25, 10));
+      expect(erase).toHaveBeenCalledWith({ x: 1.25, y: 0.5 });
+    });
+  });
 });

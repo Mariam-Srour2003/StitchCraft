@@ -262,4 +262,56 @@ describe('PatternsService', () => {
       expect(prisma.pattern.update).toHaveBeenCalled();
     });
   });
+
+  describe('backstitch validation', () => {
+    const existing = {
+      id: 'pat-1',
+      projectId: 'proj-1',
+      name: 'P',
+      type: 'cross_stitch',
+      width: 4,
+      height: 4,
+      palette: [{ index: 0, symbol: 'A', color: { hex: '#000000', rgb: { r: 0, g: 0, b: 0 } } }],
+      grid: [[[null, 4]], [[null, 4]], [[null, 4]], [[null, 4]]],
+      meta: {
+        createdFrom: 'blank',
+        backstitches: [{ x1: 0, y1: 0, x2: 4, y2: 4, paletteIndex: 0 }],
+      },
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+      project: { id: 'proj-1', userId: 'user-1' },
+    };
+
+    beforeEach(() => {
+      prisma.pattern.findUnique.mockResolvedValue(existing);
+      prisma.pattern.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existing, ...data }),
+      );
+    });
+
+    it('accepts valid lines', async () => {
+      await service.update('user-1', 'pat-1', {
+        meta: { backstitches: [{ x1: 1, y1: 1, x2: 2, y2: 1, paletteIndex: 0 }] },
+      });
+      expect(prisma.pattern.update).toHaveBeenCalled();
+    });
+
+    it('rejects lines outside the grid', async () => {
+      await expect(
+        service.update('user-1', 'pat-1', {
+          meta: { backstitches: [{ x1: 0, y1: 0, x2: 9, y2: 0, paletteIndex: 0 }] },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects a shrink that would strand existing lines', async () => {
+      await expect(
+        service.update('user-1', 'pat-1', {
+          width: 2,
+          height: 2,
+          grid: [[[null, 2]], [[null, 2]]],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
 });
