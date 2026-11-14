@@ -117,6 +117,11 @@
     }
   }
 
+  &__hint {
+    font-size: var(--sc-font-size-xs, var(--sc-font-size-sm));
+    line-height: 1.4;
+  }
+
   &__check {
     display: flex;
     gap: var(--sc-space-2);

@@ -161,6 +161,7 @@ describe('ConverterComponent', () => {
       colorCount: 24,
       enhance: false,
       cleanup: true,
+      dither: 'none',
     });
     expect(component['analysisState']()).toBe('ready');
     fixture.detectChanges();
@@ -249,6 +250,34 @@ describe('ConverterComponent', () => {
     expect(component['enhance']()).toBe(true);
     expect(component['cleanup']()).toBe(true);
     expect([component['width'](), component['height']()]).toEqual([120, 80]);
+  });
+
+  it('blends colours lightly for diamond painting unless the user picks otherwise', async () => {
+    await selectPhoto();
+    expect(component['dither']()).toBe('none');
+    component.setTargetType('diamond');
+    expect(component['dither']()).toBe('light');
+    component.setTargetType('cross_stitch');
+    expect(component['dither']()).toBe('none');
+
+    component.setDither('full');
+    component.setTargetType('diamond');
+    expect(component['dither']()).toBe('full');
+  });
+
+  it('offers colour blending for every craft but paint by number', async () => {
+    await selectPhoto();
+    const blendingShown = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('sc-segmented-toggle'),
+      ).some(
+        (el) =>
+          el.getAttribute('ariaLabel') === 'Colour blending' || el.textContent?.includes('Full'),
+      );
+    expect(blendingShown()).toBe(true);
+    component.setTargetType('color_by_number');
+    fixture.detectChanges();
+    expect(blendingShown()).toBe(false);
   });
 
   it('"apply all" crops first, then sizes to the new shape', async () => {
@@ -341,6 +370,7 @@ describe('ConverterComponent', () => {
         colorCount: 24,
         enhance: false,
         cleanup: true,
+        dither: 'none',
       });
       const text = fixture.nativeElement.textContent;
       expect(text).toContain('a woman in a spacesuit');
@@ -426,6 +456,7 @@ describe('ConverterComponent', () => {
         colorCount: 15,
         enhance: false,
         cleanup: true,
+        dither: 'light',
       },
       'cat.png',
     );

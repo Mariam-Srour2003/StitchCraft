@@ -1,3 +1,4 @@
+import type { DitherMode } from '../models/conversion.model';
 import type { PatternType } from '../models/pattern.model';
 
 /** How much one finding matters for the finished piece. */
@@ -84,6 +85,7 @@ export interface AnalyzeImageParams {
   /** As the conversion would run, so the preview and advice match. */
   enhance?: boolean;
   cleanup?: boolean;
+  dither?: DitherMode;
 }
 
 /**

@@ -35,6 +35,9 @@ interface Variant {
 const VARIANTS: Variant[] = [
   { name: 'default', options: {} },
   { name: 'cleanup', options: { cleanup: true } },
+  { name: 'blend light', options: { dither: 'light' } },
+  { name: 'blend full', options: { dither: 'full' } },
+  { name: 'blend light + cleanup', options: { dither: 'light', cleanup: true } },
 ];
 
 const WIDTH = Number(process.env['BENCH_WIDTH'] ?? 100);

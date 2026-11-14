@@ -1,7 +1,7 @@
 import type { Rgb } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
 
-import { buildGridFromPixels } from './build-grid-from-pixels';
+import { buildGridFromPixels, effectiveDither } from './build-grid-from-pixels';
 
 function solidBlock(color: Rgb, count: number): Rgb[] {
   return Array.from({ length: count }, () => ({ ...color }));
@@ -63,6 +63,51 @@ describe('buildGridFromPixels', () => {
     // ...and every one of them is actually used.
     const used = new Set(decodeGrid(grid, width).flatMap((row) => Array.from(row)));
     expect(used.size).toBe(20);
+  });
+
+  describe('colour blending (dither)', () => {
+    // A horizontal grey ramp with only 3 colours allowed: plain mapping makes
+    // flat bands, blending mixes neighbouring threads across each band edge.
+    const width = 60;
+    const height = 20;
+    const ramp: Rgb[] = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const v = Math.round((x / (width - 1)) * 255);
+        ramp.push({ r: v, g: v, b: v });
+      }
+    }
+    const changesAlongRows = (grid: ReturnType<typeof buildGridFromPixels>['grid']) =>
+      decodeGrid(grid, width).reduce(
+        (sum, row) => sum + row.reduce((n, v, x) => n + (x > 0 && v !== row[x - 1] ? 1 : 0), 0),
+        0,
+      );
+
+    it('mixes threads across band edges, more at full than at light', () => {
+      const none = changesAlongRows(buildGridFromPixels(ramp, width, height, 3).grid);
+      const light = changesAlongRows(
+        buildGridFromPixels(ramp, width, height, 3, { dither: 'light' }).grid,
+      );
+      const full = changesAlongRows(
+        buildGridFromPixels(ramp, width, height, 3, { dither: 'full' }).grid,
+      );
+      expect(light).toBeGreaterThan(none);
+      expect(full).toBeGreaterThan(light);
+    });
+
+    it('uses the same threads with or without blending', () => {
+      const codes = (dither?: 'none' | 'full') =>
+        buildGridFromPixels(ramp, width, height, 3, { dither })
+          .palette.map((e) => (e.color as { code: string }).code)
+          .sort();
+      expect(codes('full')).toEqual(codes('none'));
+    });
+
+    it('is never applied to paint by number', () => {
+      expect(effectiveDither('color_by_number', 'full')).toBe('none');
+      expect(effectiveDither('diamond', 'light')).toBe('light');
+      expect(effectiveDither('cross_stitch', undefined)).toBe('none');
+    });
   });
 
   it('assigns every palette entry a distinct symbol', () => {

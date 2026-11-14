@@ -205,6 +205,22 @@
             >
           </label>
 
+          @if (targetType() !== 'color_by_number') {
+            <div class="converter-page__field">
+              <span>Colour blending</span>
+              <sc-segmented-toggle
+                [options]="ditherOptions"
+                [value]="dither()"
+                (valueChange)="setDither($event)"
+                ariaLabel="Colour blending"
+              />
+              <small class="converter-page__hint"
+                >Mixes neighbouring threads so gradients look smooth from a distance. More single
+                stitches; best for diamond painting and photos with soft skies or skin.</small
+              >
+            </div>
+          }
+
           <sc-photo-advice
             [analysis]="analysis()"
             [state]="analysisState()"

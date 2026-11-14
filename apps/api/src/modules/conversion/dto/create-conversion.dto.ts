@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-import { MAX_PATTERN_DIMENSION, PatternType } from '@stitchcraft/types';
+import { DITHER_MODES, DitherMode, MAX_PATTERN_DIMENSION, PatternType } from '@stitchcraft/types';
 
 const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
 
@@ -56,4 +56,8 @@ export class CreateConversionDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   cleanup?: boolean;
+
+  @IsOptional()
+  @IsIn(DITHER_MODES)
+  dither?: DitherMode;
 }
