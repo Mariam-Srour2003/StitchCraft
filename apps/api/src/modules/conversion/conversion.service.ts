@@ -3,7 +3,7 @@ import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nest
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
 
-import { ConversionJob, ConversionParams } from '@stitchcraft/types';
+import { ConversionJob, ConversionParams } from '@hobbygrid/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';

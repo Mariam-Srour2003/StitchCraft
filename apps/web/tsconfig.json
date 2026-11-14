@@ -19,8 +19,8 @@
     // Redefining "paths" replaces the base's, so the shared packages are
     // repeated here; both resolve from the repo root via the inherited baseUrl.
     "paths": {
-      "@stitchcraft/types": ["packages/types/src/index.ts"],
-      "@stitchcraft/color": ["packages/color/src/index.ts"],
+      "@hobbygrid/types": ["packages/types/src/index.ts"],
+      "@hobbygrid/color": ["packages/color/src/index.ts"],
       "@app/*": ["apps/web/src/app/*"]
     }
   },

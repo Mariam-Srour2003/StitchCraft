@@ -1,5 +1,5 @@
 {
-  "name": "@stitchcraft/api",
+  "name": "@hobbygrid/api",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -24,8 +24,8 @@
     "@nestjs/platform-socket.io": "^10.4.0",
     "@nestjs/websockets": "^10.4.0",
     "@prisma/client": "^5.18.0",
-    "@stitchcraft/color": "workspace:*",
-    "@stitchcraft/types": "workspace:*",
+    "@hobbygrid/color": "workspace:*",
+    "@hobbygrid/types": "workspace:*",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.12.0",
     "class-transformer": "^0.5.1",

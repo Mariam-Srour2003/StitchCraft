@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 
-import type { Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@hobbygrid/types';
 
 /**
  * Turns a photo into exactly width x height pixels, one per stitch: applies

@@ -9,7 +9,7 @@
     // real output location, watch mode would crash looking for a file that
     // was never written.
     "outDir": "./dist",
-    // Cross-package imports (@stitchcraft/types, @stitchcraft/color resolve
+    // Cross-package imports (@hobbygrid/types, @hobbygrid/color resolve
     // to sibling packages' src/) pull files outside apps/api into this
     // compilation, so tsc's rootDir inference would otherwise land on the
     // repo root; harmless either way since webpack bundles rather than

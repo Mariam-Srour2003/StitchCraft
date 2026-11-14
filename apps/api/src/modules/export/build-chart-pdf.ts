@@ -1,14 +1,14 @@
 import PDFDocument from 'pdfkit';
 
-import { contrastTextColor } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
+import { contrastTextColor } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
 import {
   backstitchLengthByIndex,
   decodeGrid,
   catalogueLabel,
   PART_SEGMENT,
   partialCountByIndex,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { countPaletteUsage } from './count-palette-usage';
 

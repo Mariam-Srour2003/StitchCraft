@@ -99,10 +99,10 @@ importers:
       '@prisma/client':
         specifier: ^5.18.0
         version: 5.22.0(prisma@5.22.0)
-      '@stitchcraft/color':
+      '@hobbygrid/color':
         specifier: workspace:*
         version: link:../../packages/color
-      '@stitchcraft/types':
+      '@hobbygrid/types':
         specifier: workspace:*
         version: link:../../packages/types
       bcrypt:
@@ -214,10 +214,10 @@ importers:
       '@angular/router':
         specifier: ^18.2.0
         version: 18.2.14(@angular/common@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(rxjs@7.8.2))(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(@angular/platform-browser@18.2.14(@angular/animations@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10)))(@angular/common@18.2.14(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10))(rxjs@7.8.2))(@angular/core@18.2.14(rxjs@7.8.2)(zone.js@0.14.10)))(rxjs@7.8.2)
-      '@stitchcraft/color':
+      '@hobbygrid/color':
         specifier: workspace:*
         version: link:../../packages/color
-      '@stitchcraft/types':
+      '@hobbygrid/types':
         specifier: workspace:*
         version: link:../../packages/types
       rxjs:

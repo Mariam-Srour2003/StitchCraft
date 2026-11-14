@@ -16,7 +16,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
 
-import { decodeGrid, EMPTY_CELL } from '@stitchcraft/types';
+import { decodeGrid, EMPTY_CELL } from '@hobbygrid/types';
 
 import {
   buildGridFromPixels,

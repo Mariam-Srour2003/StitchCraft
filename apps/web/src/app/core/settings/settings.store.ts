@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   canvasTheme: 'auto',
 };
 
-const STORAGE_KEY = 'stitchcraft.settings.v1';
+const STORAGE_KEY = 'hobbygrid.settings.v1';
 
 /**
  * Per-browser preferences. Kept client-side on purpose: they're display and

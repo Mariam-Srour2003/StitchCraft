@@ -1,4 +1,4 @@
-import type { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@hobbygrid/types';
 
 /** D65 reference white, 2-degree observer. */
 const REF_WHITE = { x: 95.047, y: 100.0, z: 108.883 };

@@ -1,4 +1,4 @@
-# Contributing to StitchCraft
+# Contributing to Hobbygrid
 
 ## Branching
 
@@ -37,7 +37,7 @@ CI runs the same command on every PR.
   `domain/` (pure, no Angular), `core/`, `data-access/`, `shared/`,
   `features/`. Lint enforces them: no feature imports another feature, no
   `../` imports (use `@app/...`), and `domain/` stays framework-free.
-- Order imports: packages, `@stitchcraft/*`, `@app/*`, then `./local`,
+- Order imports: packages, `@hobbygrid/*`, `@app/*`, then `./local`,
   with a blank line between groups.
 - Per-pattern-type rules go in `domain/pattern/pattern-rules.ts`, not inline
   `type === 'diamond'` checks.

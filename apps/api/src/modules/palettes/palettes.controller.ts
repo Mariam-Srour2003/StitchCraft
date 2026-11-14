@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 
-import { DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
+import { DmcColor, PaginatedResponse, Palette } from '@hobbygrid/types';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';

@@ -8,7 +8,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import type { RelativeBox } from '@stitchcraft/types';
+import type { RelativeBox } from '@hobbygrid/types';
 
 import { paintToCanvas } from '@app/core/browser/image-io';
 import {

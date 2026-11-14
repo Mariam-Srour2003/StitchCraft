@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { CreateProjectDto, Project } from '@stitchcraft/types';
+import { CreateProjectDto, Project } from '@hobbygrid/types';
 
 import { ApiClient } from '@app/core/api/api-client.service';
 

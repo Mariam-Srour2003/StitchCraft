@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import type { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@hobbygrid/types';
 
 import { GridCanvas } from './grid-canvas';
 

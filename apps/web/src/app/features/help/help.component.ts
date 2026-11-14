@@ -27,7 +27,7 @@ export const GLOSSARY: readonly { term: string; definition: string }[] = [
   {
     term: 'Skein',
     definition:
-      'One bundle of floss. StitchCraft estimates how many you need per color from the stitch count and fabric.',
+      'One bundle of floss. Hobbygrid estimates how many you need per color from the stitch count and fabric.',
   },
   { term: 'Full cross stitch', definition: 'One "X" covering one square of the chart.' },
   {

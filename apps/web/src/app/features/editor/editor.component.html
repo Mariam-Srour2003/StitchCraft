@@ -228,6 +228,33 @@
           >
         </section>
 
+        @if (beadCheck(); as check) {
+          <section class="editor-page__panel" aria-labelledby="hold-heading">
+            <h2 id="hold-heading">Will it hold together?</h2>
+            @if (check.loose === 0 && check.pieces <= 1) {
+              <p class="editor-page__muted" role="status">
+                Yes: every bead touches another along a side, so it irons into one piece.
+              </p>
+            } @else {
+              @if (check.loose > 0) {
+                <p role="status">
+                  <strong
+                    >{{ check.loose }} {{ check.loose === 1 ? 'bead touches' : 'beads touch' }} no
+                    other bead along a side</strong
+                  >
+                  and will fall off after ironing: {{ check.where }}.
+                </p>
+              }
+              @if (check.pieces > 1) {
+                <p class="editor-page__muted">
+                  It irons into {{ check.pieces }} separate pieces. Fine for letters or a set of
+                  charms; join them with a row of beads if it should be one piece.
+                </p>
+              }
+            }
+          </section>
+        }
+
         @if (!store.stitchMode()) {
           <section class="editor-page__panel" aria-labelledby="tidy-heading">
             <h2 id="tidy-heading">Tidy</h2>

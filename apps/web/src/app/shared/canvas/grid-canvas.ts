@@ -12,7 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { Backstitch, PaletteEntry, PartialStitch } from '@stitchcraft/types';
+import { Backstitch, PaletteEntry, PartialStitch } from '@hobbygrid/types';
 
 import type { EditorTool } from '@app/domain/editor/tools';
 import { isLineTool, isPartialTool } from '@app/domain/editor/tools';

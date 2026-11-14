@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { encodeGrid } from '@stitchcraft/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { PatternThumbnail } from './pattern-thumbnail';
 

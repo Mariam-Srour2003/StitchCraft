@@ -1,4 +1,4 @@
-import type { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@hobbygrid/types';
 
 import {
   cellSizeForZoom,

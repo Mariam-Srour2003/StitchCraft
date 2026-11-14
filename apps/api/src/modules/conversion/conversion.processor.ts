@@ -2,8 +2,8 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 
-import { DEFAULT_BEAD_CATALOGUE_ID, defaultBoardPegs, findBeadCatalogue } from '@stitchcraft/color';
-import { ConversionParams, PatternMeta } from '@stitchcraft/types';
+import { DEFAULT_BEAD_CATALOGUE_ID, defaultBoardPegs, findBeadCatalogue } from '@hobbygrid/color';
+import { ConversionParams, PatternMeta } from '@hobbygrid/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImagingService } from '../imaging/imaging.service';

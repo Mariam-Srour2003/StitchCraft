@@ -1,4 +1,4 @@
-# StitchCraft architecture
+# Hobbygrid architecture
 
 How the code is organised, which way dependencies may point, and why. The
 rules marked **enforced** fail `pnpm nx run-many -t lint` when broken.
@@ -49,7 +49,7 @@ Allowed imports (**enforced** with `no-restricted-imports`):
 
 | Layer          | May import                            |
 | -------------- | ------------------------------------- |
-| `domain/`      | `domain/`, `@stitchcraft/*`           |
+| `domain/`      | `domain/`, `@hobbygrid/*`             |
 | `core/`        | `core/`, `domain/`, packages, Angular |
 | `data-access/` | `core/`, `domain/`, packages, Angular |
 | `shared/`      | everything except `features/`         |
@@ -57,7 +57,7 @@ Allowed imports (**enforced** with `no-restricted-imports`):
 
 Imports between folders use the `@app/...` alias; `../` imports are banned
 (**enforced**), and `./` is for files in the same folder. Imports are ordered:
-packages, `@stitchcraft/*`, `@app/*`, then `./local`.
+packages, `@hobbygrid/*`, `@app/*`, then `./local`.
 
 ### Why these layers
 

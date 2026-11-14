@@ -1,8 +1,11 @@
-# StitchCraft
+# Hobbygrid
 
-Cross-stitch, color-by-number & diamond-painting studio: draw patterns by
-hand, or convert a photo into one, then export a printable chart with a
-materials list.
+A studio for hobbies made on a grid: cross-stitch, fuse beads (Perler, Hama,
+Artkal), diamond painting and color-by-number. Draw patterns by hand, or
+convert a photo into one, then export a printable chart with a materials
+list.
+
+Formerly StitchCraft; renamed once it grew beyond stitching.
 
 All six milestones from [PLAN.md](./PLAN.md) are built: foundation, the
 pattern editor, the classic image converter, diamond-painting mode,
@@ -86,7 +89,7 @@ pnpm dev:api    # http://localhost:3000/api
 pnpm dev:web    # http://localhost:4200 (proxies /api to :3000 in dev)
 ```
 
-Demo login after seeding: `demo@stitchcraft.dev` / `demo-password-123`.
+Demo login after seeding: `demo@hobbygrid.dev` / `demo-password-123`.
 
 To also run the AI service on the host (see `services/ai/README.md` for
 details):

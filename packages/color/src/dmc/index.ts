@@ -1,4 +1,4 @@
-import type { DmcColor } from '@stitchcraft/types';
+import type { DmcColor } from '@hobbygrid/types';
 
 import raw from './dmc-colors.json';
 

@@ -1,18 +1,18 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-import { BEAD_CATALOGUE_IDS } from '@stitchcraft/color';
+import { BEAD_CATALOGUE_IDS } from '@hobbygrid/color';
 import {
   DITHER_MODES,
   DitherMode,
   MAX_PATTERN_DIMENSION,
   PATTERN_TYPE_VALUES,
   PatternType,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 /**
  * Wire DTO for the multipart POST /conversions request. Deliberately
- * separate from @stitchcraft/types' CreateConversionDto: that shape assumes
+ * separate from @hobbygrid/types' CreateConversionDto: that shape assumes
  * a JSON body with a pre-uploaded `sourceImageRef`, whereas this endpoint
  * takes the source image itself as the multipart `file` field, and every
  * other field arrives as a form-data string that needs coercion.

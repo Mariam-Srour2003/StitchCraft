@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { assignSymbols } from '@stitchcraft/color';
-import { CustomColor, Palette, PaletteEntry } from '@stitchcraft/types';
+import { assignSymbols } from '@hobbygrid/color';
+import { CustomColor, Palette, PaletteEntry } from '@hobbygrid/types';
 
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 import { Button } from '@app/shared/ui/button/button';

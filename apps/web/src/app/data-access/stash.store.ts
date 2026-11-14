@@ -1,7 +1,7 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 
-import { DMC_COLORS, findDmcByCode } from '@stitchcraft/color';
-import type { DmcColor } from '@stitchcraft/types';
+import { DMC_COLORS, findDmcByCode } from '@hobbygrid/color';
+import type { DmcColor } from '@hobbygrid/types';
 
 import { AuthStore } from '@app/core/auth/auth.store';
 import { readJson, writeJson } from '@app/core/browser/browser-storage';
@@ -11,7 +11,7 @@ export interface StashItem {
   skeins: number;
 }
 
-const KEY_PREFIX = 'stitchcraft.stash.v1.';
+const KEY_PREFIX = 'hobbygrid.stash.v1.';
 
 /** "310", "B5200" and "white" all match regardless of case. */
 function normalizeCode(code: string): string | null {

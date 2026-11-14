@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CreatePaletteDto as CreatePaletteDtoShape, CustomColor } from '@stitchcraft/types';
+import { CreatePaletteDto as CreatePaletteDtoShape, CustomColor } from '@hobbygrid/types';
 
 class RgbInput {
   @IsInt()

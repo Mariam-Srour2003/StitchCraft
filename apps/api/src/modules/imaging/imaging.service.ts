@@ -8,7 +8,7 @@ import {
   ImageAnalysis,
   PatternType,
   VisionAdvice,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
 import { analyzeImage } from './analyze-image';

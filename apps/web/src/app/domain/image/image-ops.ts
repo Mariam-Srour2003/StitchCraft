@@ -4,7 +4,7 @@
  * ImageData), so they're testable without a browser.
  */
 
-import type { RelativeBox } from '@stitchcraft/types';
+import type { RelativeBox } from '@hobbygrid/types';
 
 export interface RgbaImage {
   width: number;

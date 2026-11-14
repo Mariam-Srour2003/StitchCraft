@@ -39,7 +39,7 @@ async function bootstrap() {
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console
-  console.log(`StitchCraft API listening on http://localhost:${port}/api`);
+  console.log(`Hobbygrid API listening on http://localhost:${port}/api`);
 }
 
 bootstrap();

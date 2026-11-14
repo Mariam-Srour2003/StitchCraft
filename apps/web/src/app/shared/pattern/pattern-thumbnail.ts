@@ -8,8 +8,8 @@ import {
   viewChild,
 } from '@angular/core';
 
-import type { EncodedRow, PaletteEntry } from '@stitchcraft/types';
-import { decodeGrid } from '@stitchcraft/types';
+import type { EncodedRow, PaletteEntry } from '@hobbygrid/types';
+import { decodeGrid } from '@hobbygrid/types';
 
 /**
  * A small, non-interactive preview of a pattern: one solid pixel block per

@@ -1,4 +1,4 @@
-# StitchCraft AI service
+# Hobbygrid AI service
 
 Optional FastAPI microservice for AI-assisted conversion steps. The main
 app works fully without this running (see `AiProvider`/`NullAiProvider` in
@@ -62,8 +62,8 @@ degrades correctly (400 or 503, never a crash) without needing the model.
 ## Docker
 
 ```sh
-docker build -t stitchcraft-ai .
-docker run -p 8000:8000 stitchcraft-ai
+docker build -t hobbygrid-ai .
+docker run -p 8000:8000 hobbygrid-ai
 ```
 
 See the root `docker-compose.yml` for wiring this in alongside the rest of

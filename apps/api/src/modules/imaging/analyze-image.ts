@@ -10,13 +10,13 @@ import type {
   PaletteEntry,
   PatternType,
   RelativeBox,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 import {
   computeRegions,
   decodeGrid,
   MAX_PATTERN_DIMENSION,
   removeStrayStitches,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import {
   buildGridFromPixels,

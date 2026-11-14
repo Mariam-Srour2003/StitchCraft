@@ -1,6 +1,6 @@
-import { contrastTextColor } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
-import { decodeGrid, PART_SEGMENT } from '@stitchcraft/types';
+import { contrastTextColor } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
+import { decodeGrid, PART_SEGMENT } from '@hobbygrid/types';
 
 const EMPTY_CELL_FILL = '#f4f1ec';
 const GRID_LINE = '#d8d2c8';

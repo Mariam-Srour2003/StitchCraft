@@ -15,8 +15,8 @@ import {
   CreatePatternDto as CreatePatternDtoShape,
   PATTERN_TYPE_VALUES,
   PatternType,
-} from '@stitchcraft/types';
-import { MAX_PATTERN_DIMENSION } from '@stitchcraft/types';
+} from '@hobbygrid/types';
+import { MAX_PATTERN_DIMENSION } from '@hobbygrid/types';
 
 export class CreatePatternDto implements CreatePatternDtoShape {
   @IsString()

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { AuthResponse, AuthTokens } from '@stitchcraft/types';
+import { AuthResponse, AuthTokens } from '@hobbygrid/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { toUserDto } from '../users/users.mapper';

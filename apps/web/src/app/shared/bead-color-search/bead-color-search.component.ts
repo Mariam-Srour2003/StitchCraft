@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 
-import { BeadCatalogue, DmcColor } from '@stitchcraft/types';
+import { BeadCatalogue, DmcColor } from '@hobbygrid/types';
 
 const RESULT_LIMIT = 24;
 

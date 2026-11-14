@@ -1,4 +1,4 @@
-import type { AnalyzeImageParams, VisionAdvice } from '@stitchcraft/types';
+import type { AnalyzeImageParams, VisionAdvice } from '@hobbygrid/types';
 
 export const AI_PROVIDER = Symbol('AI_PROVIDER');
 

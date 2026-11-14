@@ -1,7 +1,7 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import sharp from 'sharp';
 
-import { ExportResponse, Pattern } from '@stitchcraft/types';
+import { ExportResponse, Pattern } from '@hobbygrid/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { toPatternDto } from '../patterns/patterns.mapper';

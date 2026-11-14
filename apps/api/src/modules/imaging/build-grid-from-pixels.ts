@@ -12,7 +12,7 @@ import {
   nearestDmc,
   planRareColorMerge,
   srgbToLab,
-} from '@stitchcraft/color';
+} from '@hobbygrid/color';
 import type {
   DitherMode,
   DmcColor,
@@ -20,7 +20,7 @@ import type {
   PaletteEntry,
   PatternType,
   Rgb,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 import {
   countDecodedCells,
   EMPTY_CELL,
@@ -28,7 +28,7 @@ import {
   mergeSmallRegions,
   remapCells,
   removeStrayStitches,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 export interface BuildGridOptions {
   /**

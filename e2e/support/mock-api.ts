@@ -7,11 +7,11 @@ import {
   Pattern,
   Project,
   User,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 export const TEST_USER: User = {
   id: 'user-1',
-  email: 'e2e@stitchcraft.dev',
+  email: 'e2e@hobbygrid.dev',
   name: 'E2E Tester',
   createdAt: '2026-01-01T00:00:00.000Z',
 };
@@ -267,8 +267,8 @@ export async function mockApi(page: Page): Promise<void> {
 export async function signInDirectly(page: Page): Promise<void> {
   await page.addInitScript(
     ([accessToken, refreshToken]) => {
-      localStorage.setItem('stitchcraft.accessToken', accessToken);
-      localStorage.setItem('stitchcraft.refreshToken', refreshToken);
+      localStorage.setItem('hobbygrid.accessToken', accessToken);
+      localStorage.setItem('hobbygrid.refreshToken', refreshToken);
     },
     ['fake-access-token', 'fake-refresh-token'],
   );

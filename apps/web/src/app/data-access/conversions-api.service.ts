@@ -7,7 +7,7 @@ import {
   ImageAnalysis,
   VisionAdvice,
   VisionAdviceStatus,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { ApiClient } from '@app/core/api/api-client.service';
 

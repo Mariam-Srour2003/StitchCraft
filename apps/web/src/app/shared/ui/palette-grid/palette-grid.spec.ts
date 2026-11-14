@@ -2,7 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
-import type { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@hobbygrid/types';
 
 import { PaletteSwatch } from '@app/shared/ui/palette-swatch/palette-swatch';
 

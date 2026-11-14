@@ -2,9 +2,9 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { findDmcByCode } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
-import { encodeGrid } from '@stitchcraft/types';
+import { findDmcByCode } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { AuthStore } from '@app/core/auth/auth.store';
 import { PatternLibraryService } from '@app/data-access/pattern-library.service';

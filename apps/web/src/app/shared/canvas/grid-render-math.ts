@@ -1,4 +1,4 @@
-import type { PaletteEntry } from '@stitchcraft/types';
+import type { PaletteEntry } from '@hobbygrid/types';
 
 import type { CellPosition } from '@app/domain/grid/cell';
 import type { RenderMode } from '@app/domain/pattern/pattern-rules';

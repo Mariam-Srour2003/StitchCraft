@@ -3,8 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import type { Project } from '@stitchcraft/types';
-import { encodeGrid } from '@stitchcraft/types';
+import type { Project } from '@hobbygrid/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { AuthStore } from '@app/core/auth/auth.store';
 import { SettingsStore } from '@app/core/settings/settings.store';

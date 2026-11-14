@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
-import { DmcColor } from '@stitchcraft/types';
+import { DmcColor } from '@hobbygrid/types';
 
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 

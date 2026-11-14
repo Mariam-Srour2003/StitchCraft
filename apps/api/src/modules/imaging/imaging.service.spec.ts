@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 
-import { decodeGrid } from '@stitchcraft/types';
+import { decodeGrid } from '@hobbygrid/types';
 
 import type { AiProvider } from './ai-provider';
 import { ImagingService } from './imaging.service';

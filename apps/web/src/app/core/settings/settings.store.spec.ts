@@ -33,7 +33,7 @@ describe('SettingsStore', () => {
   });
 
   it('survives corrupt stored JSON', () => {
-    localStorage.setItem('stitchcraft.settings.v1', '{not json');
+    localStorage.setItem('hobbygrid.settings.v1', '{not json');
     expect(create().settings()).toEqual(DEFAULT_SETTINGS);
   });
 

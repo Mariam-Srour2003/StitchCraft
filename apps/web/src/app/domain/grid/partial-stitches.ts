@@ -1,5 +1,5 @@
-import type { PartialStitch, StitchPart } from '@stitchcraft/types';
-import { partsOverlap } from '@stitchcraft/types';
+import type { PartialStitch, StitchPart } from '@hobbygrid/types';
+import { partsOverlap } from '@hobbygrid/types';
 
 /**
  * Pure partial-stitch editing: picking a part from where in a cell the user

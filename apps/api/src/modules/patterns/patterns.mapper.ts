@@ -1,12 +1,6 @@
 import type { Pattern as PrismaPattern } from '@prisma/client';
 
-import type {
-  EncodedRow,
-  PaletteEntry,
-  Pattern,
-  PatternMeta,
-  PatternType,
-} from '@stitchcraft/types';
+import type { EncodedRow, PaletteEntry, Pattern, PatternMeta, PatternType } from '@hobbygrid/types';
 
 export function toPatternDto(pattern: PrismaPattern): Pattern {
   return {

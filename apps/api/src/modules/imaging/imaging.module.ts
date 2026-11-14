@@ -8,7 +8,7 @@ import { NullAiProvider } from './null-ai-provider';
 
 /**
  * Deterministic image processing (resize, quantize, DMC-match, symbol
- * assignment via `sharp` + `@stitchcraft/color`), plus the `AiProvider` seam
+ * assignment via `sharp` + `@hobbygrid/color`), plus the `AiProvider` seam
  * for optional AI-assisted steps. Consumed by the `conversion` module.
  *
  * AI_PROVIDER resolves to HttpAiProvider (talks to services/ai) when

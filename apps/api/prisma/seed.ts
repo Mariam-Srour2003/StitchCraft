@@ -2,12 +2,12 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
-import { encodeGrid } from '@stitchcraft/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'demo@stitchcraft.dev';
+  const email = 'demo@hobbygrid.dev';
   const passwordHash = await bcrypt.hash('demo-password-123', 10);
 
   const user = await prisma.user.upsert({
@@ -42,7 +42,9 @@ async function main() {
     },
   });
 
-  console.log(`Seeded demo user "${email}" (password: demo-password-123) with 1 project and 1 pattern.`);
+  console.log(
+    `Seeded demo user "${email}" (password: demo-password-123) with 1 project and 1 pattern.`,
+  );
 }
 
 main()

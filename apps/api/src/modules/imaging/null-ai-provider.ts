@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { AnalyzeImageParams, VisionAdvice } from '@stitchcraft/types';
+import type { AnalyzeImageParams, VisionAdvice } from '@hobbygrid/types';
 
 import { AiProvider, VisionAdviceError } from './ai-provider';
 

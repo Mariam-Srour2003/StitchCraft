@@ -1,4 +1,4 @@
-import type { Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@hobbygrid/types';
 
 import { kMeansQuantize } from './k-means';
 import { medianCutQuantize } from './median-cut';

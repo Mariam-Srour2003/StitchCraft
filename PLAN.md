@@ -1,4 +1,4 @@
-# StitchCraft — PLAN
+# Hobbygrid — PLAN
 
 Cross-stitch, color-by-number & diamond-painting studio: draw patterns by hand, or convert a
 photo into one, then export a printable chart with a materials list.
@@ -39,7 +39,7 @@ Proceeding with these; flag if any should change:
 2. **DMC dataset source**: seeding `packages/color` from Adrian Jongenelen's `CrossStitchCreator` DMC RGB table (454 colors, MIT-style hobby project, the same dataset the well-known `sharlagelfand/dmc` R package is built from) — the most complete open, freely-redistributable DMC hex table found. Cited in `packages/color/src/dmc/README.md` with source URL. Anchor threads are **not** included in M0 (spec says "DMC/Anchor" but only requires "a known open DMC hex table," singular, to start) — flagged as a gap, addable as a second dataset file later.
 3. **Diamond "drill" palette** reuses the same DMC color set in M3 (real diamond-painting kits are DMC-numbered) rather than a separate dataset — avoids inventing colors.
 4. **No production deploy target chosen yet** (Vercel/Fly/Render/self-host) — Docker Compose + Dockerfiles are deploy-target-agnostic; picking a host is deferred until it's actually needed.
-5. **GitHub repo**: public, named `stitchcraft`, created empty by the user; this session does all local git work (init, branches, commits) and pushes once the remote exists.
+5. **GitHub repo**: public, named `hobbygrid`, created empty by the user; this session does all local git work (init, branches, commits) and pushes once the remote exists.
 6. **Branch model**: `main` (always releasable) + `develop` (integration) + short-lived `feature/*` branches merged into `develop` via PR. M0 lands on `feature/m0-foundation` → `develop`; the first PR from `develop` → `main` happens once M0 is verified running.
 7. **Node 22 / pnpm** (via Corepack, already bundled with Node 22) — no separate pnpm install needed. Nx 20.x targets Angular 18 and Nest 10, both current as of this workspace's creation.
 8. **Package manager for the optional Python service**: `pip` + `requirements.txt` (not Poetry) — keeps `services/ai` approachable without a second Python tooling decision; revisit if the service grows.
@@ -82,7 +82,7 @@ Proceeding with these; flag if any should change:
 ## 3. Folder tree (M0 state — feature subfolders under `apps/web/src/app/features/*` are stubs until M1+)
 
 ```
-stitchcraft/
+hobbygrid/
 ├── apps/
 │   ├── web/                          # Angular 18 standalone app
 │   │   ├── src/
@@ -470,7 +470,7 @@ typed against `packages/types`, but do no real work yet.
   built end to end.
   - **Data:** a `Backstitch` is a line between two grid corners (`0..width`, `0..height`) in a palette
     color, stored in `pattern.meta.backstitches` - `meta` is free-form JSON, so no migration.
-    `findBackstitchProblem` (in `@stitchcraft/types`) checks corners, length, color and a 20,000-line
+    `findBackstitchProblem` (in `@hobbygrid/types`) checks corners, length, color and a 20,000-line
     cap; the API runs it whenever lines change _and_ whenever a resize or palette change could
     strand existing lines.
   - **Editor:** _Backstitch_ tool (key `J`) drags corner to corner with a dashed live preview and a
@@ -595,7 +595,7 @@ real gaps, both fixed:
   symlink — once for a third-party package's own stale bundled config (`@nestjs/jwt` shipped one
   referencing an option removed in `eslint-config-prettier` 8.0+, breaking `api:lint`), and once
   for `packages/color`'s _own_ `.eslintrc.json`, whose relative `extends: "../../.eslintrc.json"`
-  resolved wrong when ESLint reached it through `apps/web/node_modules/@stitchcraft/color` (the
+  resolved wrong when ESLint reached it through `apps/web/node_modules/@hobbygrid/color` (the
   pnpm workspace-link symlink) instead of its real path (breaking `web:lint`). Root-caused to each
   project's `.eslintrc.json` un-ignoring everything (`"ignorePatterns": ["!**/*"]`, needed so the
   root config's blanket `["**/*"]` ignore doesn't hide the project's own files) without re-excluding
@@ -627,15 +627,15 @@ verification pass:
 - **The compiled API had never actually been runnable, in dev or in Docker.** Two independent bugs,
   both invisible until something actually tried to execute `apps/api`'s build output for the first
   time:
-  1. `apps/api/tsconfig.app.json` had no explicit `rootDir`. Because `@stitchcraft/types` and
-     `@stitchcraft/color` are imported by path-mapped bare specifiers that resolve to sibling
+  1. `apps/api/tsconfig.app.json` had no explicit `rootDir`. Because `@hobbygrid/types` and
+     `@hobbygrid/color` are imported by path-mapped bare specifiers that resolve to sibling
      packages' `src/`, TypeScript's rootDir inference span the whole repo, so `nest build`'s plain
      `tsc` output landed at `dist/apps/api/apps/api/src/main.js`, not the
      `dist/apps/api/main.js` every tool (nest-cli's launcher, the Dockerfile) assumed.
   2. Even pointed at the right file, it still crashed: plain `tsc` leaves path-mapped imports as
-     unresolved bare specifiers (`require('@stitchcraft/color')`) rather than rewriting them, so
+     unresolved bare specifiers (`require('@hobbygrid/color')`) rather than rewriting them, so
      Node fell back to resolving that specifier the normal way — through the pnpm workspace symlink
-     in `node_modules/@stitchcraft/color`, straight to that package's **TypeScript source**, which a
+     in `node_modules/@hobbygrid/color`, straight to that package's **TypeScript source**, which a
      plain Node process can't execute (`ERR_MODULE_NOT_FOUND`).
 
   Fixed by switching `apps/api`'s build to NestJS's built-in webpack mode
@@ -643,8 +643,8 @@ verification pass:
   workspace code into one flat file instead of mirroring source directories. That alone wasn't
   enough either: the default webpack config's `webpack-node-externals` treats _any_ package
   resolved through `node_modules` as external, which in a pnpm workspace includes symlinked local
-  packages — so `@stitchcraft/color` was still being left as an unbundled bare `require`. A custom
-  `apps/api/webpack.config.js` allowlists the `@stitchcraft/*` scope so those specifically get
+  packages — so `@hobbygrid/color` was still being left as an unbundled bare `require`. A custom
+  `apps/api/webpack.config.js` allowlists the `@hobbygrid/*` scope so those specifically get
   bundled while genuine third-party deps (`@nestjs/*`, `bcrypt`, `sharp`, ...) still don't (correctly
   — those need to stay real `node_modules` installs, not bundled, since several have native
   bindings). `ts-loader` was added as the one new dependency this required. `pinned rootDir` stays

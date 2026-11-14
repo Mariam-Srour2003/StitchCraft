@@ -1,6 +1,6 @@
 import { IsString, MinLength } from 'class-validator';
 
-import { CreateProjectDto as CreateProjectDtoShape } from '@stitchcraft/types';
+import { CreateProjectDto as CreateProjectDtoShape } from '@hobbygrid/types';
 
 export class CreateProjectDto implements CreateProjectDtoShape {
   @IsString()

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import { contrastTextColor } from '@stitchcraft/color';
-import { catalogueLabel, PaletteEntry } from '@stitchcraft/types';
+import { contrastTextColor } from '@hobbygrid/color';
+import { catalogueLabel, PaletteEntry } from '@hobbygrid/types';
 
 @Component({
   selector: 'sc-palette-swatch',

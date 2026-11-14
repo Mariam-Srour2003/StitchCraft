@@ -7,7 +7,7 @@ import {
   materialColumnLabel,
   planRareColorMerge,
   srgbToLab,
-} from '@stitchcraft/color';
+} from '@hobbygrid/color';
 import {
   Backstitch,
   backstitchLengthByIndex,
@@ -25,7 +25,7 @@ import {
   Pattern,
   remapCells,
   removeStrayStitches,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';

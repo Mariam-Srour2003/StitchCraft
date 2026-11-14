@@ -10,8 +10,8 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { UpdatePatternDto as UpdatePatternDtoShape } from '@stitchcraft/types';
-import { MAX_PATTERN_DIMENSION } from '@stitchcraft/types';
+import { UpdatePatternDto as UpdatePatternDtoShape } from '@hobbygrid/types';
+import { MAX_PATTERN_DIMENSION } from '@hobbygrid/types';
 
 export class UpdatePatternDto implements UpdatePatternDtoShape {
   @IsOptional()

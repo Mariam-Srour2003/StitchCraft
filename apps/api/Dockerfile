@@ -13,8 +13,8 @@ FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
-RUN pnpm --filter @stitchcraft/api run prisma:generate
-RUN pnpm --filter @stitchcraft/api run build
+RUN pnpm --filter @hobbygrid/api run prisma:generate
+RUN pnpm --filter @hobbygrid/api run build
 
 FROM base AS runtime
 ENV NODE_ENV=production

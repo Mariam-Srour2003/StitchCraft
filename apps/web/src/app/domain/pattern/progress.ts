@@ -1,5 +1,5 @@
-import type { EncodedRow } from '@stitchcraft/types';
-import { decodeGrid, encodeGrid } from '@stitchcraft/types';
+import type { EncodedRow } from '@hobbygrid/types';
+import { decodeGrid, encodeGrid } from '@hobbygrid/types';
 
 /** Progress cell values: 1 = stitched, 0 = not yet. */
 export const DONE = 1;

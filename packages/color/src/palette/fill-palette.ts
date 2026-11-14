@@ -1,4 +1,4 @@
-import type { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@hobbygrid/types';
 
 /** A colour from an image with how many pixels it stands for. */
 export interface WeightedLab {

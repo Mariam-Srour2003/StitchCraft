@@ -1,4 +1,4 @@
-"""StitchCraft AI service.
+"""Hobbygrid AI service.
 
 Optional microservice for AI-assisted conversion steps (background removal,
 upscaling), called by the NestJS API's `AiProvider` seam (see
@@ -19,8 +19,8 @@ from PIL import Image, UnidentifiedImageError
 
 from app import vision_advice
 
-app = FastAPI(title="StitchCraft AI Service", version="0.1.0")
-logger = logging.getLogger("stitchcraft.ai")
+app = FastAPI(title="Hobbygrid AI Service", version="0.1.0")
+logger = logging.getLogger("hobbygrid.ai")
 
 MAX_UPSCALE = 4.0
 MIN_UPSCALE = 1.0
