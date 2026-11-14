@@ -12,7 +12,8 @@
       "options": {
         "command": "nest build",
         "cwd": "apps/api"
-      }
+      },
+      "dependsOn": ["prisma-generate"]
     },
     "serve": {
       "executor": "nx:run-commands",
