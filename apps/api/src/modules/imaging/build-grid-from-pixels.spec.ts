@@ -78,4 +78,59 @@ describe('buildGridFromPixels', () => {
       expect(decoded[0][0]).not.toBe(decoded[1][0]);
     }
   });
+
+  describe('cleanup', () => {
+    const red = { r: 220, g: 20, b: 20 };
+    const blue = { r: 20, g: 20, b: 220 };
+    const green = { r: 20, g: 200, b: 40 };
+
+    /** 10x10 red field with one blue stitch in the middle. */
+    function fieldWithSpeck(): Rgb[] {
+      const pixels = solidBlock(red, 100);
+      pixels[55] = blue;
+      return pixels;
+    }
+
+    it('is off by default and reports nothing', () => {
+      const result = buildGridFromPixels(fieldWithSpeck(), 10, 10, 2);
+      expect(result.cleanup).toBeUndefined();
+      expect(result.palette).toHaveLength(2);
+    });
+
+    it('recolours lone stitches and drops colours nothing uses any more', () => {
+      const result = buildGridFromPixels(fieldWithSpeck(), 10, 10, 2, { cleanup: true });
+      expect(result.cleanup).toEqual({ strayStitchesRemoved: 1, colorsMerged: 0 });
+      expect(result.palette).toHaveLength(1);
+      expect(result.grid.every((row) => row.length === 1 && row[0][0] === 0)).toBe(true);
+    });
+
+    it('merges a colour used for only a few (clumped) stitches into its closest common colour', () => {
+      // 20x20 = 400 cells, threshold max(4, 0.8) = 4: a 2x1 clump of blue is
+      // not confetti (the two touch) but is too rare to keep its own thread.
+      const pixels = [...solidBlock(red, 200), ...solidBlock(green, 200)];
+      pixels[30] = blue;
+      pixels[31] = blue;
+      const result = buildGridFromPixels(pixels, 20, 20, 3, { cleanup: true });
+      expect(result.cleanup).toEqual({ strayStitchesRemoved: 0, colorsMerged: 1 });
+      expect(result.palette).toHaveLength(2);
+      const decoded = decodeGrid(result.grid, 20);
+      expect(decoded[1][10]).toBe(decoded[0][0]);
+    });
+  });
+
+  it('for paint by number, merges areas too small to paint', () => {
+    // 10x10: left half red with a 2-cell blue clump in it, right half blue.
+    // The clump isn't confetti (its cells touch) and blue isn't rare.
+    const red = { r: 220, g: 20, b: 20 };
+    const blue = { r: 20, g: 20, b: 220 };
+    const pixels = Array.from({ length: 100 }, (_, i) => (i % 10 < 5 ? red : blue));
+    pixels[41] = blue;
+    pixels[42] = blue;
+    const plain = buildGridFromPixels(pixels, 10, 10, 2, { cleanup: true });
+    expect(decodeGrid(plain.grid, 10)[4][1]).toBe(decodeGrid(plain.grid, 10)[0][9]);
+    const pbn = buildGridFromPixels(pixels, 10, 10, 2, { cleanup: true, minRegionSize: 4 });
+    expect(pbn.cleanup?.regionsMerged).toBe(1);
+    const rows = decodeGrid(pbn.grid, 10);
+    expect(rows[4][1]).toBe(rows[0][0]); // clump is red now
+  });
 });

@@ -90,4 +90,26 @@ describe('buildChartSvg', () => {
       /x2="10" y2="10" stroke="#[0-9A-Fa-f]{6}" stroke-width="1.5" stroke-linecap="round"/,
     );
   });
+
+  it('draws half and quarter stitches in their cell, edged and in the thread colour', () => {
+    const svg = buildChartSvg(
+      makePattern({
+        meta: {
+          createdFrom: 'blank',
+          partialStitches: [
+            { x: 1, y: 0, part: 'half-up', paletteIndex: 0 },
+            { x: 0, y: 1, part: 'quarter-br', paletteIndex: 0 },
+          ],
+        },
+      }),
+      { cellSize: 10 },
+    );
+    // "/" in cell (1,0): bottom-left (10,10) to top-right (20,0)
+    expect(svg).toContain('<line x1="10" y1="10" x2="20" y2="0" stroke="#3a3530"');
+    expect(svg).toMatch(
+      /<line x1="10" y1="10" x2="20" y2="0" stroke="#[0-9A-Fa-f]{6}" stroke-width="2.4"/,
+    );
+    // quarter from the bottom-right corner of cell (0,1) to its centre
+    expect(svg).toContain('<line x1="10" y1="20" x2="5" y2="15"');
+  });
 });

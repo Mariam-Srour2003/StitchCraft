@@ -29,6 +29,8 @@ describe('resolveShortcut', () => {
     expect(resolveShortcut(press('G'))).toEqual({ type: 'tool', tool: 'fill' });
     expect(resolveShortcut(press('o'))).toEqual({ type: 'tool', tool: 'ellipse' });
     expect(resolveShortcut(press('j'))).toEqual({ type: 'tool', tool: 'backstitch' });
+    expect(resolveShortcut(press('d'))).toEqual({ type: 'tool', tool: 'half-stitch' });
+    expect(resolveShortcut(press('Q'))).toEqual({ type: 'tool', tool: 'quarter-stitch' });
   });
 
   it('maps view and mode keys', () => {
@@ -40,7 +42,7 @@ describe('resolveShortcut', () => {
   });
 
   it('ignores everything else', () => {
-    expect(resolveShortcut(press('q'))).toBeNull();
+    expect(resolveShortcut(press('x'))).toBeNull();
     expect(resolveShortcut(press('Enter'))).toBeNull();
   });
 });

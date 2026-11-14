@@ -39,7 +39,8 @@
     pointer-events: none;
   }
 
-  &--line canvas {
+  &--line canvas,
+  &--partial canvas {
     cursor: crosshair;
   }
 

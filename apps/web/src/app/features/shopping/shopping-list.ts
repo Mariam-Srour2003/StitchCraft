@@ -1,6 +1,6 @@
 import { backstitchSkeinFraction, drillBagsNeeded, skeinFraction } from '@stitchcraft/color';
 import type { DmcColor, Pattern } from '@stitchcraft/types';
-import { backstitchLengthByIndex, isDmcColor } from '@stitchcraft/types';
+import { backstitchLengthByIndex, isDmcColor, partialThreadByIndex } from '@stitchcraft/types';
 
 import { patternStats } from '@app/domain/pattern/pattern-stats';
 
@@ -66,11 +66,13 @@ export function buildShoppingList(
           : groups.paints;
     const fabricCount = pattern.meta.fabricCount ?? options.defaultFabricCount ?? 14;
     const lineLengths = backstitchLengthByIndex(pattern.meta.backstitches, pattern.palette.length);
+    const partials = partialThreadByIndex(pattern.meta.partialStitches, pattern.palette.length);
 
     pattern.palette.forEach((entry, i) => {
       const count = stats.perColor[i] ?? 0;
       const lineLength = lineLengths[i] ?? 0;
-      if (count === 0 && lineLength === 0) return;
+      const partial = partials[i] ?? 0;
+      if (count === 0 && lineLength === 0 && partial === 0) return;
       const color = entry.color;
       const dmc = isDmcColor(color) ? color : null;
       const key = dmc ? dmc.code : entry.color.hex.toLowerCase();
@@ -86,7 +88,7 @@ export function buildShoppingList(
         } satisfies Accumulator);
       acc.count += count;
       acc.skeins +=
-        skeinFraction(count, fabricCount, options.strands) +
+        skeinFraction(count + partial, fabricCount, options.strands) +
         backstitchSkeinFraction(lineLength, fabricCount);
       acc.patterns.add(pattern.name);
       group.set(key, acc);

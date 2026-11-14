@@ -8,12 +8,19 @@ PLAN.md's "must work with zero AI configuration" requirement.
 """
 
 import io
+import logging
+from functools import lru_cache
+from typing import Literal
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+import anthropic
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from PIL import Image, UnidentifiedImageError
 
+from app import vision_advice
+
 app = FastAPI(title="StitchCraft AI Service", version="0.1.0")
+logger = logging.getLogger("stitchcraft.ai")
 
 MAX_UPSCALE = 4.0
 MIN_UPSCALE = 1.0
@@ -73,3 +80,60 @@ async def upscale(
     buffer = io.BytesIO()
     upscaled.save(buffer, format="PNG")
     return Response(content=buffer.getvalue(), media_type="image/png")
+
+
+@lru_cache(maxsize=1)
+def anthropic_client() -> anthropic.Anthropic:
+    """One client for the process; credentials come from the environment."""
+    return anthropic.Anthropic()
+
+
+@app.get("/vision-advice/status")
+def vision_advice_status() -> dict:
+    """Lets the API show the "ask AI" button only when it can work."""
+    return {"enabled": vision_advice.enabled(), "model": vision_advice.model_name()}
+
+
+@app.post("/vision-advice", response_model=vision_advice.VisionAdvice)
+async def get_vision_advice(
+    file: UploadFile = File(...),
+    target_type: Literal["cross_stitch", "color_by_number", "diamond"] = Form(...),
+    width: int = Form(..., ge=1, le=500),
+    height: int = Form(..., ge=1, le=500),
+    color_count: int = Form(..., ge=2, le=100),
+    client: anthropic.Anthropic = Depends(anthropic_client),
+) -> vision_advice.VisionAdvice:
+    """An AI second opinion on how well a photo will turn into a pattern.
+
+    Off unless VISION_ADVISOR_ENABLED is set: it sends the photo to Anthropic.
+    """
+    if not vision_advice.enabled():
+        raise HTTPException(status_code=503, detail="AI advice is not enabled on this deployment")
+
+    data = await file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    try:
+        return vision_advice.advise(client, data, target_type, width, height, color_count)
+    except UnidentifiedImageError as exc:
+        raise HTTPException(status_code=400, detail="Could not read image") from exc
+    except vision_advice.VisionAdviceUnavailable as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except anthropic.AuthenticationError as exc:
+        raise HTTPException(status_code=503, detail="AI advice is not configured (no valid credentials)") from exc
+    except anthropic.RateLimitError as exc:
+        raise HTTPException(status_code=429, detail="AI advice is busy - try again in a minute") from exc
+    except anthropic.APIStatusError as exc:
+        raise HTTPException(status_code=502, detail=f"AI advice failed ({exc.status_code})") from exc
+    except anthropic.APIConnectionError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach the AI service") from exc
+    except TypeError as exc:
+        # The SDK raises a plain TypeError, not an API error, when it finds no
+        # credentials at all (no ANTHROPIC_API_KEY, token or profile).
+        if "authentication method" not in str(exc):
+            raise
+        logger.error("VISION_ADVISOR_ENABLED is set but no Anthropic credentials were found")
+        raise HTTPException(
+            status_code=503, detail="AI advice is not configured (no credentials)"
+        ) from exc

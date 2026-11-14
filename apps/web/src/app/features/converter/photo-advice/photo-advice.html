@@ -1,0 +1,105 @@
+<section class="photo-advice" aria-labelledby="photo-advice-title" aria-live="polite">
+  <header class="photo-advice__header">
+    <h2 id="photo-advice-title">Photo check</h2>
+    @if (state() === 'loading') {
+    <span class="photo-advice__status">Checking…</span>
+    }
+  </header>
+
+  @switch (state()) { @case ('error') {
+  <p class="photo-advice__error">
+    Couldn't check this photo. You can still convert it.
+    <button type="button" class="photo-advice__link" (click)="retry.emit()">Try again</button>
+  </p>
+  } @default { @if (analysis(); as result) {
+  <div
+    class="photo-advice__verdict"
+    [class]="'photo-advice__verdict photo-advice__verdict--' + result.verdict"
+    [class.photo-advice__verdict--stale]="state() === 'loading'"
+  >
+    <span class="photo-advice__score" [attr.aria-label]="'Score ' + result.score + ' out of 100'">
+      {{ result.score }}
+    </span>
+    <div>
+      <strong>{{ verdictLabel[result.verdict] }}</strong>
+      <p>{{ result.summary }}</p>
+    </div>
+  </div>
+
+  @if (result.advice.length > 0) {
+  <ul class="photo-advice__list" [class.photo-advice__list--stale]="state() === 'loading'">
+    @for (item of result.advice; track item.code) {
+    <li
+      class="photo-advice__item"
+      [class]="'photo-advice__item photo-advice__item--' + item.severity"
+    >
+      <span class="photo-advice__icon" aria-hidden="true">{{ icon[item.severity] }}</span>
+      <div class="photo-advice__body">
+        <strong>
+          <span class="sc-visually-hidden">{{ severityLabel[item.severity] }}: </span>
+          {{ item.title }}
+        </strong>
+        <p>{{ item.detail }}</p>
+        @if (item.fix && item.fixLabel) {
+        <sc-button variant="secondary" (pressed)="applyFix.emit(item.fix)">
+          {{ item.fixLabel }}
+        </sc-button>
+        }
+      </div>
+    </li>
+    }
+  </ul>
+  } @if (fixCount() > 1) {
+  <sc-button (pressed)="applyAll.emit()">Apply all suggestions</sc-button>
+  } } @else if (state() === 'loading') {
+  <p class="photo-advice__muted">Looking at sharpness, light, faces and detail…</p>
+  } } } @if (visionEnabled()) {
+  <div class="photo-advice__vision" aria-labelledby="vision-title">
+    <h3 id="vision-title">AI second opinion</h3>
+    @if (visionAdvice(); as ai) {
+    <div [class.photo-advice__list--stale]="visionStale() || visionState() === 'loading'">
+      <p><strong>{{ verdictLabel[ai.verdict] }}</strong> - {{ ai.subject }}. {{ ai.summary }}</p>
+      @if (ai.keep.length) {
+      <p class="photo-advice__muted">Will come out well:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.keep; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      } @if (ai.lose.length) {
+      <p class="photo-advice__muted">Will be lost or look wrong:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.lose; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      } @if (ai.tips.length) {
+      <p class="photo-advice__muted">To make it better:</p>
+      <ul class="photo-advice__bullets">
+        @for (item of ai.tips; track $index) {
+        <li>{{ item }}</li>
+        }
+      </ul>
+      }
+    </div>
+    @if (visionStale()) {
+    <p class="photo-advice__muted">This was for an earlier version of the photo or settings.</p>
+    } } @else {
+    <p class="photo-advice__muted">
+      A description of what will and won't survive as a pattern, from an AI that looks at the photo.
+    </p>
+    } @if (visionState() === 'error') {
+    <p class="photo-advice__error" role="alert">{{ visionError() }}</p>
+    }
+    <sc-button
+      variant="secondary"
+      [disabled]="visionState() === 'loading'"
+      (pressed)="askVision.emit()"
+    >
+      {{ visionState() === 'loading' ? 'Asking the AI…' : visionAdvice() ? 'Ask again' : 'Ask AI for
+      a second opinion' }}
+    </sc-button>
+    <p class="photo-advice__privacy">Sends this photo to Anthropic's Claude to look at.</p>
+  </div>
+  }
+</section>

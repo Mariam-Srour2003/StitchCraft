@@ -341,7 +341,7 @@ Floss#,Description,Red,Green,Blue,RGB code,Row
 3341,Apricot,252,171,152,FCAB98,row 14-23
 3340,Apricot Med,255,131,111,FF836F,row 14-24
 608,Burnt Orange Bright,253,93,53,FD5D35,row 14-25
-606,Orange?Red Bright,250,50,3,FA3203,row 14-26
+606,Orange-Red Bright,250,50,3,FA3203,row 14-26
 951,Tawny Light,255,226,207,FFE2CF,row 15-01
 3856,Mahogany Ult Vy Lt,255,211,181,FFD3B5,row 15-02
 722,Orange Spice Light,247,151,111,F7976F,row 15-03
@@ -351,8 +351,8 @@ Floss#,Description,Red,Green,Blue,RGB code,Row
 922,Copper Light,226,115,35,E27323,row 15-07
 921,Copper,198,98,24,C66218,row 15-08
 920,Copper Med,172,84,20,AC5414,row 15-09
-919,Red?Copper,166,69,16,A64510,row 15-10
-918,Red?Copper Dark,130,52,10,82340A,row 15-11
+919,Red-Copper,166,69,16,A64510,row 15-10
+918,Red-Copper Dark,130,52,10,82340A,row 15-11
 3770,Tawny Vy Light,255,238,227,FFEEE3,row 15-12
 945,Tawny,251,213,187,FBD5BB,row 15-13
 402,Mahogany Vy Lt,247,167,119,F7A777,row 15-14

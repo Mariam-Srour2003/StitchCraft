@@ -8,6 +8,7 @@
   [class.sc-grid-canvas--readonly]="!interactive()"
   [class.sc-grid-canvas--line]="tool() === 'backstitch'"
   [class.sc-grid-canvas--line-erase]="tool() === 'backstitch-erase'"
+  [class.sc-grid-canvas--partial]="tool() === 'half-stitch' || tool() === 'quarter-stitch'"
 >
   <canvas
     #canvas

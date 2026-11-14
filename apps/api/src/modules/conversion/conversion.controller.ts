@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
   Param,
   Post,
   UploadedFile,
@@ -12,12 +13,15 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
-import { ConversionJob } from '@stitchcraft/types';
+import { ConversionJob, ImageAnalysis, VisionAdvice, VisionAdviceStatus } from '@stitchcraft/types';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { VisionAdviceError } from '../imaging/ai-provider';
+import { ImagingService } from '../imaging/imaging.service';
 import { ConversionsService } from './conversion.service';
+import { AnalyzeImageDto } from './dto/analyze-image.dto';
 import { CreateConversionDto } from './dto/create-conversion.dto';
 
 const ACCEPTED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -26,7 +30,57 @@ const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 @Controller('conversions')
 @UseGuards(JwtAuthGuard)
 export class ConversionController {
-  constructor(private readonly conversions: ConversionsService) {}
+  constructor(
+    private readonly conversions: ConversionsService,
+    private readonly imaging: ImagingService,
+  ) {}
+
+  /**
+   * The image advisor. Stateless: nothing is stored, the photo is only read.
+   * Declared before `:id` so "analyze" is never taken for a job id.
+   */
+  @Post('analyze')
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
+  async analyze(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() dto: AnalyzeImageDto,
+  ): Promise<ImageAnalysis> {
+    checkImage(file);
+    try {
+      return await this.imaging.analyze(file.buffer, dto);
+    } catch {
+      throw new BadRequestException('Could not read that image');
+    }
+  }
+
+  /** Whether the optional AI second opinion can be asked for (the converter hides the button otherwise). */
+  @Get('vision-advice/status')
+  async visionAdviceStatus(): Promise<VisionAdviceStatus> {
+    return { enabled: await this.imaging.visionAdviceAvailable() };
+  }
+
+  /**
+   * AI second opinion on a photo. Only when the user asks for it - the photo
+   * is sent to an outside model - and only if the AI service has it enabled.
+   */
+  @Post('vision-advice')
+  @UseInterceptors(
+    FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_UPLOAD_BYTES } }),
+  )
+  async visionAdvice(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() dto: AnalyzeImageDto,
+  ): Promise<VisionAdvice> {
+    checkImage(file);
+    try {
+      return await this.imaging.visionAdvice(file.buffer, dto);
+    } catch (error) {
+      if (error instanceof VisionAdviceError) throw new HttpException(error.message, error.status);
+      throw new BadRequestException('Could not read that image');
+    }
+  }
 
   @Post()
   @UseInterceptors(
@@ -37,15 +91,19 @@ export class ConversionController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body() dto: CreateConversionDto,
   ): Promise<{ jobId: string }> {
-    if (!file) throw new BadRequestException('An image file is required');
-    if (!ACCEPTED_MIME_TYPES.includes(file.mimetype)) {
-      throw new BadRequestException(`Unsupported image type: ${file.mimetype}`);
-    }
+    checkImage(file);
     return this.conversions.create(user.id, dto, file);
   }
 
   @Get(':id')
   findOne(@CurrentUser() user: RequestUser, @Param('id') id: string): Promise<ConversionJob> {
     return this.conversions.findOne(user.id, id);
+  }
+}
+
+function checkImage(file: Express.Multer.File | undefined): asserts file is Express.Multer.File {
+  if (!file) throw new BadRequestException('An image file is required');
+  if (!ACCEPTED_MIME_TYPES.includes(file.mimetype)) {
+    throw new BadRequestException(`Unsupported image type: ${file.mimetype}`);
   }
 }

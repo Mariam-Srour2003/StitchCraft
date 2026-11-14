@@ -78,4 +78,85 @@ describe('HttpAiProvider', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
   });
+
+  describe('vision advice', () => {
+    const params = { targetType: 'cross_stitch' as const, width: 60, height: 45, colorCount: 24 };
+    const json = (status: number, body: unknown) => ({
+      ok: status >= 200 && status < 300,
+      status,
+      json: () => Promise.resolve(body),
+    });
+
+    it('is unavailable without AI_SERVICE_URL, and never calls out', async () => {
+      const fetchMock = jest.fn();
+      global.fetch = fetchMock as unknown as typeof fetch;
+      expect(await makeProvider(undefined).visionAdviceAvailable()).toBe(false);
+      await expect(
+        makeProvider(undefined).visionAdvice(Buffer.from('x'), params),
+      ).rejects.toMatchObject({
+        status: 503,
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('asks the service whether it is enabled, and caches the answer', async () => {
+      const fetchMock = jest.fn().mockResolvedValue(json(200, { enabled: true }));
+      global.fetch = fetchMock as unknown as typeof fetch;
+      const provider = makeProvider('http://ai:8000');
+      expect(await provider.visionAdviceAvailable()).toBe(true);
+      expect(await provider.visionAdviceAvailable()).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith('http://ai:8000/vision-advice/status');
+    });
+
+    it('treats an unreachable service as unavailable', async () => {
+      global.fetch = jest
+        .fn()
+        .mockRejectedValue(new Error('ECONNREFUSED')) as unknown as typeof fetch;
+      expect(await makeProvider('http://ai:8000').visionAdviceAvailable()).toBe(false);
+    });
+
+    it('forwards the photo and settings and returns the advice', async () => {
+      const advice = {
+        subject: 'a cat',
+        verdict: 'good',
+        summary: 's',
+        keep: [],
+        lose: [],
+        tips: [],
+      };
+      const fetchMock = jest.fn().mockResolvedValue(json(200, advice));
+      global.fetch = fetchMock as unknown as typeof fetch;
+      expect(await makeProvider('http://ai:8000').visionAdvice(Buffer.from('img'), params)).toEqual(
+        advice,
+      );
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe('http://ai:8000/vision-advice');
+      const form = init.body as FormData;
+      expect(form.get('target_type')).toBe('cross_stitch');
+      expect(form.get('width')).toBe('60');
+      expect(form.get('color_count')).toBe('24');
+    });
+
+    it("passes the service's own message and status on, mapping server errors to 502", async () => {
+      const provider = makeProvider('http://ai:8000');
+      global.fetch = jest
+        .fn()
+        .mockResolvedValueOnce(json(429, { detail: 'AI advice is busy - try again in a minute' }))
+        .mockResolvedValueOnce(json(500, {}))
+        .mockResolvedValueOnce(
+          json(503, { detail: 'AI advice is not enabled on this deployment' }),
+        ) as unknown as typeof fetch;
+      await expect(provider.visionAdvice(Buffer.from('x'), params)).rejects.toMatchObject({
+        status: 429,
+        message: 'AI advice is busy - try again in a minute',
+      });
+      await expect(provider.visionAdvice(Buffer.from('x'), params)).rejects.toMatchObject({
+        status: 502,
+      });
+      await expect(provider.visionAdvice(Buffer.from('x'), params)).rejects.toMatchObject({
+        status: 503,
+      });
+    });
+  });
 });

@@ -36,6 +36,16 @@ export const GLOSSARY: readonly { term: string; definition: string }[] = [
       'Straight outline stitches along the edges of squares, used for detail and lettering.',
   },
   {
+    term: 'Half / quarter stitch',
+    definition:
+      'Part of a cross: a half stitch is one diagonal, a quarter runs from a corner to the centre. Used for curves and fine detail.',
+  },
+  {
+    term: 'Confetti',
+    definition:
+      'Single stitches of a color scattered on their own - slow to stitch. Photo conversions make lots; Clean up removes them.',
+  },
+  {
     term: 'Drill',
     definition:
       'A tiny resin "diamond" placed on the sticky canvas in diamond painting. Usually 2.5-2.8 mm.',

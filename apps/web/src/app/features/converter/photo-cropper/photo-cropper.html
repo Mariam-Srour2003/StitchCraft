@@ -1,0 +1,34 @@
+<div
+  class="photo-cropper"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp()"
+  (pointercancel)="onPointerUp()"
+>
+  <canvas #canvas class="photo-cropper__canvas" role="img" aria-label="Photo to convert"></canvas>
+
+  @for (face of faces(); track $index) {
+  <div
+    class="photo-cropper__face"
+    [class]="'photo-cropper__face photo-cropper__face--' + face.tone"
+    [style.left]="percent(face.box.x)"
+    [style.top]="percent(face.box.y)"
+    [style.width]="percent(face.box.width)"
+    [style.height]="percent(face.box.height)"
+  >
+    <span>{{ face.label }}</span>
+  </div>
+  } @if (crop(); as box) {
+  <div
+    class="photo-cropper__crop"
+    tabindex="0"
+    role="group"
+    aria-label="Crop area. Arrow keys move it, Delete removes it."
+    [style.left]="percent(box.x)"
+    [style.top]="percent(box.y)"
+    [style.width]="percent(box.width)"
+    [style.height]="percent(box.height)"
+    (keydown)="onCropKeydown($event)"
+  ></div>
+  }
+</div>

@@ -170,5 +170,17 @@ describe('GridCanvas', () => {
       component.onPointerDown(fakePointerEvent(25, 10));
       expect(erase).toHaveBeenCalledWith({ x: 1.25, y: 0.5 });
     });
+
+    it('reports a click point for the half and quarter stitch tools', () => {
+      fixture.componentRef.setInput('tool', 'quarter-stitch');
+      fixture.detectChanges();
+      const place = jest.fn();
+      const edit = jest.fn();
+      component.partialPlace.subscribe(place);
+      component.cellEdit.subscribe(edit);
+      component.onPointerDown(fakePointerEvent(25, 10));
+      expect(place).toHaveBeenCalledWith({ x: 1.25, y: 0.5 });
+      expect(edit).not.toHaveBeenCalled();
+    });
   });
 });

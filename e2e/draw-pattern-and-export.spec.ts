@@ -34,7 +34,7 @@ test('sign in, create a project and pattern, paint it, save, and export', async 
 
   // --- Select it as the active paint color, then paint a few cells ---
   await swatch.click();
-  const canvas = page.locator('canvas');
+  const canvas = page.locator('sc-grid-canvas canvas').first(); // the overlay canvas sits on top
   await expect(canvas).toBeVisible();
   const box = await canvas.boundingBox();
   if (!box) throw new Error('grid-canvas bounding box unavailable');

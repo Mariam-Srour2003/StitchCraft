@@ -1,5 +1,6 @@
 import type { Backstitch } from './backstitch';
 import type { EncodedRow } from './grid';
+import type { PartialStitch } from './partial-stitch';
 import type { PaletteEntry } from './palette.model';
 
 export type PatternType = 'cross_stitch' | 'color_by_number' | 'diamond';
@@ -11,6 +12,12 @@ export interface PatternMeta {
   drillSizeMm?: number;
   createdFrom: 'blank' | 'conversion';
   sourceConversionJobId?: string;
+  /** What the converter's cleanup step changed, for patterns made from a photo. */
+  conversionCleanup?: {
+    strayStitchesRemoved: number;
+    colorsMerged: number;
+    regionsMerged?: number;
+  };
   /**
    * Stitching progress: which cells the stitcher has marked done, RLE-encoded
    * like the grid (1 = done, null = not yet). Optional; absent or mismatched
@@ -19,6 +26,8 @@ export interface PatternMeta {
   progress?: EncodedRow[];
   /** Outline stitches drawn over the grid. Optional; absent means none. */
   backstitches?: Backstitch[];
+  /** Half and quarter stitches. Optional; absent means none. */
+  partialStitches?: PartialStitch[];
 }
 
 export interface Pattern {

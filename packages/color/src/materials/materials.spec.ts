@@ -73,10 +73,17 @@ describe('materials', () => {
     // Exactly one skein of cross stitches, plus some backstitch, needs a second skein.
     expect(estimateMaterial('cross_stitch', perSkein, { fabricCount: 14 })?.quantity).toBe(1);
     expect(
-      estimateMaterial('cross_stitch', perSkein, { fabricCount: 14, backstitchLength: 100 })?.quantity,
+      estimateMaterial('cross_stitch', perSkein, { fabricCount: 14, backstitchLength: 100 })
+        ?.quantity,
     ).toBe(2);
     expect(Object.is(estimateMaterial('cross_stitch', 0)?.quantity, 0)).toBe(true);
     // A color used only for backstitch still needs a skein.
     expect(estimateMaterial('cross_stitch', 0, { backstitchLength: 50 })?.quantity).toBe(1);
+  });
+
+  it('adds half and quarter stitches to the same skeins', () => {
+    const perSkein = stitchesPerSkein(14);
+    expect(estimateMaterial('cross_stitch', perSkein, { partialStitches: 1 })?.quantity).toBe(2);
+    expect(estimateMaterial('cross_stitch', 0, { partialStitches: 0.25 })?.quantity).toBe(1);
   });
 });

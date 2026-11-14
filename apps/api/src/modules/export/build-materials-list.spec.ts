@@ -95,4 +95,22 @@ describe('buildMaterialsListCsv', () => {
     expect(rows).toContain('B,,"Sky, Custom",#123456,1,3,1');
     expect(rows).toContain('A,310,Black,#000000,2,0,1');
   });
+
+  it('adds a partial stitch column and counts their thread when there are any', () => {
+    const csv = buildMaterialsListCsv(
+      makePattern({
+        meta: {
+          createdFrom: 'blank',
+          partialStitches: [
+            { x: 0, y: 0, part: 'half-up', paletteIndex: 1 },
+            { x: 0, y: 0, part: 'quarter-tl', paletteIndex: 1 },
+          ],
+        },
+      }),
+    );
+    const [header, ...rows] = csv.trim().split('\r\n');
+    expect(header).toBe('Symbol,DMC Code,Name,Hex,Count,Partial stitches,Skeins');
+    expect(rows).toContain('B,,"Sky, Custom",#123456,1,2,1');
+    expect(rows).toContain('A,310,Black,#000000,2,0,1');
+  });
 });

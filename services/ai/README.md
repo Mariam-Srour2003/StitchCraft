@@ -19,6 +19,21 @@ app works fully without this running (see `AiProvider`/`NullAiProvider` in
   `cv2.dnn_superres`) only touches the `upscale` function in `app/main.py`;
   the route contract and the Nest-side `AiProvider` interface stay the same.
 
+- `GET /vision-advice/status` → `{ "enabled": bool, "model": str }`
+- `POST /vision-advice` (multipart `file`, `target_type`, `width`, `height`,
+  `color_count`) → an AI second opinion on how well the photo will turn into
+  a pattern: `{ subject, verdict, summary, keep[], lose[], tips[] }`.
+  Uses Claude (`claude-opus-5-5` by default; override with
+  `VISION_ADVISOR_MODEL`) through the official `anthropic` SDK, with
+  structured JSON output and the API's safety fallback. **Off unless
+  `VISION_ADVISOR_ENABLED=1`** - it sends the photo (shrunk to 1024 px) to
+  Anthropic, so whoever runs the service has to opt in. Credentials come
+  from `ANTHROPIC_API_KEY` (or an `ant auth login` profile). Errors come back
+  as plain-language `detail` messages: 503 when not enabled or no
+  credentials, 429 when rate limited, 422 when the model declined or gave no
+  usable answer. The converter only shows its "Ask AI" button when the
+  status endpoint says it's enabled, and only calls it when the user clicks.
+
 ## Running locally
 
 ```sh
@@ -34,6 +49,10 @@ uvicorn app.main:app --reload --port 8000
 pip install -r requirements-dev.txt
 pytest
 ```
+
+The vision advice tests use a fake Anthropic client (no network, no key);
+they check the exact request sent and every failure path, including what
+happens with the feature on but no credentials.
 
 The background-removal success path (an actual `rembg.remove()` call) is
 deliberately not exercised by the test suite - it would trigger that

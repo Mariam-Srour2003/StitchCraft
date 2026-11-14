@@ -2,7 +2,13 @@ import PDFDocument from 'pdfkit';
 
 import { contrastTextColor } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
-import { backstitchLengthByIndex, decodeGrid, isDmcColor } from '@stitchcraft/types';
+import {
+  backstitchLengthByIndex,
+  decodeGrid,
+  isDmcColor,
+  PART_SEGMENT,
+  partialCountByIndex,
+} from '@stitchcraft/types';
 
 import { countPaletteUsage } from './count-palette-usage';
 
@@ -125,6 +131,7 @@ function drawTilePage(doc: PdfDoc, pattern: Pattern, decoded: Int16Array[], tile
 
   const tileWidthPt = (endX - startX) * CELL_PT;
   const tileHeightPt = (endY - startY) * CELL_PT;
+  drawPartialStitches(doc, pattern, tile, originX, originY);
   drawBackstitches(doc, pattern, tile, originX, originY, tileWidthPt, tileHeightPt);
   for (let x = startX; x <= endX; x++) {
     const bold = x % 10 === 0;
@@ -146,6 +153,38 @@ function drawTilePage(doc: PdfDoc, pattern: Pattern, decoded: Int16Array[], tile
       .lineTo(originX + tileWidthPt, py)
       .stroke();
   }
+}
+
+/** Half and quarter stitches in this tile: a thick stroke in the thread colour, edged darker. */
+function drawPartialStitches(
+  doc: PdfDoc,
+  pattern: Pattern,
+  tile: Tile,
+  originX: number,
+  originY: number,
+): void {
+  const stitches = (pattern.meta.partialStitches ?? []).filter(
+    (s) => s.x >= tile.startX && s.x < tile.endX && s.y >= tile.startY && s.y < tile.endY,
+  );
+  if (stitches.length === 0) return;
+  doc.save();
+  doc.lineCap('round');
+  for (const pass of ['edge', 'colour'] as const) {
+    for (const stitch of stitches) {
+      const entry = pattern.palette[stitch.paletteIndex];
+      if (!entry) continue;
+      const [fx1, fy1, fx2, fy2] = PART_SEGMENT[stitch.part];
+      const x = originX + (stitch.x - tile.startX) * CELL_PT;
+      const y = originY + (stitch.y - tile.startY) * CELL_PT;
+      doc
+        .lineWidth(pass === 'edge' ? 4.2 : 3)
+        .strokeColor(pass === 'edge' ? '#3a3530' : entry.color.hex)
+        .moveTo(x + fx1 * CELL_PT, y + fy1 * CELL_PT)
+        .lineTo(x + fx2 * CELL_PT, y + fy2 * CELL_PT)
+        .stroke();
+    }
+  }
+  doc.restore();
 }
 
 /**
@@ -215,6 +254,29 @@ function drawLegendPage(doc: PdfDoc, pattern: Pattern, counts: number[]): void {
       );
     cursorY += 18;
   });
+
+  const partialCounts = partialCountByIndex(pattern.meta.partialStitches, pattern.palette.length);
+  if (partialCounts.some((count) => count > 0)) {
+    cursorY += 12;
+    doc.fontSize(11).fillColor('#000000').text('Half and quarter stitches', PAGE_MARGIN, cursorY);
+    cursorY += 18;
+    doc.fontSize(9);
+    partialCounts.forEach((count, index) => {
+      if (count <= 0) return;
+      if (cursorY > PAGE_HEIGHT - PAGE_MARGIN - 16) {
+        doc.addPage({ size: 'LETTER', margin: PAGE_MARGIN });
+        cursorY = PAGE_MARGIN;
+      }
+      doc
+        .fillColor('#000000')
+        .text(
+          `#${index + 1}  ${count} partial ${count === 1 ? 'stitch' : 'stitches'}`,
+          PAGE_MARGIN + 20,
+          cursorY + 2,
+        );
+      cursorY += 18;
+    });
+  }
 
   const lengths = backstitchLengthByIndex(pattern.meta.backstitches, pattern.palette.length);
   if (lengths.some((length) => length > 0)) {

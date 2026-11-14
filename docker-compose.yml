@@ -70,6 +70,11 @@ services:
     profiles: ['ai']
     ports:
       - '8000:8000'
+    environment:
+      # AI second opinion on photos in the converter. Off unless set to 1 -
+      # it sends photos to Anthropic. Needs ANTHROPIC_API_KEY in your shell.
+      VISION_ADVISOR_ENABLED: ${VISION_ADVISOR_ENABLED:-0}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
 
 volumes:
   db-data:

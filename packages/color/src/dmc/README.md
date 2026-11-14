@@ -11,7 +11,9 @@
 
 ## Regenerating
 
-`source.csv` in this folder is the checked-in, unmodified source data. To
+`source.csv` in this folder is the checked-in source data, unmodified except
+for three names where an encoding error had turned a hyphen into `?` (606
+Orange-Red Bright, 918 Red-Copper Dark, 919 Red-Copper). To
 regenerate `dmc-colors.json` (e.g. after correcting an entry in the CSV),
 run from the repo root:
 

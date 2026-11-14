@@ -8,6 +8,7 @@ export const SHORTCUTS: readonly { keys: string; action: string }[] = [
   { keys: 'B / E / G / I / T', action: 'Paint, Erase, Fill, Pick, Text' },
   { keys: 'L / R / O', action: 'Line, Box, Oval' },
   { keys: 'J', action: 'Backstitch' },
+  { keys: 'D / Q', action: 'Half stitch, Quarter stitch' },
   { keys: 'H', action: 'Highlight the selected color' },
   { keys: 'K', action: 'Toggle stitching mode' },
   { keys: '+ / −', action: 'Zoom in / out' },
@@ -43,6 +44,8 @@ const TOOL_KEYS: Readonly<Record<string, EditorTool>> = {
   r: 'rect',
   o: 'ellipse',
   j: 'backstitch',
+  d: 'half-stitch',
+  q: 'quarter-stitch',
 };
 
 /**

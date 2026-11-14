@@ -5,7 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { encodeGrid, findBackstitchProblem, findGridProblem, Pattern } from '@stitchcraft/types';
+import {
+  encodeGrid,
+  findBackstitchProblem,
+  findGridProblem,
+  findPartialStitchProblem,
+  Pattern,
+} from '@stitchcraft/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePatternDto } from './dto/create-pattern.dto';
@@ -135,13 +141,24 @@ export class PatternsService {
 
     // Backstitches are checked when they change, and also when the grid's size or
     // palette changes underneath them (a shrink or a deleted color can strand lines).
-    const newMeta = dto.meta as { progress?: unknown; backstitches?: unknown } | undefined;
+    const newMeta = dto.meta as
+      { progress?: unknown; backstitches?: unknown; partialStitches?: unknown } | undefined;
     const backstitches =
       newMeta?.backstitches ?? (existing.meta as { backstitches?: unknown } | null)?.backstitches;
     if (backstitches !== undefined && (newMeta?.backstitches !== undefined || touchesGrid)) {
       const paletteLength = (dto.palette ?? (existing.palette as unknown[]) ?? []).length;
       const problem = findBackstitchProblem(backstitches, width, height, paletteLength);
       if (problem) throw new BadRequestException(`Invalid backstitches: ${problem}`);
+    }
+
+    // Partial stitches follow the same rule as backstitches.
+    const partials =
+      newMeta?.partialStitches ??
+      (existing.meta as { partialStitches?: unknown } | null)?.partialStitches;
+    if (partials !== undefined && (newMeta?.partialStitches !== undefined || touchesGrid)) {
+      const paletteLength = (dto.palette ?? (existing.palette as unknown[]) ?? []).length;
+      const problem = findPartialStitchProblem(partials, width, height, paletteLength);
+      if (problem) throw new BadRequestException(`Invalid partial stitches: ${problem}`);
     }
 
     const progress = newMeta?.progress;

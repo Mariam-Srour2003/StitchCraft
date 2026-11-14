@@ -12,7 +12,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
-import { backstitchLengthByIndex, decodeGrid } from '@stitchcraft/types';
+import { backstitchLengthByIndex, decodeGrid, partialThreadByIndex } from '@stitchcraft/types';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';
@@ -129,21 +129,23 @@ export class PatternViewComponent {
     const stats = this.stats();
     if (!p || !stats) return [];
     const lineLengths = backstitchLengthByIndex(p.meta.backstitches, p.palette.length);
+    const partials = partialThreadByIndex(p.meta.partialStitches, p.palette.length);
     return (
       p.palette
         .map((entry, i) => ({
           entry,
           count: stats.perColor[i] ?? 0,
-          lineLength: lineLengths[i],
+          extra: lineLengths[i] + partials[i],
           buy: estimateMaterial(p.type, stats.perColor[i] ?? 0, {
             fabricCount: p.meta.fabricCount,
             strands: this.settings.strands(),
             backstitchLength: lineLengths[i],
+            partialStitches: partials[i],
           })?.quantity,
         }))
-        // Colors used only for backstitch still belong in the legend.
-        .filter((row) => row.count > 0 || row.lineLength > 0)
-        .map(({ lineLength: _unused, ...row }) => row)
+        // Colors used only for backstitch or partial stitches still belong in the legend.
+        .filter((row) => row.count > 0 || row.extra > 0)
+        .map(({ extra: _unused, ...row }) => row)
     );
   });
 
