@@ -1,18 +1,31 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStore } from './core/auth/auth.store';
 import { Button } from './shared/ui/button/button';
-import { Toolbar } from './shared/ui/toolbar/toolbar';
+
+export const NAV_LINKS: readonly { path: string; label: string }[] = [
+  { path: '/', label: 'Home' },
+  { path: '/projects', label: 'Projects' },
+  { path: '/templates', label: 'Templates' },
+  { path: '/threads', label: 'My threads' },
+  { path: '/shopping', label: 'Shopping list' },
+  { path: '/tools', label: 'Calculators' },
+  { path: '/palettes', label: 'DMC colors' },
+  { path: '/my-palettes', label: 'My palettes' },
+  { path: '/help', label: 'Help' },
+];
 
 @Component({
   selector: 'sc-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, Toolbar, Button],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
+  protected readonly navLinks = NAV_LINKS;
+
   protected readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
 

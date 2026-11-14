@@ -136,7 +136,7 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M8) is built:
+Everything in PLAN.md's milestone list (M0-M9) is built:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
   password hashing, refresh-token revocation via a stored hash.
@@ -155,6 +155,11 @@ Everything in PLAN.md's milestone list (M0-M8) is built:
   by Aida count or diamond drill size in mm). All state lives in a
   component-scoped `EditorStore`; the canvas component itself owns no
   business rules.
+- **App pages** (M9): a home dashboard (landing page when signed out), a
+  read-only printable pattern viewer, a template library of ten designs,
+  calculators (fabric size, thread, drills, time), a thread stash, a
+  multi-pattern shopping list that subtracts the stash, help, settings and a
+  404 page. Patterns can be duplicated.
 - **Pro drawing tools** (M8): line/box/oval shapes with live preview, mirror
   drawing (left/right, top/bottom, both), a 5x7 stitch font for lettering,
   flip/rotate, highlight/replace/delete colors, remove unused colors, a

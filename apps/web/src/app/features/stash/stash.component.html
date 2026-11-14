@@ -1,0 +1,134 @@
+<div class="sc-page stash">
+  <header class="sc-page__header">
+    <div>
+      <h1>My threads</h1>
+      <p class="sc-page__lede">
+        Keep track of the DMC floss you already own. The <a routerLink="/shopping">shopping list</a>
+        subtracts it, so you only buy what you're missing.
+      </p>
+    </div>
+    <div class="sc-actions">
+      <sc-button variant="secondary" [disabled]="stash.items().length === 0" (pressed)="exportCsv()"
+        >Export CSV</sc-button
+      >
+      <sc-button variant="ghost" [disabled]="stash.items().length === 0" (pressed)="clearAll()"
+        >Clear all</sc-button
+      >
+    </div>
+  </header>
+
+  @if (!auth.isAuthenticated()) {
+    <p class="sc-muted" role="note">
+      You're not signed in, so this list is saved as a guest list in this browser.
+    </p>
+  }
+
+  <section class="sc-stat-row" aria-label="Stash summary">
+    <div class="sc-stat">
+      <span class="sc-stat__value">{{ stash.items().length }}</span>
+      <span class="sc-stat__label">Colors</span>
+    </div>
+    <div class="sc-stat">
+      <span class="sc-stat__value">{{ stash.totalSkeins() }}</span>
+      <span class="sc-stat__label">Skeins</span>
+    </div>
+    <div class="sc-stat">
+      <span class="sc-stat__value">{{ lowCount() }}</span>
+      <span class="sc-stat__label">Running low (under 1)</span>
+    </div>
+  </section>
+
+  <div class="stash__layout">
+    <aside class="stash__add">
+      <section class="sc-card">
+        <h2>Add a thread</h2>
+        <sc-dmc-thread-search [paletteCodes]="stash.codes()" (threadSelected)="addThread($event)" />
+        <p class="sc-muted">Each click adds one skein.</p>
+      </section>
+      <section class="sc-card">
+        <h2>Paste a list</h2>
+        <label class="sc-field">
+          Codes, with optional quantities
+          <textarea
+            rows="4"
+            placeholder="310 x2, 321, 666:3&#10;B5200"
+            [ngModel]="importText()"
+            (ngModelChange)="importText.set($event)"
+          ></textarea>
+        </label>
+        <sc-button variant="secondary" [disabled]="!importText().trim()" (pressed)="runImport()"
+          >Add to stash</sc-button
+        >
+        @if (importResult(); as r) {
+          <p class="sc-muted" role="status">
+            Added {{ r.added }}.
+            @if (r.unknown.length) {
+              Not DMC codes: {{ r.unknown.join(', ') }}.
+            }
+          </p>
+        }
+      </section>
+    </aside>
+
+    <section class="sc-card stash__list">
+      <label class="sc-field">
+        <span class="sc-visually-hidden">Filter threads</span>
+        <input
+          type="search"
+          placeholder="Filter by code or name…"
+          [ngModel]="filter()"
+          (ngModelChange)="filter.set($event)"
+        />
+      </label>
+      @if (stash.items().length === 0) {
+        <p class="sc-muted">No threads yet. Search for a DMC code on the left, or paste a list.</p>
+      } @else {
+        <table class="sc-table">
+          <thead>
+            <tr>
+              <th scope="col"><span class="sc-visually-hidden">Color</span></th>
+              <th scope="col">Code</th>
+              <th scope="col">Name</th>
+              <th scope="col" class="sc-num">Skeins</th>
+              <th scope="col"><span class="sc-visually-hidden">Remove</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of visible(); track item.color.code) {
+              <tr [class.stash__low]="item.skeins < 1">
+                <td><span class="sc-chip" [style.background]="item.color.hex"></span></td>
+                <td>{{ item.color.code }}</td>
+                <td>{{ item.color.name }}</td>
+                <td class="sc-num">
+                  <input
+                    class="stash__qty"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    [attr.aria-label]="'Skeins of DMC ' + item.color.code"
+                    [value]="item.skeins"
+                    (change)="setSkeins(item.color.code, $any($event.target).value)"
+                  />
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="stash__remove"
+                    [attr.aria-label]="'Remove DMC ' + item.color.code"
+                    (click)="stash.remove(item.color.code)"
+                  >
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="sc-muted">No threads match "{{ filter() }}".</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+</div>

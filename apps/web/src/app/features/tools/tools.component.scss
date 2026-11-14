@@ -1,0 +1,21 @@
+.tools {
+  &__result {
+    margin: 0;
+    padding: var(--sc-space-3);
+    border-radius: var(--sc-radius-md);
+    background: var(--sc-color-bg);
+  }
+
+  &__check {
+    display: flex;
+    align-items: center;
+    gap: var(--sc-space-2);
+    font-size: var(--sc-font-size-sm);
+  }
+
+  details summary {
+    cursor: pointer;
+    font-size: var(--sc-font-size-sm);
+    font-weight: 600;
+  }
+}

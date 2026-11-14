@@ -1,0 +1,113 @@
+@if (loading()) {
+  <p class="sc-page sc-muted">Loading pattern…</p>
+} @else if (notFound()) {
+  <div class="sc-page">
+    <sc-empty-state
+      title="Pattern not found"
+      description="It may have been deleted, or it belongs to another account."
+    />
+    <a routerLink="/projects">Back to projects</a>
+  </div>
+} @else {
+  @if (pattern(); as p) {
+    <div class="sc-page view">
+      <header class="sc-page__header">
+        <div>
+          <p class="sc-muted view__type">{{ typeLabels[p.type] }}</p>
+          <h1>{{ p.name }}</h1>
+          <sc-size-readout
+            [type]="p.type"
+            [width]="p.width"
+            [height]="p.height"
+            [unitSize]="unitSize()"
+          />
+        </div>
+        <div class="sc-actions sc-no-print">
+          <a class="view__link-button view__link-button--primary" [routerLink]="['/editor', p.id]"
+            >Edit</a
+          >
+          <a
+            class="view__link-button"
+            [routerLink]="['/editor', p.id]"
+            [queryParams]="{ mode: 'stitch' }"
+            >Stitch</a
+          >
+          <sc-button variant="secondary" [disabled]="busy()" (pressed)="duplicate()"
+            >Duplicate</sc-button
+          >
+          <sc-button variant="secondary" (pressed)="print()">Print chart</sc-button>
+          <sc-button variant="ghost" [disabled]="busy()" (pressed)="remove()">Delete</sc-button>
+        </div>
+      </header>
+
+      @if (stats(); as s) {
+        <section class="sc-stat-row" aria-label="Pattern details">
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ s.total }}</span>
+            <span class="sc-stat__label">{{ p.type === 'diamond' ? 'Drills' : 'Stitches' }}</span>
+          </div>
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ s.colorsUsed }}</span>
+            <span class="sc-stat__label">Colors</span>
+          </div>
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ s.percent }}%</span>
+            <span class="sc-stat__label">Done ({{ s.done }})</span>
+          </div>
+          <div class="sc-stat">
+            <span class="sc-stat__value">{{ hoursLeft() }}h</span>
+            <span class="sc-stat__label">Left at your pace (est.)</span>
+          </div>
+        </section>
+      }
+
+      <div class="view__controls sc-no-print">
+        <sc-segmented-toggle
+          [options]="viewModes"
+          [value]="mode()"
+          (valueChange)="mode.set($event)"
+          ariaLabel="Chart view"
+        />
+        <sc-slider
+          label="Zoom"
+          [min]="25"
+          [max]="300"
+          [step]="25"
+          [value]="zoom()"
+          (valueChange)="zoom.set($event)"
+        />
+        <label class="view__check">
+          <input
+            type="checkbox"
+            [checked]="showProgress()"
+            (change)="showProgress.set($any($event.target).checked)"
+          />
+          Show progress
+        </label>
+      </div>
+
+      <div class="view__body">
+        <div class="view__canvas">
+          <sc-grid-canvas
+            [width]="p.width"
+            [height]="p.height"
+            [grid]="grid()"
+            [palette]="p.palette"
+            [mode]="mode()"
+            [zoomPercent]="zoom()"
+            [progress]="progress()"
+            [showCenter]="true"
+            [interactive]="false"
+          />
+        </div>
+        <aside class="view__legend">
+          <sc-legend
+            [rows]="legendRows()"
+            [countLabel]="p.type === 'diamond' ? 'Drills' : 'Stitches'"
+            [buyLabel]="buyLabel()"
+          />
+        </aside>
+      </div>
+    </div>
+  }
+}

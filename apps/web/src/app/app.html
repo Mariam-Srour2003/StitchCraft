@@ -1,22 +1,33 @@
 <div class="app-shell">
-  <header class="app-shell__header">
-    <span class="app-shell__brand">StitchCraft</span>
-    <sc-toolbar ariaLabel="Main navigation">
-      <a routerLink="/projects">Projects</a>
-      <a routerLink="/palettes">DMC palette</a>
-      <a routerLink="/my-palettes">My palettes</a>
-    </sc-toolbar>
+  <a class="app-shell__skip sc-no-print" href="#main">Skip to content</a>
+  <header class="app-shell__header sc-no-print">
+    <a class="app-shell__brand" routerLink="/">StitchCraft</a>
+    <nav class="app-shell__nav" aria-label="Main navigation">
+      @for (link of navLinks; track link.path) {
+      <a
+        [routerLink]="link.path"
+        routerLinkActive="app-shell__link--active"
+        [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+        class="app-shell__link"
+        >{{ link.label }}</a
+      >
+      }
+    </nav>
     <div class="app-shell__account">
       @if (authStore.isAuthenticated()) {
-        <span>{{ authStore.currentUser()?.name }}</span>
-        <sc-button variant="ghost" (pressed)="signOut()">Sign out</sc-button>
+      <a routerLink="/settings" routerLinkActive="app-shell__link--active" class="app-shell__link"
+        >Settings</a
+      >
+      <span class="app-shell__user">{{ authStore.currentUser()?.name }}</span>
+      <sc-button variant="ghost" (pressed)="signOut()">Sign out</sc-button>
       } @else {
-        <a routerLink="/sign-in">Sign in</a>
+      <a routerLink="/sign-in" class="app-shell__link">Sign in</a>
+      <a routerLink="/register" class="app-shell__link">Create account</a>
       }
     </div>
   </header>
 
-  <main class="app-shell__main">
+  <main class="app-shell__main" id="main" tabindex="-1">
     <router-outlet />
   </main>
 </div>

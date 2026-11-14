@@ -1,0 +1,105 @@
+<div class="sc-page templates">
+  <header>
+    <h1>Template library</h1>
+    <p class="sc-page__lede">
+      Ready-made designs to stitch as they are or make your own. Every template opens in the full
+      editor, so you can recolor it, change the lettering or resize it.
+    </p>
+  </header>
+
+  <div class="templates__filters" role="group" aria-label="Filter by category">
+    <button
+      type="button"
+      class="templates__chip"
+      [class.templates__chip--active]="category() === 'All'"
+      [attr.aria-pressed]="category() === 'All'"
+      (click)="category.set('All')"
+    >
+      All
+    </button>
+    @for (c of categories; track c) {
+      <button
+        type="button"
+        class="templates__chip"
+        [class.templates__chip--active]="category() === c"
+        [attr.aria-pressed]="category() === c"
+        (click)="category.set(c)"
+      >
+        {{ c }}
+      </button>
+    }
+  </div>
+
+  <ul class="sc-card-grid">
+    @for (card of visible(); track card.template.id) {
+      <li class="sc-card templates__card">
+        <div class="templates__preview">
+          <sc-pattern-thumbnail
+            [width]="card.design.width"
+            [height]="card.design.height"
+            [grid]="card.design.rows"
+            [palette]="card.design.palette"
+            [size]="140"
+            [label]="card.template.name + ' preview'"
+          />
+        </div>
+        <div>
+          <h2 class="templates__name">{{ card.template.name }}</h2>
+          <p class="sc-muted templates__desc">{{ card.template.description }}</p>
+        </div>
+        <ul class="templates__tags">
+          <li>{{ typeLabels[card.template.type] }}</li>
+          <li>{{ card.template.difficulty }}</li>
+          <li>{{ card.design.width }}×{{ card.design.height }}</li>
+          <li>{{ card.design.palette.length }} colors</li>
+        </ul>
+        @if (auth.isAuthenticated()) {
+          <sc-button (pressed)="choose(card)">Use this template</sc-button>
+        } @else {
+          <a routerLink="/sign-in">Sign in to use this template</a>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (chosen(); as card) {
+    <sc-modal [heading]="'Use “' + card.template.name + '”'" (closed)="close()">
+      <form class="templates__form" (submit)="$event.preventDefault(); create()">
+        <label class="sc-field">
+          Pattern name
+          <input
+            name="patternName"
+            [ngModel]="patternName()"
+            (ngModelChange)="patternName.set($event)"
+            required
+          />
+        </label>
+        <label class="sc-field">
+          Add to project
+          <select name="projectId" [ngModel]="projectId()" (ngModelChange)="projectId.set($event)">
+            @for (project of projects(); track project.id) {
+              <option [value]="project.id">{{ project.name }}</option>
+            }
+            <option [value]="newProject">+ New project…</option>
+          </select>
+        </label>
+        @if (projectId() === newProject) {
+          <label class="sc-field">
+            New project name
+            <input
+              name="newProjectName"
+              [ngModel]="newProjectName()"
+              (ngModelChange)="newProjectName.set($event)"
+            />
+          </label>
+        }
+        @if (error()) {
+          <p role="alert">{{ error() }}</p>
+        }
+        <sc-button type="submit" [disabled]="creating()">
+          {{ creating() ? 'Creating…' : 'Create & open in editor' }}
+        </sc-button>
+      </form>
+    </sc-modal>
+  }
+</div>

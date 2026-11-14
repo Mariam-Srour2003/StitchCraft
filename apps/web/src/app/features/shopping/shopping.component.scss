@@ -1,0 +1,78 @@
+.shopping {
+  &__layout {
+    display: grid;
+    grid-template-columns: 18rem minmax(0, 1fr);
+    gap: var(--sc-space-4);
+    align-items: start;
+
+    @media (max-width: 52rem) {
+      grid-template-columns: 1fr;
+    }
+
+    @media print {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__patterns ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: var(--sc-space-2);
+    font-size: var(--sc-font-size-sm);
+
+    label {
+      display: flex;
+      gap: var(--sc-space-2);
+      align-items: flex-start;
+    }
+  }
+
+  &__link {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--sc-color-primary);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--sc-font-size-sm);
+    text-decoration: underline;
+  }
+
+  &__lists {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sc-space-4);
+  }
+
+  &__section-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--sc-space-2);
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--sc-space-2);
+    font-size: var(--sc-font-size-sm);
+  }
+
+  &__bought td {
+    text-decoration: line-through;
+    color: var(--sc-color-text-muted);
+  }
+
+  &__paints {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: var(--sc-space-2);
+    font-size: var(--sc-font-size-sm);
+  }
+}

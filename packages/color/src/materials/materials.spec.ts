@@ -2,6 +2,7 @@ import {
   defaultStrandsForCount,
   drillBagsNeeded,
   estimateMaterial,
+  skeinFraction,
   skeinsNeeded,
   stitchesPerSkein,
 } from './materials';
@@ -43,5 +44,11 @@ describe('materials', () => {
       unit: 'skein',
     });
     expect(estimateMaterial('color_by_number', 100)).toBeNull();
+  });
+
+  it('reports unrounded skeins for summing across patterns', () => {
+    const per = stitchesPerSkein(14, 2);
+    expect(skeinFraction(per / 2, 14, 2)).toBeCloseTo(0.5);
+    expect(skeinFraction(0, 14)).toBe(0);
   });
 });

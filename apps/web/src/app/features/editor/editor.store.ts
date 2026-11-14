@@ -13,6 +13,7 @@ import {
 import { firstValueFrom } from 'rxjs';
 import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
 import { LegendRow } from '../../shared/ui/legend/legend';
+import { SettingsStore } from '../../core/settings/settings.store';
 import { PatternsApiService } from '../patterns/patterns-api.service';
 import {
   CellChange,
@@ -93,6 +94,7 @@ function blankProgress(width: number, height: number): Int16Array[] {
 @Injectable()
 export class EditorStore {
   private readonly patternsApi = inject(PatternsApiService);
+  private readonly settings = inject(SettingsStore);
 
   private readonly patternIdSignal = signal<string | null>(null);
   private readonly nameSignal = signal('');
@@ -176,11 +178,12 @@ export class EditorStore {
     });
     const type = this.typeSignal();
     const fabricCount = this.metaSignal().fabricCount;
+    const strands = this.settings.strands();
     return palette.map((entry, i) => ({
       entry,
       count: counts[i],
       done: done[i],
-      buy: estimateMaterial(type, counts[i], { fabricCount })?.quantity,
+      buy: estimateMaterial(type, counts[i], { fabricCount, strands })?.quantity,
     }));
   });
 

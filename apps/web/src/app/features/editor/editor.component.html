@@ -82,6 +82,7 @@
         [progress]="store.progress()"
         [highlightIndex]="store.highlightIndex()"
         [showCenter]="store.showCenter()"
+        [theme]="canvasTheme()"
         (cellEdit)="onCellEdit($event)"
         (strokeEnd)="store.endStroke()"
       />

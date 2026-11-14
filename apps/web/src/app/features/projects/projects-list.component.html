@@ -29,18 +29,28 @@
               {{ project.name }}
             </button>
             <span class="projects-page__count">{{ project.patternIds.length }} pattern(s)</span>
-            <sc-button variant="secondary" (pressed)="openNewPattern(project.id)">New pattern</sc-button>
-            <sc-button variant="secondary" (pressed)="openConverter(project.id)">Convert image</sc-button>
+            <sc-button variant="secondary" (pressed)="openNewPattern(project.id)"
+              >New pattern</sc-button
+            >
+            <sc-button variant="secondary" (pressed)="openConverter(project.id)"
+              >Convert image</sc-button
+            >
             <sc-button variant="ghost" (pressed)="deleteProject(project.id)">Delete</sc-button>
           </div>
 
           @if (expandedProjectId() === project.id) {
             <ul class="projects-page__patterns">
               @for (pattern of patternsByProject()[project.id]; track pattern.id) {
-                <li>
+                <li class="projects-page__pattern">
                   <button type="button" (click)="openPattern(pattern.id)">
                     {{ pattern.name }} ({{ pattern.width }}×{{ pattern.height }})
                   </button>
+                  <span class="projects-page__pattern-actions">
+                    <a [routerLink]="['/patterns', pattern.id]">View</a>
+                    <button type="button" (click)="duplicatePattern(project.id, pattern.id)">
+                      Duplicate
+                    </button>
+                  </span>
                 </li>
               } @empty {
                 <li class="projects-page__patterns-empty">No patterns yet.</li>
@@ -54,7 +64,11 @@
 
   @if (newPatternProjectId()) {
     <sc-modal heading="New pattern" (closed)="closeNewPattern()">
-      <form class="projects-page__new-pattern" [formGroup]="newPatternForm" (ngSubmit)="createPattern()">
+      <form
+        class="projects-page__new-pattern"
+        [formGroup]="newPatternForm"
+        (ngSubmit)="createPattern()"
+      >
         <label>
           Name
           <input type="text" formControlName="name" />

@@ -17,7 +17,8 @@ export class PatternsService {
   async findAllForProject(userId: string, projectId: string): Promise<Pattern[]> {
     const project = await this.prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
 
     const patterns = await this.prisma.pattern.findMany({
       where: { projectId },
@@ -29,7 +30,8 @@ export class PatternsService {
   async create(userId: string, dto: CreatePatternDto): Promise<Pattern> {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
 
     const blankGrid = encodeGrid(
       Array.from({ length: dto.height }, () => new Array(dto.width).fill(null)),
@@ -63,6 +65,30 @@ export class PatternsService {
         ...(dto.meta !== undefined && {
           meta: { ...(existing.meta as object), ...dto.meta } as object,
         }),
+      },
+    });
+    return toPatternDto(pattern);
+  }
+
+  /**
+   * Copies a pattern (grid, palette, sizing) into the same project as
+   * "<name> (copy)". Stitching progress is deliberately not copied: a
+   * duplicate is a fresh start, e.g. to try a colorway or stitch it again.
+   */
+  async duplicate(userId: string, id: string): Promise<Pattern> {
+    const source = await this.getOwned(userId, id);
+    const meta = { ...((source.meta ?? {}) as Record<string, unknown>) };
+    delete meta['progress'];
+    const pattern = await this.prisma.pattern.create({
+      data: {
+        projectId: source.projectId,
+        name: `${source.name} (copy)`,
+        type: source.type,
+        width: source.width,
+        height: source.height,
+        palette: source.palette as object[],
+        grid: source.grid as object,
+        meta: meta as object,
       },
     });
     return toPatternDto(pattern);

@@ -28,4 +28,9 @@
   &--stitch canvas {
     cursor: pointer;
   }
+
+  &--readonly canvas {
+    cursor: default;
+    touch-action: auto;
+  }
 }
