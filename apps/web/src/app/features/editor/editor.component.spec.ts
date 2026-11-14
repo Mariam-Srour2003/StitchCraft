@@ -54,6 +54,70 @@ describe('EditorComponent', () => {
     fixture.detectChanges();
   });
 
+  describe('fuse beads', () => {
+    async function openBeads(grid: Pattern['grid']): Promise<string> {
+      patternsApi.get.mockReturnValue(
+        of({
+          ...makePattern(),
+          type: 'fuse_bead',
+          grid,
+          meta: { createdFrom: 'blank', beadCatalogueId: 'hama-midi', boardPegs: 14 },
+        } satisfies Pattern),
+      );
+      fixture = TestBed.createComponent(EditorComponent);
+      fixture.componentRef.setInput('id', 'pattern-1');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).textContent ?? '';
+    }
+
+    it('says when a design holds together', async () => {
+      const text = await openBeads([
+        [
+          [0, 2],
+          [null, 2],
+        ],
+        [
+          [0, 2],
+          [null, 2],
+        ],
+        [[null, 4]],
+        [[null, 4]],
+      ]);
+      expect(text).toContain('irons into one piece');
+      const search = (fixture.nativeElement as HTMLElement).querySelector('input[type="search"]');
+      expect(search?.getAttribute('placeholder')).toContain('Add Hama Midi bead');
+    });
+
+    it('points out beads that will fall off, and separate pieces', async () => {
+      // A 2x2 block plus one bead touching it only at a corner.
+      const text = await openBeads([
+        [
+          [0, 2],
+          [null, 2],
+        ],
+        [
+          [0, 2],
+          [null, 2],
+        ],
+        [
+          [null, 2],
+          [0, 1],
+          [null, 1],
+        ],
+        [[null, 4]],
+      ]);
+      expect(text).toContain('1 bead touches no other bead along a side');
+      expect(text).toContain('column 3, row 3');
+      expect(text).toContain('irons into 2 separate pieces');
+    });
+  });
+
+  it('does not show the bead check for cross-stitch', () => {
+    expect(fixture.nativeElement.textContent).not.toContain('Will it hold together?');
+  });
+
   it('loads the pattern for the bound id', () => {
     expect(patternsApi.get).toHaveBeenCalledWith('pattern-1');
   });
