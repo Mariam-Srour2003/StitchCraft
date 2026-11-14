@@ -47,6 +47,24 @@ describe('buildGridFromPixels', () => {
     expect(new Set(codes).size).toBe(codes.length);
   });
 
+  it('delivers the requested colour count on a many-coloured image', () => {
+    // A smooth two-axis gradient: far more distinct colours than requested,
+    // and dense enough that several k-means centres snap to one DMC thread.
+    const width = 40;
+    const height = 30;
+    const pixels: Rgb[] = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        pixels.push({ r: Math.round((x / width) * 255), g: 90, b: Math.round((y / height) * 255) });
+      }
+    }
+    const { palette, grid } = buildGridFromPixels(pixels, width, height, 20);
+    expect(palette).toHaveLength(20);
+    // ...and every one of them is actually used.
+    const used = new Set(decodeGrid(grid, width).flatMap((row) => Array.from(row)));
+    expect(used.size).toBe(20);
+  });
+
   it('assigns every palette entry a distinct symbol', () => {
     const pixels = [
       ...solidBlock({ r: 220, g: 20, b: 20 }, 4),
