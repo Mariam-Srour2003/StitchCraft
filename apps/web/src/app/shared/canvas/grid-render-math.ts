@@ -1,6 +1,13 @@
 import type { PaletteEntry } from '@stitchcraft/types';
 
-export type RenderMode = 'x-stitch' | 'block' | 'symbol' | 'number' | 'diamond';
+export type RenderMode =
+  | 'x-stitch'
+  | 'block'
+  | 'symbol'
+  | 'number'
+  | 'diamond'
+  /** White canvas, outlined regions, one number per region - like a real paint-by-number board. */
+  | 'paint-by-number';
 
 export interface GridTheme {
   /** Background painted behind an empty (unpainted) cell. */
@@ -12,7 +19,42 @@ export interface GridTheme {
   gridLineBold: string;
   /** Glyph color in symbol/number mode. */
   symbolText: string;
+  /** Centre-line markers, so stitchers can start from the middle of the fabric. */
+  centerLine: string;
+  /** Overlay drawn on stitches marked done in stitching mode. */
+  doneOverlay: string;
+  /** Overlay drawn on other colors while one color is highlighted. */
+  dimOverlay: string;
+  /** Region outlines and numbers in paint-by-number mode. */
+  regionLine: string;
+  regionText: string;
 }
+
+export const LIGHT_GRID_THEME: GridTheme = {
+  emptyCellFill: '#f4f1ec',
+  paintedCellFill: '#ffffff',
+  gridLine: '#d8d2c8',
+  gridLineBold: '#a39a8c',
+  symbolText: '#2b2622',
+  centerLine: '#d0453a',
+  doneOverlay: 'rgba(30, 26, 22, 0.55)',
+  dimOverlay: 'rgba(255, 255, 255, 0.78)',
+  regionLine: '#3b3530',
+  regionText: '#5a524b',
+};
+
+export const DARK_GRID_THEME: GridTheme = {
+  emptyCellFill: '#24211e',
+  paintedCellFill: '#f2eee8',
+  gridLine: '#3a3631',
+  gridLineBold: '#6b645b',
+  symbolText: '#f2eee8',
+  centerLine: '#ff7a6b',
+  doneOverlay: 'rgba(0, 0, 0, 0.6)',
+  dimOverlay: 'rgba(20, 18, 16, 0.8)',
+  regionLine: '#3b3530',
+  regionText: '#5a524b',
+};
 
 export interface CellPosition {
   x: number;

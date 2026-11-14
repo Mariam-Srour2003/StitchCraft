@@ -101,3 +101,66 @@ export function resizeGrid(
     return row;
   });
 }
+
+/** Mirror the whole pattern left-to-right. */
+export function flipHorizontal(grid: readonly Int16Array[]): Int16Array[] {
+  return grid.map((row) => row.slice().reverse());
+}
+
+/** Mirror the whole pattern top-to-bottom. */
+export function flipVertical(grid: readonly Int16Array[]): Int16Array[] {
+  return grid.slice().reverse();
+}
+
+/** Rotate a width x height grid 90 degrees clockwise into a height x width grid. */
+export function rotateClockwise(
+  grid: readonly Int16Array[],
+  width: number,
+  height: number,
+): Int16Array[] {
+  return Array.from({ length: width }, (_, newY) => {
+    const row = new Int16Array(height);
+    for (let newX = 0; newX < height; newX++) row[newX] = grid[height - 1 - newX][newY];
+    return row;
+  });
+}
+
+/** Every cell of color `from` becomes `to` (a palette-wide recolor). */
+export function replaceValue(
+  grid: readonly (Int16Array | readonly number[])[],
+  from: number,
+  to: number,
+): CellChange[] {
+  if (from === to) return [];
+  const changes: CellChange[] = [];
+  grid.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === from) changes.push({ x, y, before: from, after: to });
+    }
+  });
+  return changes;
+}
+
+/**
+ * Drops palette entries no cell uses and re-numbers the rest (keeping their
+ * order and symbols), rewriting the grid to the new indices. `remap[old]` is
+ * the new index, or -1 for a removed entry.
+ */
+export function compactPalette<T extends { index: number }>(
+  palette: readonly T[],
+  grid: readonly Int16Array[],
+): { palette: T[]; grid: Int16Array[]; remap: Int16Array } {
+  const used = new Uint8Array(palette.length);
+  for (const row of grid) {
+    for (const value of row) if (value >= 0 && value < used.length) used[value] = 1;
+  }
+  const remap = new Int16Array(palette.length).fill(-1);
+  const nextPalette: T[] = [];
+  palette.forEach((entry, i) => {
+    if (!used[i]) return;
+    remap[i] = nextPalette.length;
+    nextPalette.push({ ...entry, index: nextPalette.length });
+  });
+  const nextGrid = grid.map((row) => row.map((v) => (v >= 0 && v < remap.length ? remap[v] : v)));
+  return { palette: nextPalette, grid: nextGrid, remap };
+}

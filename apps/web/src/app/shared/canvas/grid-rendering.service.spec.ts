@@ -9,6 +9,11 @@ const theme: GridTheme = {
   gridLine: '#CCCCCC',
   gridLineBold: '#888888',
   symbolText: '#000000',
+  centerLine: '#CENTER',
+  doneOverlay: 'DONE',
+  dimOverlay: 'DIM',
+  regionLine: '#REGION',
+  regionText: '#REGTXT',
 };
 
 const palette: PaletteEntry[] = [
@@ -159,5 +164,73 @@ describe('GridRenderingService', () => {
     const thinStrokes = strokeCalls.filter((c) => c.strokeStyle === theme.gridLine);
     expect(boldStrokes.length).toBeGreaterThan(0);
     expect(thinStrokes.length).toBeGreaterThan(0);
+  });
+
+  describe('stitching, highlight, centre and paint-by-number', () => {
+    const base = (overrides: Partial<GridRenderParams> = {}): GridRenderParams => ({
+      grid: [Int16Array.from([0, 1]), Int16Array.from([0, 0])],
+      width: 2,
+      height: 2,
+      palette,
+      mode: 'block',
+      cellSize: 10,
+      theme,
+      ...overrides,
+    });
+
+    it('overlays done stitches', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderAll(
+        mock.ctx,
+        base({ progress: [Int16Array.from([1, 0]), Int16Array.from([0, 0])] }),
+      );
+      expect(mock.fillRectCalls.filter((c) => c.fillStyle === 'DONE')).toHaveLength(1);
+    });
+
+    it('dims every other color while one is highlighted', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderAll(mock.ctx, base({ highlightIndex: 0 }));
+      const dimmed = mock.fillRectCalls.filter((c) => c.fillStyle === 'DIM');
+      expect(dimmed).toHaveLength(1);
+      expect(dimmed[0]).toMatchObject({ x: 10, y: 0 });
+    });
+
+    it('draws centre lines only when asked', () => {
+      const without = createMockCtx();
+      new GridRenderingService().renderAll(without.ctx, base());
+      expect(without.strokeCalls.some((c) => c.strokeStyle === '#CENTER')).toBe(false);
+
+      const withCenter = createMockCtx();
+      new GridRenderingService().renderAll(withCenter.ctx, base({ showCenter: true }));
+      expect(withCenter.strokeCalls.some((c) => c.strokeStyle === '#CENTER')).toBe(true);
+    });
+
+    it('redraws the centre line through a single repainted cell', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderCell(mock.ctx, base({ showCenter: true }), 1, 1);
+      expect(mock.strokeCalls.some((c) => c.strokeStyle === '#CENTER')).toBe(true);
+    });
+
+    it('paint-by-number: white cells, region outlines, one number per region', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderAll(mock.ctx, base({ mode: 'paint-by-number' }));
+      // 2 regions: the three 0-cells (connected) and the single 1-cell
+      expect(mock.fillTextCalls.map((c) => c.text).sort()).toEqual(['1', '2']);
+      expect(mock.strokeCalls.some((c) => c.strokeStyle === '#REGION')).toBe(true);
+      expect(mock.fillRectCalls.some((c) => c.fillStyle === '#FF0000')).toBe(false);
+    });
+
+    it('paint-by-number: a painted (done) region shows its color and drops its number', () => {
+      const mock = createMockCtx();
+      new GridRenderingService().renderAll(
+        mock.ctx,
+        base({
+          mode: 'paint-by-number',
+          progress: [Int16Array.from([0, 1]), Int16Array.from([0, 0])],
+        }),
+      );
+      expect(mock.fillRectCalls.some((c) => c.fillStyle === '#00FF00')).toBe(true);
+      expect(mock.fillTextCalls.map((c) => c.text)).toEqual(['1']);
+    });
   });
 });

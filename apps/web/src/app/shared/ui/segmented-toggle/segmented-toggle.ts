@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
 export interface SegmentedToggleOption<T extends string = string> {
   value: T;
@@ -17,6 +17,15 @@ export class SegmentedToggle<T extends string = string> {
   readonly value = input.required<T>();
   readonly ariaLabel = input('View mode');
   readonly valueChange = output<T>();
+
+  /**
+   * False when `value` matches none of the options (e.g. when two toggles
+   * split one setting between them); the first option then takes the tab
+   * stop so the group stays keyboard-reachable.
+   */
+  protected readonly hasSelection = computed(() =>
+    this.options().some((option) => option.value === this.value()),
+  );
 
   select(value: T): void {
     if (value !== this.value()) this.valueChange.emit(value);

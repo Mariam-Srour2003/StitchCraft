@@ -10,6 +10,12 @@ export interface PatternMeta {
   drillSizeMm?: number;
   createdFrom: 'blank' | 'conversion';
   sourceConversionJobId?: string;
+  /**
+   * Stitching progress: which cells the stitcher has marked done, RLE-encoded
+   * like the grid (1 = done, null = not yet). Optional; absent or mismatched
+   * dimensions mean "nothing stitched yet".
+   */
+  progress?: EncodedRow[];
 }
 
 export interface Pattern {

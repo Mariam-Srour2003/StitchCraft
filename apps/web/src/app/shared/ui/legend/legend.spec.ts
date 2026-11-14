@@ -71,4 +71,46 @@ describe('Legend', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('thead').textContent).toContain('Drills');
   });
+
+  describe('optional columns and selection', () => {
+    const entry = {
+      index: 0,
+      symbol: 'A',
+      color: { hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } },
+    };
+
+    it('shows a buy column and a progress column when enabled', () => {
+      fixture.componentRef.setInput('rows', [{ entry, count: 10, buy: 2, done: 4 }]);
+      fixture.componentRef.setInput('buyLabel', 'Skeins');
+      fixture.componentRef.setInput('showProgress', true);
+      fixture.detectChanges();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Skeins');
+      expect(text).toContain('Done');
+      expect(text).toContain('40%');
+    });
+
+    it('hides the optional columns by default', () => {
+      fixture.componentRef.setInput('rows', [{ entry, count: 10, buy: 2 }]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Skeins');
+      expect(fixture.nativeElement.querySelectorAll('th')).toHaveLength(3);
+    });
+
+    it('emits rowSelected with the palette index when a row is clicked', () => {
+      const spy = jest.fn();
+      fixture.componentInstance.rowSelected.subscribe(spy);
+      fixture.componentRef.setInput('rows', [{ entry, count: 1 }]);
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('.sc-legend__row').click();
+      expect(spy).toHaveBeenCalledWith(0);
+    });
+
+    it('marks the highlighted row', () => {
+      fixture.componentRef.setInput('rows', [{ entry, count: 1 }]);
+      fixture.componentRef.setInput('highlightedIndex', 0);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.sc-legend__row--highlighted')).not.toBeNull();
+    });
+  });
 });

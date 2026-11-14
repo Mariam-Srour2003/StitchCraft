@@ -5,17 +5,34 @@
     <header class="editor-page__toolbar">
       <sc-toolbar ariaLabel="Editing tools">
         <sc-segmented-toggle
-          [options]="toolOptions"
-          [value]="store.tool()"
-          (valueChange)="store.setTool($event)"
-          ariaLabel="Tool"
+          [options]="workModeOptions"
+          [value]="workMode()"
+          (valueChange)="setWorkMode($event)"
+          ariaLabel="Work mode"
         />
-        <sc-icon-button label="Undo" [disabled]="!store.canUndo()" (pressed)="store.undo()"
+        <sc-icon-button label="Undo (Ctrl+Z)" [disabled]="!store.canUndo()" (pressed)="store.undo()"
           >↶</sc-icon-button
         >
-        <sc-icon-button label="Redo" [disabled]="!store.canRedo()" (pressed)="store.redo()"
+        <sc-icon-button
+          label="Redo (Ctrl+Shift+Z)"
+          [disabled]="!store.canRedo()"
+          (pressed)="store.redo()"
           >↷</sc-icon-button
         >
+        @if (!store.stitchMode()) {
+          <sc-segmented-toggle
+            [options]="drawTools"
+            [value]="store.tool()"
+            (valueChange)="selectTool($event)"
+            ariaLabel="Drawing tool"
+          />
+          <sc-segmented-toggle
+            [options]="shapeTools"
+            [value]="store.tool()"
+            (valueChange)="selectTool($event)"
+            ariaLabel="Shape tool"
+          />
+        }
         <sc-segmented-toggle
           [options]="modeOptions"
           [value]="store.renderMode()"
@@ -45,6 +62,13 @@
       />
     </header>
 
+    @if (store.stitchMode()) {
+      <p class="editor-page__hint" role="status">
+        Stitching mode: click or drag over stitches to mark them done. Click a legend row to
+        highlight one color.
+      </p>
+    }
+
     <div class="editor-page__body">
       <sc-grid-canvas
         class="editor-page__canvas"
@@ -54,12 +78,40 @@
         [palette]="store.palette()"
         [mode]="store.renderMode()"
         [zoomPercent]="store.zoomPercent()"
-        [tool]="store.tool()"
+        [tool]="canvasTool()"
+        [progress]="store.progress()"
+        [highlightIndex]="store.highlightIndex()"
+        [showCenter]="store.showCenter()"
         (cellEdit)="onCellEdit($event)"
         (strokeEnd)="store.endStroke()"
       />
 
       <aside class="editor-page__sidebar">
+        @if (store.stitchMode()) {
+          <section class="editor-page__panel" aria-labelledby="progress-heading">
+            <h2 id="progress-heading">Stitching progress</h2>
+            <sc-progress [value]="store.progressSummary().percent" label="Stitched" />
+            <p class="editor-page__muted">
+              {{ store.progressSummary().done }} of {{ store.progressSummary().total }} done ({{
+                store.progressSummary().percent
+              }}%)
+            </p>
+            @if (selectedEntry(); as entry) {
+              <div class="editor-page__row">
+                <sc-button variant="secondary" (pressed)="store.setColorStitched(entry.index, true)"
+                  >Mark {{ entry.symbol }} done</sc-button
+                >
+                <sc-button
+                  variant="secondary"
+                  (pressed)="store.setColorStitched(entry.index, false)"
+                  >Unmark {{ entry.symbol }}</sc-button
+                >
+              </div>
+            }
+            <sc-button variant="secondary" (pressed)="resetProgress()">Clear progress</sc-button>
+          </section>
+        }
+
         <section class="editor-page__panel">
           <h2>Palette</h2>
           <sc-palette-grid
@@ -72,32 +124,137 @@
             (threadSelected)="store.addColorToPalette($event)"
           />
           <sc-color-picker (colorAdded)="store.addColorToPalette($event)" />
+
+          @if (selectedEntry(); as entry) {
+            <div class="editor-page__color-actions">
+              <div class="editor-page__row">
+                <sc-button variant="secondary" (pressed)="store.toggleHighlight(entry.index)">
+                  {{ store.highlightIndex() === entry.index ? 'Unhighlight' : 'Highlight' }}
+                </sc-button>
+                <sc-button variant="secondary" (pressed)="deleteSelectedColor()"
+                  >Delete color</sc-button
+                >
+              </div>
+              @if (store.palette().length > 1) {
+                <div class="editor-page__row">
+                  <label class="editor-page__inline-label">
+                    Replace {{ entry.symbol }} with
+                    <select
+                      [value]="replaceTarget() ?? ''"
+                      (change)="onReplaceTargetChange($any($event.target).value)"
+                    >
+                      <option value="">Choose…</option>
+                      @for (other of store.palette(); track other.index) {
+                        @if (other.index !== entry.index) {
+                          <option [value]="other.index">
+                            {{ other.symbol }} · {{ other.color.hex }}
+                          </option>
+                        }
+                      }
+                    </select>
+                  </label>
+                  <sc-button
+                    variant="secondary"
+                    [disabled]="replaceTarget() === null"
+                    (pressed)="applyReplace()"
+                    >Replace</sc-button
+                  >
+                </div>
+              }
+            </div>
+          }
+          <sc-button variant="secondary" (pressed)="store.removeUnusedColors()"
+            >Remove unused colors</sc-button
+          >
         </section>
 
+        @if (!store.stitchMode()) {
+          <section class="editor-page__panel">
+            <h2>Mirror drawing</h2>
+            <sc-segmented-toggle
+              [options]="symmetryOptions"
+              [value]="store.symmetry()"
+              (valueChange)="store.setSymmetry($event)"
+              ariaLabel="Mirror drawing"
+            />
+          </section>
+
+          <section class="editor-page__panel">
+            <h2>Lettering</h2>
+            <label class="editor-page__stacked-label">
+              Text to stamp (choose the Text tool, then click where it starts)
+              <textarea
+                rows="2"
+                maxlength="200"
+                [value]="store.stampText()"
+                (input)="store.setStampText($any($event.target).value)"
+              ></textarea>
+            </label>
+            @if (store.stampText()) {
+              <p class="editor-page__muted">
+                {{ stampSize().width }} × {{ stampSize().height }} stitches
+              </p>
+            }
+            <p class="editor-page__muted">Letters, numbers and {{ lettering }}</p>
+          </section>
+
+          <section class="editor-page__panel">
+            <h2>Transform</h2>
+            <div class="editor-page__row">
+              <sc-button variant="secondary" (pressed)="store.flipHorizontal()">Flip ↔</sc-button>
+              <sc-button variant="secondary" (pressed)="store.flipVertical()">Flip ↕</sc-button>
+              <sc-button variant="secondary" (pressed)="store.rotateClockwise()"
+                >Rotate ↻</sc-button
+              >
+            </div>
+            <form
+              class="editor-page__resize"
+              (submit)="$event.preventDefault(); applyResize(widthInput.value, heightInput.value)"
+            >
+              <label>
+                W
+                <input #widthInput type="number" min="1" max="500" [value]="store.width()" />
+              </label>
+              <label>
+                H
+                <input #heightInput type="number" min="1" max="500" [value]="store.height()" />
+              </label>
+              <sc-button type="submit" variant="secondary">Resize</sc-button>
+            </form>
+          </section>
+        }
+
         <section class="editor-page__panel">
-          <h2>Resize</h2>
-          <form
-            class="editor-page__resize"
-            (ngSubmit)="applyResize(widthInput.value, heightInput.value)"
-          >
-            <label>
-              W
-              <input #widthInput type="number" min="1" max="500" [value]="store.width()" />
-            </label>
-            <label>
-              H
-              <input #heightInput type="number" min="1" max="500" [value]="store.height()" />
-            </label>
-            <sc-button type="submit" variant="secondary">Apply</sc-button>
-          </form>
+          <label class="editor-page__check">
+            <input
+              type="checkbox"
+              [checked]="store.showCenter()"
+              (change)="store.setShowCenter($any($event.target).checked)"
+            />
+            Show centre lines
+          </label>
         </section>
 
         <section class="editor-page__panel">
           <sc-legend
             [rows]="store.legendRows()"
             [countLabel]="store.type() === 'diamond' ? 'Drills' : 'Stitches'"
+            [buyLabel]="store.buyLabel()"
+            [showProgress]="store.stitchMode()"
+            [highlightedIndex]="store.highlightIndex()"
+            (rowSelected)="store.toggleHighlight($event)"
           />
         </section>
+
+        <details class="editor-page__panel editor-page__shortcuts">
+          <summary>Keyboard shortcuts</summary>
+          <dl>
+            @for (shortcut of shortcuts; track shortcut.keys) {
+              <dt>{{ shortcut.keys }}</dt>
+              <dd>{{ shortcut.action }}</dd>
+            }
+          </dl>
+        </details>
       </aside>
     </div>
   </div>

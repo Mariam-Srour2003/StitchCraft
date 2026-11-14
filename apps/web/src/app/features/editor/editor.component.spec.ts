@@ -140,4 +140,108 @@ describe('EditorComponent', () => {
       expect(fixture.componentInstance['exportResult']()).toBeNull();
     });
   });
+
+  describe('keyboard shortcuts', () => {
+    const press = (key: string, init: KeyboardEventInit = {}, target?: EventTarget) => {
+      const event = new KeyboardEvent('keydown', { key, cancelable: true, ...init });
+      if (target) Object.defineProperty(event, 'target', { value: target });
+      fixture.componentInstance.onKeydown(event);
+      return event;
+    };
+
+    it('switches tools with single keys', () => {
+      const store = fixture.componentInstance['store'];
+      press('g');
+      expect(store.tool()).toBe('fill');
+      press('L');
+      expect(store.tool()).toBe('line');
+    });
+
+    it('undoes and redoes with Ctrl+Z / Ctrl+Shift+Z and prevents the browser default', () => {
+      const store = fixture.componentInstance['store'];
+      store.setSelectedPaletteIndex(0);
+      store.paintCell(0, 0);
+      store.endStroke();
+
+      const undo = press('z', { ctrlKey: true });
+      expect(undo.defaultPrevented).toBe(true);
+      expect(store.canUndo()).toBe(false);
+
+      press('z', { ctrlKey: true, shiftKey: true });
+      expect(store.canUndo()).toBe(true);
+    });
+
+    it('saves with Ctrl+S', () => {
+      patternsApi.update.mockReturnValueOnce(of(makePattern()));
+      press('s', { metaKey: true });
+      expect(patternsApi.update).toHaveBeenCalled();
+    });
+
+    it('ignores shortcuts while typing in a field', () => {
+      const store = fixture.componentInstance['store'];
+      press('g', {}, document.createElement('textarea'));
+      expect(store.tool()).toBe('paint');
+    });
+
+    it('toggles stitching mode with K and zooms with +/-', () => {
+      const store = fixture.componentInstance['store'];
+      press('k');
+      expect(store.stitchMode()).toBe(true);
+      press('+');
+      expect(store.zoomPercent()).toBe(125);
+      press('-');
+      expect(store.zoomPercent()).toBe(100);
+    });
+
+    it('picking a tool leaves stitching mode', () => {
+      const store = fixture.componentInstance['store'];
+      store.setStitchMode(true);
+      press('b');
+      expect(store.stitchMode()).toBe(false);
+    });
+  });
+
+  describe('unsaved changes', () => {
+    it('lets you leave freely when nothing changed', () => {
+      expect(fixture.componentInstance.canLeave()).toBe(true);
+    });
+
+    it('asks before leaving with unsaved edits', () => {
+      const store = fixture.componentInstance['store'];
+      store.setSelectedPaletteIndex(0);
+      store.paintCell(0, 0);
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+      expect(fixture.componentInstance.canLeave()).toBe(false);
+      confirmSpy.mockRestore();
+    });
+  });
+
+  describe('palette actions', () => {
+    it('replaces the selected color with the chosen one', () => {
+      const store = fixture.componentInstance['store'];
+      store.addColorToPalette({ hex: '#00FF00', rgb: { r: 0, g: 255, b: 0 } });
+      store.setSelectedPaletteIndex(0);
+      store.paintCell(0, 0);
+      store.endStroke();
+
+      fixture.componentInstance.onReplaceTargetChange('1');
+      fixture.componentInstance.applyReplace();
+      expect(store.grid()[0][0]).toBe(1);
+    });
+
+    it('switches the canvas into stitch input in stitching mode', () => {
+      fixture.componentInstance.setWorkMode('stitch');
+      expect(fixture.componentInstance['canvasTool']()).toBe('stitch');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Stitching progress');
+    });
+
+    it('renders the new sidebar panels in design mode', () => {
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Mirror drawing');
+      expect(text).toContain('Lettering');
+      expect(text).toContain('Transform');
+      expect(text).toContain('Skeins');
+    });
+  });
 });

@@ -63,4 +63,12 @@ describe('SegmentedToggle', () => {
     expect(buttons[0].tabIndex).toBe(0);
     expect(buttons[1].tabIndex).toBe(-1);
   });
+
+  it('gives the first option the tab stop when no option matches the value', () => {
+    fixture.componentRef.setInput('value', 'not-an-option');
+    fixture.detectChanges();
+    const buttons = fixture.nativeElement.querySelectorAll('button');
+    expect(buttons[0].tabIndex).toBe(0);
+    expect(buttons[1].tabIndex).toBe(-1);
+  });
 });

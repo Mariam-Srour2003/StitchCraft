@@ -136,7 +136,7 @@ secrets, CORS origin, local storage path, optional AI service URL).
 
 ## What's implemented
 
-Everything in PLAN.md's milestone list (M0-M7) is built:
+Everything in PLAN.md's milestone list (M0-M8) is built:
 
 - **Auth**: register/login/refresh with JWT access + refresh tokens, bcrypt
   password hashing, refresh-token revocation via a stored hash.
@@ -155,6 +155,16 @@ Everything in PLAN.md's milestone list (M0-M7) is built:
   by Aida count or diamond drill size in mm). All state lives in a
   component-scoped `EditorStore`; the canvas component itself owns no
   business rules.
+- **Pro drawing tools** (M8): line/box/oval shapes with live preview, mirror
+  drawing (left/right, top/bottom, both), a 5x7 stitch font for lettering,
+  flip/rotate, highlight/replace/delete colors, remove unused colors, a
+  paint-by-number view (outlined regions, one number each), centre lines,
+  crisp high-DPI rendering, a dark canvas theme, keyboard shortcuts, and an
+  unsaved-changes guard.
+- **Stitching mode** (M8): mark stitches done by click or drag, per-color
+  and overall progress, saved with the pattern.
+- **Shopping quantities**: skeins (cross-stitch) or drill bags (diamond) per
+  color in the legend and the export CSV, from a documented thread model.
 - **Image converter**: upload a PNG/JPG/WebP, pick type/size/color count,
   and a BullMQ worker resizes it (`sharp`), k-means quantizes it, nearest-
   DMC-matches and dedupes the resulting colors, assigns symbols, and builds

@@ -7,3 +7,4 @@ export * from './match/nearest-dmc';
 export * from './match/nearest-color-index';
 export * from './symbols/symbol-assign';
 export * from './dmc';
+export * from './materials/materials';

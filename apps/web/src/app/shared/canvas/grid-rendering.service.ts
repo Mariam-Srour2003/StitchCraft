@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { PaletteEntry } from '@stitchcraft/types';
-import { colorHexForCell, glyphForMode, GridTheme, isBoldGridLine, RenderMode } from './grid-render-math';
+import {
+  colorHexForCell,
+  glyphForMode,
+  GridTheme,
+  isBoldGridLine,
+  RenderMode,
+} from './grid-render-math';
+import { RegionMap, computeRegions, isRegionEdge } from './regions';
 
 export interface GridRenderParams {
   /** Decoded grid rows; a cell value of -1 (EMPTY_CELL from @stitchcraft/types) means unpainted. */
@@ -11,15 +18,24 @@ export interface GridRenderParams {
   mode: RenderMode;
   cellSize: number;
   theme: GridTheme;
+  /** Stitching progress rows (1 = done). Done stitches get an overlay; in paint-by-number they reveal their color. */
+  progress?: readonly (Int16Array | number[])[];
+  /** When set, every other color is dimmed so this one stands out. */
+  highlightIndex?: number | null;
+  /** Draw centre-line markers. */
+  showCenter?: boolean;
+  /** Precomputed regions for paint-by-number mode; computed on demand when omitted. */
+  regions?: RegionMap;
 }
 
 /**
  * Pure canvas-drawing layer for the pattern grid. Owns no business rules and
  * no Angular change detection - it just paints pixels given a snapshot of
  * state. `grid-canvas` decides *when* to call `renderAll` (full redraw: on
- * load, resize, mode/zoom change) vs `renderCell` (single-cell repaint
- * during an active paint stroke, so a 200x200 grid doesn't get fully redrawn
- * on every pointermove).
+ * load, resize, mode/zoom change, and every change in paint-by-number mode,
+ * whose region outlines depend on neighbours) vs `renderCell` (single-cell
+ * repaint during an active paint stroke, so a 200x200 grid doesn't get fully
+ * redrawn on every pointermove).
  */
 @Injectable({ providedIn: 'root' })
 export class GridRenderingService {
@@ -33,6 +49,10 @@ export class GridRenderingService {
       }
     }
     this.drawGridLines(ctx, params);
+    if (params.mode === 'paint-by-number') {
+      this.drawRegions(ctx, params, params.regions ?? computeRegions(params.grid, width, height));
+    }
+    if (params.showCenter) this.drawCenterLines(ctx, params);
   }
 
   /** Repaints a single cell and the grid-line segments bordering it. */
@@ -41,9 +61,15 @@ export class GridRenderingService {
     ctx.clearRect(x * cellSize, y * cellSize, cellSize, cellSize);
     this.paintCellBody(ctx, params, x, y);
     this.drawCellBorder(ctx, params, x, y);
+    if (params.showCenter) this.drawCenterLines(ctx, params, x, y);
   }
 
-  private paintCellBody(ctx: CanvasRenderingContext2D, params: GridRenderParams, x: number, y: number): void {
+  private paintCellBody(
+    ctx: CanvasRenderingContext2D,
+    params: GridRenderParams,
+    x: number,
+    y: number,
+  ): void {
     const { mode, cellSize, palette, theme, grid } = params;
     const paletteIndex = grid[y][x];
     const left = x * cellSize;
@@ -56,9 +82,41 @@ export class GridRenderingService {
     }
 
     const hex = colorHexForCell(paletteIndex, palette) ?? theme.emptyCellFill;
+    const done = params.progress?.[y]?.[x] === 1;
+
+    this.paintStitch(ctx, params, hex, paletteIndex, left, top, done);
+
+    if (done && mode !== 'paint-by-number') {
+      ctx.fillStyle = theme.doneOverlay;
+      ctx.fillRect(left, top, cellSize, cellSize);
+    }
+    const highlight = params.highlightIndex;
+    if (highlight !== null && highlight !== undefined && highlight !== paletteIndex) {
+      ctx.fillStyle = theme.dimOverlay;
+      ctx.fillRect(left, top, cellSize, cellSize);
+    }
+  }
+
+  private paintStitch(
+    ctx: CanvasRenderingContext2D,
+    params: GridRenderParams,
+    hex: string,
+    paletteIndex: number,
+    left: number,
+    top: number,
+    done: boolean,
+  ): void {
+    const { mode, cellSize, palette, theme } = params;
 
     if (mode === 'block') {
       ctx.fillStyle = hex;
+      ctx.fillRect(left, top, cellSize, cellSize);
+      return;
+    }
+
+    if (mode === 'paint-by-number') {
+      // Unpainted canvas is white; a region "painted" (marked done) shows its color.
+      ctx.fillStyle = done ? hex : theme.paintedCellFill;
       ctx.fillRect(left, top, cellSize, cellSize);
       return;
     }
@@ -110,17 +168,121 @@ export class GridRenderingService {
     }
   }
 
-  private drawGridLines(ctx: CanvasRenderingContext2D, params: GridRenderParams): void {
-    const { width, height, cellSize } = params;
-    for (let i = 0; i <= width; i++) {
-      this.strokeLine(ctx, params, i * cellSize, 0, i * cellSize, height * cellSize, isBoldGridLine(i));
+  /** Thick outlines between regions and one palette number per region, at its deepest cell. */
+  private drawRegions(
+    ctx: CanvasRenderingContext2D,
+    params: GridRenderParams,
+    map: RegionMap,
+  ): void {
+    const { width, height, cellSize, theme } = params;
+    ctx.strokeStyle = theme.regionLine;
+    ctx.lineWidth = Math.max(1.5, cellSize / 10);
+    ctx.beginPath();
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (map.ids[y * width + x] < 0) continue;
+        const left = x * cellSize;
+        const top = y * cellSize;
+        // Each cell owns its right and bottom edges, plus top/left on the grid border or next to an empty cell.
+        if (isRegionEdge(map, x, y, x + 1, y))
+          this.segment(ctx, left + cellSize, top, left + cellSize, top + cellSize);
+        if (isRegionEdge(map, x, y, x, y + 1))
+          this.segment(ctx, left, top + cellSize, left + cellSize, top + cellSize);
+        if (x === 0 || map.ids[y * width + x - 1] < 0)
+          this.segment(ctx, left, top, left, top + cellSize);
+        if (y === 0 || map.ids[(y - 1) * width + x] < 0)
+          this.segment(ctx, left, top, left + cellSize, top);
+      }
     }
-    for (let j = 0; j <= height; j++) {
-      this.strokeLine(ctx, params, 0, j * cellSize, width * cellSize, j * cellSize, isBoldGridLine(j));
+    ctx.stroke();
+
+    const fontSize = Math.max(7, cellSize * 0.55);
+    ctx.fillStyle = theme.regionText;
+    ctx.font = `${fontSize}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const region of map.regions) {
+      const done = params.progress?.[region.labelY]?.[region.labelX] === 1;
+      if (done) continue; // a painted region no longer needs its number
+      ctx.fillText(
+        String(region.paletteIndex + 1),
+        region.labelX * cellSize + cellSize / 2,
+        region.labelY * cellSize + cellSize / 2 + 1,
+      );
     }
   }
 
-  private drawCellBorder(ctx: CanvasRenderingContext2D, params: GridRenderParams, x: number, y: number): void {
+  /**
+   * Centre lines across the whole grid, or - when a cell is given - only the
+   * parts that cross that cell, so single-cell repaints don't erase them.
+   */
+  private drawCenterLines(
+    ctx: CanvasRenderingContext2D,
+    params: GridRenderParams,
+    cellX?: number,
+    cellY?: number,
+  ): void {
+    const { width, height, cellSize, theme } = params;
+    const cx = (width / 2) * cellSize;
+    const cy = (height / 2) * cellSize;
+    ctx.strokeStyle = theme.centerLine;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (cellX === undefined || cellY === undefined) {
+      this.segment(ctx, cx, 0, cx, height * cellSize);
+      this.segment(ctx, 0, cy, width * cellSize, cy);
+    } else {
+      const left = cellX * cellSize;
+      const top = cellY * cellSize;
+      if (cx >= left && cx <= left + cellSize) this.segment(ctx, cx, top, cx, top + cellSize);
+      if (cy >= top && cy <= top + cellSize) this.segment(ctx, left, cy, left + cellSize, cy);
+    }
+    ctx.stroke();
+  }
+
+  private segment(
+    ctx: CanvasRenderingContext2D,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+  ): void {
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+  }
+
+  private drawGridLines(ctx: CanvasRenderingContext2D, params: GridRenderParams): void {
+    const { width, height, cellSize } = params;
+    for (let i = 0; i <= width; i++) {
+      this.strokeLine(
+        ctx,
+        params,
+        i * cellSize,
+        0,
+        i * cellSize,
+        height * cellSize,
+        isBoldGridLine(i),
+      );
+    }
+    for (let j = 0; j <= height; j++) {
+      this.strokeLine(
+        ctx,
+        params,
+        0,
+        j * cellSize,
+        width * cellSize,
+        j * cellSize,
+        isBoldGridLine(j),
+      );
+    }
+  }
+
+  private drawCellBorder(
+    ctx: CanvasRenderingContext2D,
+    params: GridRenderParams,
+    x: number,
+    y: number,
+  ): void {
     const { cellSize } = params;
     const left = x * cellSize;
     const top = y * cellSize;

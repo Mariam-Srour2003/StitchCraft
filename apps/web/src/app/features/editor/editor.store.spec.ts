@@ -28,6 +28,8 @@ function makePattern(overrides: Partial<Pattern> = {}): Pattern {
   };
 }
 
+const E = EMPTY_CELL;
+
 describe('EditorStore', () => {
   let store: EditorStore;
   let api: { get: jest.Mock; update: jest.Mock };
@@ -364,6 +366,264 @@ describe('EditorStore', () => {
         [null, 2],
         [1, 1],
       ]);
+    });
+  });
+
+  describe('pro editing features', () => {
+    const row = (y: number) => Array.from(store.grid()[y]);
+
+    beforeEach(async () => {
+      api.get.mockReturnValueOnce(
+        of(
+          makePattern({
+            width: 5,
+            height: 5,
+            grid: encodeGrid(Array.from({ length: 5 }, () => [null, null, null, null, null])),
+          }),
+        ),
+      );
+      await store.load('pattern-1');
+      store.setSelectedPaletteIndex(0);
+    });
+
+    describe('shape tools', () => {
+      it('previews a line while dragging and commits one undo step on stroke end', () => {
+        store.setTool('line');
+        store.applyTool(0, 0);
+        store.applyTool(4, 0);
+        expect(row(0)).toEqual([0, 0, 0, 0, 0]);
+
+        // dragging back shrinks the preview: earlier preview cells are reverted
+        store.applyTool(2, 0);
+        expect(row(0)).toEqual([0, 0, 0, E, E]);
+
+        store.endStroke();
+        store.undo();
+        expect(row(0)).toEqual([E, E, E, E, E]);
+        expect(store.canUndo()).toBe(false);
+      });
+
+      it('draws a rectangle outline and a filled rectangle', () => {
+        store.setTool('rect');
+        store.applyTool(0, 0);
+        store.applyTool(2, 2);
+        store.endStroke();
+        expect(store.grid()[1][1]).toBe(E);
+        expect(store.grid()[2][2]).toBe(0);
+
+        store.setTool('rect-fill');
+        store.applyTool(0, 0);
+        store.applyTool(2, 2);
+        store.endStroke();
+        expect(store.grid()[1][1]).toBe(0);
+      });
+
+      it('starts a fresh shape after each stroke', () => {
+        store.setTool('line');
+        store.applyTool(0, 0);
+        store.endStroke();
+        store.applyTool(4, 4);
+        store.endStroke();
+        expect(store.grid()[2][2]).toBe(E); // not a line from (0,0)
+        expect(store.grid()[4][4]).toBe(0);
+      });
+    });
+
+    describe('symmetry', () => {
+      it('mirrors painting across the vertical axis', () => {
+        store.setSymmetry('vertical');
+        store.paintCell(0, 1);
+        store.endStroke();
+        expect(row(1)).toEqual([0, E, E, E, 0]);
+        store.undo();
+        expect(row(1)).toEqual([E, E, E, E, E]);
+      });
+
+      it('mirrors into four quadrants for "both"', () => {
+        store.setSymmetry('both');
+        store.paintCell(0, 0);
+        expect(store.grid()[0][4]).toBe(0);
+        expect(store.grid()[4][0]).toBe(0);
+        expect(store.grid()[4][4]).toBe(0);
+      });
+
+      it('mirrors erasing too', () => {
+        store.setSymmetry('vertical');
+        store.paintCell(1, 1);
+        store.setTool('erase');
+        store.paintCell(1, 1);
+        expect(row(1)).toEqual([E, E, E, E, E]);
+      });
+    });
+
+    describe('text tool', () => {
+      it('stamps lettering at the clicked cell, clipped to the grid, as one step', () => {
+        store.setTool('text');
+        store.setStampText('I');
+        store.applyTool(0, 0);
+        expect(row(1)).toEqual([E, E, 0, E, E]); // the stem of the I
+        store.undo();
+        expect(store.canUndo()).toBe(false);
+      });
+
+      it('does nothing with empty text', () => {
+        store.setTool('text');
+        store.applyTool(0, 0);
+        expect(store.canUndo()).toBe(false);
+      });
+    });
+
+    describe('transforms', () => {
+      beforeEach(() => {
+        store.paintCell(0, 0);
+        store.endStroke();
+      });
+
+      it('flips horizontally and vertically, undoably', () => {
+        store.flipHorizontal();
+        expect(store.grid()[0][4]).toBe(0);
+        store.flipVertical();
+        expect(store.grid()[4][4]).toBe(0);
+        store.undo();
+        store.undo();
+        expect(store.grid()[0][0]).toBe(0);
+      });
+
+      it('rotates clockwise, swapping dimensions', () => {
+        store.resize(5, 3);
+        store.rotateClockwise();
+        expect(store.width()).toBe(3);
+        expect(store.height()).toBe(5);
+        expect(store.grid()[0][2]).toBe(0); // top-left moved to top-right
+        store.undo();
+        expect(store.width()).toBe(5);
+      });
+    });
+
+    describe('palette operations', () => {
+      it('replaces every stitch of one color with another, undoably', () => {
+        store.paintCell(0, 0);
+        store.paintCell(1, 0);
+        store.endStroke();
+        store.replaceColor(0, 1);
+        expect(row(0).slice(0, 2)).toEqual([1, 1]);
+        store.undo();
+        expect(row(0).slice(0, 2)).toEqual([0, 0]);
+      });
+
+      it('removes unused colors and re-indexes the grid and selection', () => {
+        store.setSelectedPaletteIndex(1);
+        store.paintCell(0, 0);
+        store.endStroke();
+        store.removeUnusedColors();
+        expect(store.palette()).toHaveLength(1);
+        expect(store.palette()[0].index).toBe(0);
+        expect(store.palette()[0].symbol).toBe('B');
+        expect(store.grid()[0][0]).toBe(0);
+        expect(store.selectedPaletteIndex()).toBe(0);
+
+        store.undo();
+        expect(store.palette()).toHaveLength(2);
+        expect(store.grid()[0][0]).toBe(1);
+      });
+
+      it('deletes a color, erasing its stitches and shifting later indices', () => {
+        store.paintCell(0, 0); // color 0
+        store.setSelectedPaletteIndex(1);
+        store.paintCell(1, 0); // color 1
+        store.endStroke();
+        store.deleteColor(0);
+        expect(store.palette()).toHaveLength(1);
+        expect(row(0).slice(0, 2)).toEqual([E, 0]);
+        expect(store.selectedPaletteIndex()).toBe(0);
+        store.undo();
+        expect(row(0).slice(0, 2)).toEqual([0, 1]);
+      });
+
+      it('toggles a highlighted color', () => {
+        store.toggleHighlight(1);
+        expect(store.highlightIndex()).toBe(1);
+        store.toggleHighlight(1);
+        expect(store.highlightIndex()).toBeNull();
+      });
+    });
+
+    describe('stitching progress', () => {
+      beforeEach(() => {
+        store.paintCell(0, 0);
+        store.paintCell(1, 0);
+        store.endStroke();
+        store.setStitchMode(true);
+      });
+
+      it('marks painted cells done and reports progress per color', () => {
+        store.applyTool(0, 0);
+        store.endStroke();
+        expect(store.legendRows()[0].done).toBe(1);
+        expect(store.progressSummary()).toEqual({ total: 2, done: 1, percent: 50 });
+      });
+
+      it('does not paint while in stitching mode, and ignores empty cells', () => {
+        store.applyTool(3, 3);
+        expect(store.grid()[3][3]).toBe(E);
+        expect(store.progressSummary().done).toBe(0);
+      });
+
+      it('a drag sets every cell to the opposite of its starting cell', () => {
+        store.applyTool(0, 0);
+        store.endStroke();
+        store.applyTool(0, 0); // starts on a done cell -> unmark mode
+        store.applyTool(1, 0); // already not done: stays not done
+        store.endStroke();
+        expect(store.progressSummary().done).toBe(0);
+      });
+
+      it('marks or clears a whole color at once and can reset', () => {
+        store.setColorStitched(0, true);
+        expect(store.progressSummary().done).toBe(2);
+        store.resetProgress();
+        expect(store.progressSummary().done).toBe(0);
+      });
+
+      it('follows the pattern through a flip', () => {
+        store.applyTool(0, 0);
+        store.endStroke();
+        store.flipHorizontal();
+        expect(store.progress()[0][4]).toBe(1);
+      });
+
+      it('saves progress RLE-encoded in meta and restores it on load', async () => {
+        store.applyTool(1, 0);
+        store.endStroke();
+        api.update.mockImplementationOnce((_id, dto) =>
+          of(
+            makePattern({
+              width: 5,
+              height: 5,
+              grid: dto.grid,
+              meta: { createdFrom: 'blank', ...dto.meta },
+            }),
+          ),
+        );
+        await store.save();
+        const [, dto] = api.update.mock.calls[0];
+        expect(dto.meta.progress[0]).toEqual([
+          [null, 1],
+          [1, 1],
+          [null, 3],
+        ]);
+        expect(store.progress()[0][1]).toBe(1);
+        expect(store.progressSummary().done).toBe(1);
+      });
+    });
+
+    describe('materials', () => {
+      it('estimates skeins per color for cross-stitch', () => {
+        store.paintCell(0, 0);
+        expect(store.buyLabel()).toBe('Skeins');
+        expect(store.legendRows()[0].buy).toBe(1);
+        expect(store.legendRows()[1].buy).toBe(0);
+      });
     });
   });
 });
