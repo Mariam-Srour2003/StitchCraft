@@ -27,6 +27,7 @@ import {
   cellNoun,
   physicalUnit,
 } from '@app/domain/pattern/pattern-rules';
+import { beadStructure } from '@app/domain/pattern/bead-structure';
 import { BeadColorSearchComponent } from '@app/shared/bead-color-search/bead-color-search.component';
 import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
 import {
@@ -181,6 +182,25 @@ export class EditorComponent {
   protected readonly boardPegs = computed(() =>
     this.store.type() === 'fuse_bead' ? boardPegsFor(this.store.meta()) : null,
   );
+
+  /**
+   * Fuse beads: will it hold together once ironed? Beads fuse only where
+   * their sides touch, so lone and corner-only beads fall off.
+   */
+  protected readonly beadCheck = computed(() => {
+    if (this.store.type() !== 'fuse_bead') return null;
+    const { loose, pieces } = beadStructure(
+      this.store.grid(),
+      this.store.width(),
+      this.store.height(),
+    );
+    const shown = loose.slice(0, 6).map((c) => `column ${c.x + 1}, row ${c.y + 1}`);
+    return {
+      loose: loose.length,
+      pieces,
+      where: shown.join('; ') + (loose.length > shown.length ? '; …' : ''),
+    };
+  });
 
   /** The bead line a fuse-bead pattern draws its colours from. */
   protected readonly beadCatalogue = computed(() =>
