@@ -25,6 +25,8 @@ export interface ConversionParams {
   cleanup?: boolean;
   /** Colour blending; 'none' when absent. Ignored for paint by number. */
   dither?: DitherMode;
+  /** Fuse beads only: the bead line to match colours against (a BeadCatalogue id). */
+  beadCatalogueId?: string;
 }
 
 export interface ConversionJob {

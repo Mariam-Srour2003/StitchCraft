@@ -74,6 +74,27 @@ describe('buildMaterialsListCsv', () => {
     expect(csv).toContain('A,310,Black,#000000,2,1');
   });
 
+  it('names the code column after the bead brand and buys beads in packs', () => {
+    const hamaWhite = {
+      code: 'H01',
+      name: 'White',
+      hex: '#E5ECF1',
+      rgb: { r: 229, g: 236, b: 241 },
+      lab: { l: 93, a: -1, b: -3 },
+      brand: 'Hama',
+      finish: 'solid' as const,
+    };
+    const csv = buildMaterialsListCsv(
+      makePattern({
+        type: 'fuse_bead',
+        palette: [{ index: 0, symbol: 'A', color: hamaWhite }],
+        grid: encodeGrid([[0, 0, 0]]),
+      }),
+    );
+    expect(csv.split('\r\n')[0]).toBe('Symbol,Hama Code,Name,Hex,Count,Bead packs');
+    expect(csv).toContain('A,H01,White,#E5ECF1,3,1');
+  });
+
   it('has no buy column for color-by-number (painted, not bought by count)', () => {
     const csv = buildMaterialsListCsv(makePattern({ type: 'color_by_number' }));
     expect(csv.split('\r\n')[0]).toBe('Symbol,DMC Code,Name,Hex,Count');

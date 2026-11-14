@@ -21,6 +21,7 @@ import { decodeGrid, EMPTY_CELL } from '@stitchcraft/types';
 import {
   buildGridFromPixels,
   type BuildGridOptions,
+  conversionCatalogue,
 } from '../src/modules/imaging/build-grid-from-pixels';
 import { stitchPixels } from '../src/modules/imaging/stitch-pixels';
 import { measurePattern, type PatternMetrics } from './metrics';
@@ -38,6 +39,14 @@ const VARIANTS: Variant[] = [
   { name: 'blend light', options: { dither: 'light' } },
   { name: 'blend full', options: { dither: 'full' } },
   { name: 'blend light + cleanup', options: { dither: 'light', cleanup: true } },
+  {
+    name: 'Hama Midi beads',
+    options: { catalogue: conversionCatalogue('fuse_bead', 'hama-midi') },
+  },
+  {
+    name: 'Hama Midi beads, blend light',
+    options: { catalogue: conversionCatalogue('fuse_bead', 'hama-midi'), dither: 'light' },
+  },
 ];
 
 const WIDTH = Number(process.env['BENCH_WIDTH'] ?? 100);

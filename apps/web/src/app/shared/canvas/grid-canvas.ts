@@ -71,6 +71,8 @@ export class GridCanvas {
   readonly progress = input<readonly (Int16Array | number[])[] | null>(null);
   readonly highlightIndex = input<number | null>(null);
   readonly showCenter = input(false);
+  /** Every how many cells to draw a bold guide line; a pegboard's width for fuse beads. */
+  readonly boldEvery = input(10);
   /** False for read-only viewers: no pointer input, default cursor. */
   readonly interactive = input(true);
   /** Backstitch lines, drawn on an overlay above the cells. */
@@ -134,6 +136,7 @@ export class GridCanvas {
       const progress = this.progress() ?? [];
       const highlightIndex = this.highlightIndex();
       const showCenter = this.showCenter();
+      const boldEvery = this.boldEvery();
 
       const canvasEl = this.canvasRef().nativeElement;
       const ctx = canvasEl.getContext('2d');
@@ -158,6 +161,7 @@ export class GridCanvas {
         bitmapHeight,
         highlightIndex,
         showCenter,
+        boldEvery,
       ].join(':');
       const params: GridRenderParams = {
         grid,
@@ -170,6 +174,7 @@ export class GridCanvas {
         progress,
         highlightIndex,
         showCenter,
+        boldEvery,
       };
 
       const needsFull =

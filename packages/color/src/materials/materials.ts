@@ -1,3 +1,5 @@
+import type { PatternType } from '@stitchcraft/types';
+
 /**
  * Shopping-quantity estimates: how many skeins of floss (cross-stitch) or bags
  * of drills (diamond painting) a given stitch/drill count needs. Shared by the
@@ -17,6 +19,10 @@
  *
  * Diamond-painting model: 10% spare drills (they get lost and some are
  * misshapen), sold in bags of 200.
+ *
+ * Fuse-bead model: 5% spare beads (they roll away), sold in packs of 1,000 -
+ * the single-colour pack size Perler and Hama sell. Other pack sizes exist,
+ * so the count itself is always shown alongside.
  */
 
 export const SKEIN_LENGTH_CM = 800;
@@ -24,6 +30,8 @@ export const SKEIN_STRANDS = 6;
 export const THREAD_WASTE_FRACTION = 0.3;
 export const DRILL_SPARE_FRACTION = 0.1;
 export const DRILLS_PER_BAG = 200;
+export const BEAD_SPARE_FRACTION = 0.05;
+export const BEADS_PER_PACK = 1000;
 
 const THREAD_PATH_PER_CELL_SIDE = 2 * Math.SQRT2 + 2;
 
@@ -55,9 +63,14 @@ export function drillBagsNeeded(drillCount: number): number {
   return Math.ceil((drillCount * (1 + DRILL_SPARE_FRACTION)) / DRILLS_PER_BAG);
 }
 
+export function beadPacksNeeded(beadCount: number): number {
+  if (beadCount <= 0) return 0;
+  return Math.ceil((beadCount * (1 + BEAD_SPARE_FRACTION)) / BEADS_PER_PACK);
+}
+
 export interface MaterialEstimate {
   quantity: number;
-  unit: 'skein' | 'bag';
+  unit: 'skein' | 'bag' | 'pack';
 }
 
 /**
@@ -65,7 +78,7 @@ export interface MaterialEstimate {
  * painted rather than stitched or drilled, so there's no unit to buy by count.
  */
 export function estimateMaterial(
-  type: 'cross_stitch' | 'color_by_number' | 'diamond',
+  type: PatternType,
   count: number,
   options: {
     fabricCount?: number;
@@ -76,6 +89,7 @@ export function estimateMaterial(
   } = {},
 ): MaterialEstimate | null {
   if (type === 'diamond') return { quantity: drillBagsNeeded(count), unit: 'bag' };
+  if (type === 'fuse_bead') return { quantity: beadPacksNeeded(count), unit: 'pack' };
   if (type === 'cross_stitch') {
     const fabricCount = options.fabricCount ?? 14;
     // Cross stitches and backstitch in the same color come off the same skeins,
@@ -101,9 +115,10 @@ export function skeinFraction(stitchCount: number, fabricCount: number, strands?
 
 /** Column header for shopping quantities by pattern type; null when the type isn't bought by count. */
 export function materialColumnLabel(
-  type: 'cross_stitch' | 'color_by_number' | 'diamond',
-): 'Skeins' | 'Drill bags' | null {
+  type: PatternType,
+): 'Skeins' | 'Drill bags' | 'Bead packs' | null {
   if (type === 'diamond') return 'Drill bags';
+  if (type === 'fuse_bead') return 'Bead packs';
   if (type === 'cross_stitch') return 'Skeins';
   return null;
 }

@@ -143,9 +143,30 @@
             />
           </div>
 
+          @if (targetType() === 'fuse_bead') {
+            <label class="converter-page__field">
+              <span>Bead line</span>
+              <select
+                class="converter-page__select"
+                [value]="beadCatalogueId()"
+                (change)="setBeadCatalogue($any($event.target).value)"
+              >
+                @for (line of beadLineOptions; track line.id) {
+                  <option [value]="line.id" [selected]="line.id === beadCatalogueId()">
+                    {{ line.label }}
+                  </option>
+                }
+              </select>
+              <small class="converter-page__hint"
+                >Colours are matched to this brand's opaque beads. Mini beads (2.5-2.6 mm) suit
+                photos; standard 5 mm beads suit pixel art and simple shapes.</small
+              >
+            </label>
+          }
+
           <div class="converter-page__dimensions">
             <label class="converter-page__field">
-              <span>Width (stitches)</span>
+              <span>Width ({{ cellWord() }})</span>
               <input
                 type="number"
                 min="1"
@@ -155,7 +176,7 @@
               />
             </label>
             <label class="converter-page__field">
-              <span>Height (stitches)</span>
+              <span>Height ({{ cellWord() }})</span>
               <input
                 type="number"
                 min="1"

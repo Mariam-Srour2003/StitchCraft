@@ -20,7 +20,14 @@ import type { EditorTool } from '@app/domain/editor/tools';
 import { isPartialTool } from '@app/domain/editor/tools';
 import { measureText, SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
 import { Symmetry } from '@app/domain/grid/shapes';
-import { cellNoun, physicalUnit } from '@app/domain/pattern/pattern-rules';
+import {
+  beadCatalogueFor,
+  boardPegsFor,
+  boldLineInterval,
+  cellNoun,
+  physicalUnit,
+} from '@app/domain/pattern/pattern-rules';
+import { BeadColorSearchComponent } from '@app/shared/bead-color-search/bead-color-search.component';
 import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
 import {
   CellPosition,
@@ -77,6 +84,7 @@ const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
   { value: 'x-stitch', label: 'X-Stitch' },
   { value: 'block', label: 'Block' },
   { value: 'diamond', label: 'Diamond' },
+  { value: 'bead', label: 'Bead' },
   { value: 'symbol', label: 'Symbol' },
   { value: 'number', label: 'Number' },
   { value: 'paint-by-number', label: 'Paint #' },
@@ -102,6 +110,7 @@ const ZOOM_STEP = 25;
   selector: 'sc-editor',
   standalone: true,
   imports: [
+    BeadColorSearchComponent,
     Button,
     ColorPicker,
     DmcThreadSearchComponent,
@@ -161,6 +170,21 @@ export class EditorComponent {
       fabricCount: this.settings.fabricCount(),
       drillSizeMm: this.settings.drillSizeMm(),
     }),
+  );
+
+  /** Bold guides at each pegboard edge for fuse beads, every 10 cells otherwise. */
+  protected readonly boldEvery = computed(() =>
+    boldLineInterval(this.store.type(), this.store.meta()),
+  );
+
+  /** Fuse beads: pegs along one side of the pegboard; null for other crafts. */
+  protected readonly boardPegs = computed(() =>
+    this.store.type() === 'fuse_bead' ? boardPegsFor(this.store.meta()) : null,
+  );
+
+  /** The bead line a fuse-bead pattern draws its colours from. */
+  protected readonly beadCatalogue = computed(() =>
+    this.store.type() === 'fuse_bead' ? beadCatalogueFor(this.store.meta()) : null,
   );
 
   protected readonly paletteDmcCodes = computed(() =>

@@ -86,6 +86,8 @@ export interface AnalyzeImageParams {
   enhance?: boolean;
   cleanup?: boolean;
   dither?: DitherMode;
+  /** Fuse beads only: the bead line to match colours against. */
+  beadCatalogueId?: string;
 }
 
 /**

@@ -1,9 +1,14 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-import { DITHER_MODES, DitherMode, MAX_PATTERN_DIMENSION, PatternType } from '@stitchcraft/types';
-
-const PATTERN_TYPES: PatternType[] = ['cross_stitch', 'color_by_number', 'diamond'];
+import { BEAD_CATALOGUE_IDS } from '@stitchcraft/color';
+import {
+  DITHER_MODES,
+  DitherMode,
+  MAX_PATTERN_DIMENSION,
+  PATTERN_TYPE_VALUES,
+  PatternType,
+} from '@stitchcraft/types';
 
 /**
  * Wire DTO for the multipart POST /conversions request. Deliberately
@@ -16,7 +21,7 @@ export class CreateConversionDto {
   @IsString()
   projectId!: string;
 
-  @IsIn(PATTERN_TYPES)
+  @IsIn(PATTERN_TYPE_VALUES)
   targetType!: PatternType;
 
   @Type(() => Number)
@@ -60,4 +65,8 @@ export class CreateConversionDto {
   @IsOptional()
   @IsIn(DITHER_MODES)
   dither?: DitherMode;
+
+  @IsOptional()
+  @IsIn(BEAD_CATALOGUE_IDS)
+  beadCatalogueId?: string;
 }

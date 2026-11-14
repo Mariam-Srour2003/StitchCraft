@@ -1,9 +1,14 @@
 <div class="sc-size-readout">
-  <span class="sc-size-readout__grid">{{ width() }} × {{ height() }} stitches</span>
+  <span class="sc-size-readout__grid">{{ width() }} × {{ height() }} {{ noun() }}</span>
   @if (size(); as s) {
   <span class="sc-size-readout__physical">
     {{ s.inches.width | number: '1.1-1' }}" × {{ s.inches.height | number: '1.1-1' }}" ({{
     s.cm.width | number: '1.1-1' }} × {{ s.cm.height | number: '1.1-1' }} cm) at {{ unitLabel() }}
+  </span>
+  } @if (boards(); as b) {
+  <span class="sc-size-readout__boards">
+    {{ b.across }} × {{ b.down }} {{ b.total === 1 ? 'board' : 'boards' }} of {{ boardPegs() }} × {{
+    boardPegs() }} pegs
   </span>
   }
 </div>

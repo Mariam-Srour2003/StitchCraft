@@ -265,6 +265,32 @@ describe('ConverterComponent', () => {
     expect(component['dither']()).toBe('full');
   });
 
+  it('converts fuse beads into the chosen bead line, with light blending', async () => {
+    await selectPhoto();
+    component.setTargetType('fuse_bead');
+    fixture.detectChanges();
+    expect(component['dither']()).toBe('light');
+    const select = (fixture.nativeElement as HTMLElement).querySelector(
+      '.converter-page__select',
+    ) as HTMLSelectElement;
+    expect(select).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Width (beads)');
+
+    select.value = 'hama-mini';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    conversionsApi.analyze.mockClear();
+    component.requestAnalysis();
+    await fixture.whenStable();
+    expect(component['conversionParams']()).toMatchObject({
+      targetType: 'fuse_bead',
+      beadCatalogueId: 'hama-mini',
+    });
+
+    component.setTargetType('cross_stitch');
+    expect(component['conversionParams']()).not.toHaveProperty('beadCatalogueId');
+  });
+
   it('offers colour blending for every craft but paint by number', async () => {
     await selectPhoto();
     const blendingShown = () =>

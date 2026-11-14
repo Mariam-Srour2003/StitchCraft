@@ -20,6 +20,7 @@
             [width]="p.width"
             [height]="p.height"
             [unitSize]="unitSize()"
+            [boardPegs]="boardPegs()"
           />
         </div>
         <div class="sc-actions sc-no-print">
@@ -97,6 +98,7 @@
             [zoomPercent]="zoom()"
             [progress]="progress()"
             [showCenter]="true"
+            [boldEvery]="boldEvery()"
             [interactive]="false"
             [backstitches]="p.meta.backstitches ?? []"
             [partialStitches]="p.meta.partialStitches ?? []"

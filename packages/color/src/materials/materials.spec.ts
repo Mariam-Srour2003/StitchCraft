@@ -1,5 +1,6 @@
 import {
   backstitchSkeinFraction,
+  beadPacksNeeded,
   defaultStrandsForCount,
   drillBagsNeeded,
   estimateMaterial,
@@ -39,7 +40,14 @@ describe('materials', () => {
     expect(drillBagsNeeded(182)).toBe(2); // 200.2 -> 2 bags
   });
 
+  it('adds 5% spare beads and rounds to 1,000-bead packs', () => {
+    expect(beadPacksNeeded(0)).toBe(0);
+    expect(beadPacksNeeded(952)).toBe(1); // 999.6 -> 1 pack
+    expect(beadPacksNeeded(953)).toBe(2); // 1000.65 -> 2 packs
+  });
+
   it('estimates per pattern type', () => {
+    expect(estimateMaterial('fuse_bead', 1500)).toEqual({ quantity: 2, unit: 'pack' });
     expect(estimateMaterial('diamond', 500)).toEqual({ quantity: 3, unit: 'bag' });
     expect(estimateMaterial('cross_stitch', 100, { fabricCount: 14 })).toEqual({
       quantity: 1,
@@ -57,6 +65,7 @@ describe('materials', () => {
   it('labels the shopping column by pattern type', () => {
     expect(materialColumnLabel('cross_stitch')).toBe('Skeins');
     expect(materialColumnLabel('diamond')).toBe('Drill bags');
+    expect(materialColumnLabel('fuse_bead')).toBe('Bead packs');
     expect(materialColumnLabel('color_by_number')).toBeNull();
   });
 

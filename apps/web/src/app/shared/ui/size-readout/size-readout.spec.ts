@@ -42,4 +42,31 @@ describe('SizeReadout', () => {
 
     expect(fixture.nativeElement.textContent).toContain('2.5mm drills');
   });
+
+  it('sizes fuse beads by bead size and shows how many pegboards they need', () => {
+    fixture.componentRef.setInput('type', 'fuse_bead');
+    fixture.componentRef.setInput('width', 58);
+    fixture.componentRef.setInput('height', 30);
+    fixture.componentRef.setInput('unitSize', 5);
+    fixture.componentRef.setInput('boardPegs', 29);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('58 × 30 beads');
+    expect(text).toContain('29.0 × 15.0 cm');
+    expect(text).toContain('5mm beads');
+    expect(text).toContain('2 × 2 boards of 29 × 29 pegs');
+  });
+
+  it('shows no board count for other crafts', () => {
+    fixture.componentRef.setInput('type', 'diamond');
+    fixture.componentRef.setInput('width', 58);
+    fixture.componentRef.setInput('height', 30);
+    fixture.componentRef.setInput('unitSize', 2.5);
+    fixture.componentRef.setInput('boardPegs', 29);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('board');
+    expect(fixture.nativeElement.textContent).toContain('58 × 30 drills');
+  });
 });

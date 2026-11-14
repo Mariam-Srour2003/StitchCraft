@@ -35,6 +35,8 @@ export interface GridRenderParams {
   showCenter?: boolean;
   /** Precomputed regions for paint-by-number mode; computed on demand when omitted. */
   regions?: RegionMap;
+  /** Every how many cells to draw a bold guide line (default 10; a pegboard's width for beads). */
+  boldEvery?: number;
 }
 
 export interface LineRenderParams {
@@ -181,6 +183,21 @@ export class GridRenderingService {
       return;
     }
 
+    if (mode === 'bead') {
+      // A fuse bead seen from above: a round tube with a hole through it,
+      // sitting on a pale pegboard.
+      ctx.fillStyle = theme.paintedCellFill;
+      ctx.fillRect(left, top, cellSize, cellSize);
+      const cx = left + cellSize / 2;
+      const cy = top + cellSize / 2;
+      ctx.fillStyle = hex;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cellSize * 0.45, 0, Math.PI * 2);
+      ctx.arc(cx, cy, cellSize * 0.18, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+      return;
+    }
+
     // symbol | number
     ctx.fillStyle = theme.paintedCellFill;
     ctx.fillRect(left, top, cellSize, cellSize);
@@ -287,7 +304,7 @@ export class GridRenderingService {
         0,
         i * cellSize,
         height * cellSize,
-        isBoldGridLine(i),
+        isBoldGridLine(i, params.boldEvery),
       );
     }
     for (let j = 0; j <= height; j++) {
@@ -298,7 +315,7 @@ export class GridRenderingService {
         j * cellSize,
         width * cellSize,
         j * cellSize,
-        isBoldGridLine(j),
+        isBoldGridLine(j, params.boldEvery),
       );
     }
   }
@@ -315,10 +332,11 @@ export class GridRenderingService {
     const right = left + cellSize;
     const bottom = top + cellSize;
 
-    this.strokeLine(ctx, params, left, top, right, top, isBoldGridLine(y));
-    this.strokeLine(ctx, params, left, bottom, right, bottom, isBoldGridLine(y + 1));
-    this.strokeLine(ctx, params, left, top, left, bottom, isBoldGridLine(x));
-    this.strokeLine(ctx, params, right, top, right, bottom, isBoldGridLine(x + 1));
+    const every = params.boldEvery;
+    this.strokeLine(ctx, params, left, top, right, top, isBoldGridLine(y, every));
+    this.strokeLine(ctx, params, left, bottom, right, bottom, isBoldGridLine(y + 1, every));
+    this.strokeLine(ctx, params, left, top, left, bottom, isBoldGridLine(x, every));
+    this.strokeLine(ctx, params, right, top, right, bottom, isBoldGridLine(x + 1, every));
   }
 
   private strokeLine(

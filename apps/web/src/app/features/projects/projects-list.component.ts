@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@stitchcraft/color';
 import { Pattern, PatternType, Project } from '@stitchcraft/types';
 
 import { SettingsStore } from '@app/core/settings/settings.store';
@@ -12,6 +13,18 @@ import { PATTERN_TYPE_LABELS, PATTERN_TYPES, sizingMeta } from '@app/domain/patt
 import { Button } from '@app/shared/ui/button/button';
 import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
 import { Modal } from '@app/shared/ui/modal/modal';
+
+/**
+ * Square pegboards people commonly have: Perler's large board (29 x 29,
+ * 841 pegs) and Hama's small Midi (14 x 14, 196 pegs), small Mini (28 x 28,
+ * 784 pegs) and large Mini (57 x 57, 3,249 pegs) boards.
+ */
+const BOARD_PRESETS = [
+  { pegs: 29, label: '29 × 29 (large, 5 mm)' },
+  { pegs: 14, label: '14 × 14 (small, 5 mm)' },
+  { pegs: 57, label: '57 × 57 (large, mini beads)' },
+  { pegs: 28, label: '28 × 28 (small, mini beads)' },
+];
 
 @Component({
   selector: 'sc-projects-list',
@@ -60,7 +73,17 @@ export class ProjectsListComponent {
       nonNullable: true,
       validators: [Validators.required, Validators.min(0.1)],
     }),
+    // Fuse beads: the bead line (sets bead size and colours) and the pegboard.
+    beadCatalogueId: new FormControl(DEFAULT_BEAD_CATALOGUE_ID, { nonNullable: true }),
+    boardPegs: new FormControl(29, {
+      nonNullable: true,
+      validators: [Validators.required, Validators.min(1), Validators.max(200)],
+    }),
   });
+
+  protected readonly beadLines = BEAD_CATALOGUES;
+  /** Common square pegboards, by pegs along a side (from Perler and Hama). */
+  protected readonly boardPresets = BOARD_PRESETS;
 
   constructor() {
     this.refresh();
@@ -113,9 +136,9 @@ export class ProjectsListComponent {
     const projectId = this.newPatternProjectId();
     if (!projectId || this.newPatternForm.invalid) return;
 
-    const { name, type, width, height, fabricCount, drillSizeMm } =
+    const { name, type, width, height, fabricCount, drillSizeMm, beadCatalogueId, boardPegs } =
       this.newPatternForm.getRawValue();
-    const meta = sizingMeta(type, { fabricCount, drillSizeMm });
+    const meta = sizingMeta(type, { fabricCount, drillSizeMm }, { beadCatalogueId, boardPegs });
     const pattern = await firstValueFrom(
       this.patternsApi.create({ projectId, name, type, width, height, meta }),
     );

@@ -15,6 +15,7 @@ import { analyzeImage } from './analyze-image';
 import {
   buildGridFromPixels,
   BuildGridResult,
+  conversionCatalogue,
   effectiveDither,
   minPaintAreaCells,
 } from './build-grid-from-pixels';
@@ -32,6 +33,8 @@ export interface ConvertImageOptions {
   cleanup?: boolean;
   /** Colour blending; ignored for paint by number, which needs solid areas. */
   dither?: DitherMode;
+  /** Fuse beads only: the bead line to match colours against. */
+  beadCatalogueId?: string;
   /** Paint by number also merges areas too small to paint when cleaning up. */
   targetType?: PatternType;
 }
@@ -59,6 +62,7 @@ export class ImagingService {
     return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount, {
       cleanup: opts.cleanup,
       dither: effectiveDither(opts.targetType, opts.dither),
+      catalogue: conversionCatalogue(opts.targetType, opts.beadCatalogueId),
       minRegionSize:
         opts.targetType === 'color_by_number'
           ? minPaintAreaCells(opts.width * opts.height)

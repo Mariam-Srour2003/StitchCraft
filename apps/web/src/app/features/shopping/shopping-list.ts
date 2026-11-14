@@ -1,18 +1,24 @@
-import { backstitchSkeinFraction, drillBagsNeeded, skeinFraction } from '@stitchcraft/color';
+import {
+  backstitchSkeinFraction,
+  beadPacksNeeded,
+  drillBagsNeeded,
+  skeinFraction,
+} from '@stitchcraft/color';
 import type { DmcColor, Pattern } from '@stitchcraft/types';
 import { backstitchLengthByIndex, isDmcColor, partialThreadByIndex } from '@stitchcraft/types';
 
+import { beadCatalogueFor } from '@app/domain/pattern/pattern-rules';
 import { patternStats } from '@app/domain/pattern/pattern-stats';
 
 export interface ShoppingLine {
-  /** DMC code, or the hex for a custom color. */
+  /** DMC code, bead line + code for beads, or the hex for a custom color. */
   key: string;
   dmc: DmcColor | null;
   hex: string;
   label: string;
-  /** Stitches or drills across all selected patterns. */
+  /** Stitches, drills or beads across all selected patterns. */
   count: number;
-  /** Skeins or bags needed. */
+  /** Skeins, bags or packs needed. */
   needed: number;
   owned: number;
   toBuy: number;
@@ -23,6 +29,8 @@ export interface ShoppingLine {
 export interface ShoppingList {
   threads: ShoppingLine[];
   drills: ShoppingLine[];
+  /** Fuse beads, per bead line (a Hama Midi and a Hama Mini white are different beads). */
+  beads: ShoppingLine[];
   /** Paint-by-number patterns: listed, but paint isn't counted by the cell. */
   paints: ShoppingLine[];
 }
@@ -43,7 +51,7 @@ interface Accumulator {
  * up once, so two patterns that each need half a skein of black need one
  * skein, not two.
  *
- * The stash only tracks floss, so drills and paints aren't subtracted.
+ * The stash only tracks floss, so drills, beads and paints aren't subtracted.
  */
 export function buildShoppingList(
   patterns: readonly Pattern[],
@@ -53,6 +61,7 @@ export function buildShoppingList(
   const groups = {
     threads: new Map<string, Accumulator>(),
     drills: new Map<string, Accumulator>(),
+    beads: new Map<string, Accumulator>(),
     paints: new Map<string, Accumulator>(),
   };
 
@@ -61,9 +70,12 @@ export function buildShoppingList(
     const group =
       pattern.type === 'diamond'
         ? groups.drills
-        : pattern.type === 'cross_stitch'
-          ? groups.threads
-          : groups.paints;
+        : pattern.type === 'fuse_bead'
+          ? groups.beads
+          : pattern.type === 'cross_stitch'
+            ? groups.threads
+            : groups.paints;
+    const beadLine = pattern.type === 'fuse_bead' ? beadCatalogueFor(pattern.meta).line : null;
     const fabricCount = pattern.meta.fabricCount ?? options.defaultFabricCount ?? 14;
     const lineLengths = backstitchLengthByIndex(pattern.meta.backstitches, pattern.palette.length);
     const partials = partialThreadByIndex(pattern.meta.partialStitches, pattern.palette.length);
@@ -75,7 +87,11 @@ export function buildShoppingList(
       if (count === 0 && lineLength === 0 && partial === 0) return;
       const color = entry.color;
       const dmc = isDmcColor(color) ? color : null;
-      const key = dmc ? dmc.code : entry.color.hex.toLowerCase();
+      const key = dmc
+        ? beadLine
+          ? `${beadLine} ${dmc.code}`
+          : dmc.code
+        : entry.color.hex.toLowerCase();
       const acc =
         group.get(key) ??
         ({
@@ -95,7 +111,7 @@ export function buildShoppingList(
     });
   }
 
-  const toLines = (map: Map<string, Accumulator>, kind: 'thread' | 'drill' | 'paint') =>
+  const toLines = (map: Map<string, Accumulator>, kind: 'thread' | 'drill' | 'bead' | 'paint') =>
     [...map.entries()]
       .map(([key, acc]) => {
         const needed =
@@ -103,7 +119,9 @@ export function buildShoppingList(
             ? Math.ceil(acc.skeins)
             : kind === 'drill'
               ? drillBagsNeeded(acc.count)
-              : 0;
+              : kind === 'bead'
+                ? beadPacksNeeded(acc.count)
+                : 0;
         const have = kind === 'thread' && acc.dmc ? owned(acc.dmc.code) : 0;
         return {
           key,
@@ -122,6 +140,7 @@ export function buildShoppingList(
   return {
     threads: toLines(groups.threads, 'thread'),
     drills: toLines(groups.drills, 'drill'),
+    beads: toLines(groups.beads, 'bead'),
     paints: toLines(groups.paints, 'paint'),
   };
 }
@@ -138,6 +157,10 @@ export function shoppingListText(list: ShoppingList): string {
     lines.push('Drills (bags of 200):');
     for (const l of list.drills)
       lines.push(`- ${l.dmc ? `DMC ${l.key}` : l.hex} ${l.label} × ${l.needed}`);
+  }
+  if (list.beads.length) {
+    lines.push('Fuse beads (packs of 1,000):');
+    for (const l of list.beads) lines.push(`- ${l.key} ${l.label} × ${l.needed}`);
   }
   return lines.length ? lines.join('\n') + '\n' : 'Nothing to buy.\n';
 }

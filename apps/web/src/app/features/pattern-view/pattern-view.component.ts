@@ -19,6 +19,8 @@ import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
 import type { RenderMode } from '@app/domain/pattern/pattern-rules';
 import {
+  boardPegsFor,
+  boldLineInterval,
   cellNoun,
   defaultRenderMode,
   PATTERN_TYPE_LABELS,
@@ -42,6 +44,7 @@ const VIEW_MODES: SegmentedToggleOption<RenderMode>[] = [
   { value: 'x-stitch', label: 'Stitched' },
   { value: 'block', label: 'Block' },
   { value: 'diamond', label: 'Diamond' },
+  { value: 'bead', label: 'Bead' },
   { value: 'paint-by-number', label: 'Paint #' },
 ];
 
@@ -117,6 +120,18 @@ export class PatternViewComponent {
           drillSizeMm: this.settings.drillSizeMm(),
         })
       : this.settings.fabricCount();
+  });
+
+  /** Bold guides at each pegboard edge for fuse beads, every 10 cells otherwise. */
+  protected readonly boldEvery = computed(() => {
+    const p = this.pattern();
+    return p ? boldLineInterval(p.type, p.meta) : 10;
+  });
+
+  /** Fuse beads: pegs along one side of the pegboard; null for other crafts. */
+  protected readonly boardPegs = computed(() => {
+    const p = this.pattern();
+    return p?.type === 'fuse_bead' ? boardPegsFor(p.meta) : null;
   });
 
   protected readonly buyLabel = computed(() => {
