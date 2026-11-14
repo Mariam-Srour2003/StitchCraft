@@ -1,0 +1,50 @@
+<div class="dmc-search">
+  <input
+    class="dmc-search__input"
+    type="search"
+    placeholder="Add DMC thread: code or name…"
+    aria-label="Search DMC threads to add to the palette"
+    [value]="term()"
+    (input)="onTermInput($any($event.target).value)"
+  />
+
+  @if (searching()) {
+    <p class="dmc-search__status">Searching…</p>
+  } @else if (failed()) {
+    <p class="dmc-search__status" role="alert">Couldn't search threads. Try again.</p>
+  } @else if (term().trim() && results().length === 0) {
+    <p class="dmc-search__status">No DMC threads match "{{ term().trim() }}".</p>
+  } @else if (results().length > 0) {
+    <ul class="dmc-search__results" aria-label="DMC thread results">
+      @for (color of results(); track color.code) {
+        <li>
+          <button
+            type="button"
+            class="dmc-search__result"
+            [class.dmc-search__result--in-palette]="paletteCodeSet().has(color.code)"
+            [attr.aria-label]="
+              (paletteCodeSet().has(color.code) ? 'Select ' : 'Add ') +
+              'DMC ' +
+              color.code +
+              ' ' +
+              color.name
+            "
+            (click)="select(color)"
+          >
+            <span class="dmc-search__chip" [style.background]="color.hex"></span>
+            <span class="dmc-search__code">{{ color.code }}</span>
+            <span class="dmc-search__name">{{ color.name }}</span>
+            @if (paletteCodeSet().has(color.code)) {
+              <span class="dmc-search__badge">In palette</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+    @if (total() > results().length) {
+      <p class="dmc-search__status">
+        Showing {{ results().length }} of {{ total() }}. Keep typing to narrow it down.
+      </p>
+    }
+  }
+</div>

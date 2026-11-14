@@ -7,7 +7,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { ExportResponse } from '@stitchcraft/types';
+import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
 import { CellPosition, RenderMode } from '../../shared/canvas/grid-render-math';
 import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
@@ -24,12 +24,15 @@ import {
 import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
 import { Slider } from '../../shared/ui/slider/slider';
 import { Toolbar } from '../../shared/ui/toolbar/toolbar';
+import { DmcThreadSearchComponent } from './dmc-thread-search.component';
 import { EditorStore } from './editor.store';
 import { ExportApiService } from './export-api.service';
 
 const TOOL_OPTIONS: SegmentedToggleOption<GridCanvasTool>[] = [
   { value: 'paint', label: 'Paint' },
   { value: 'erase', label: 'Erase' },
+  { value: 'fill', label: 'Fill' },
+  { value: 'pick', label: 'Pick' },
 ];
 
 const MODE_OPTIONS: SegmentedToggleOption<RenderMode>[] = [
@@ -49,6 +52,7 @@ const DEFAULT_DRILL_SIZE_MM = 2.8;
   imports: [
     Button,
     ColorPicker,
+    DmcThreadSearchComponent,
     GridCanvas,
     IconButton,
     Legend,
@@ -80,6 +84,10 @@ export class EditorComponent {
       : (this.store.meta().fabricCount ?? DEFAULT_FABRIC_COUNT),
   );
 
+  protected readonly paletteDmcCodes = computed(() =>
+    this.store.palette().flatMap((entry) => (isDmcColor(entry.color) ? [entry.color.code] : [])),
+  );
+
   protected readonly exporting = signal(false);
   protected readonly exportResult = signal<ExportResponse | null>(null);
   protected readonly exportError = signal<string | null>(null);
@@ -98,7 +106,7 @@ export class EditorComponent {
   }
 
   onCellEdit(cell: CellPosition): void {
-    this.store.paintCell(cell.x, cell.y);
+    this.store.applyTool(cell.x, cell.y);
   }
 
   applyResize(widthValue: string, heightValue: string): void {

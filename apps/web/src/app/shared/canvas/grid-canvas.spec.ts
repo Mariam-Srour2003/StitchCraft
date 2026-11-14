@@ -64,6 +64,23 @@ describe('GridCanvas', () => {
     expect(spy).toHaveBeenCalledWith({ x: 2, y: 2 });
   });
 
+  it.each(['fill', 'pick'] as const)(
+    'emits only once per click for the single-click %s tool, not on drag',
+    (tool) => {
+      fixture.componentRef.setInput('tool', tool);
+      fixture.detectChanges();
+      const spy = jest.fn();
+      component.cellEdit.subscribe(spy);
+
+      component.onPointerDown(fakePointerEvent(5, 5));
+      component.onPointerMove(fakePointerEvent(45, 45));
+      component.onPointerUp();
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith({ x: 0, y: 0 });
+    },
+  );
+
   it('does not emit cellEdit on pointermove when the pointer is not down', () => {
     const spy = jest.fn();
     component.cellEdit.subscribe(spy);

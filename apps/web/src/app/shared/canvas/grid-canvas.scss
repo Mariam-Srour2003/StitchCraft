@@ -15,4 +15,9 @@
   &--erase canvas {
     cursor: cell;
   }
+
+  &--fill canvas,
+  &--pick canvas {
+    cursor: copy;
+  }
 }

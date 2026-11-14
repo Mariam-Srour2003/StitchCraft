@@ -207,10 +207,93 @@ describe('EditorStore', () => {
       expect(store.grid()[0][0]).toBe(0);
     });
 
-    it('clears undo/redo history (resize is not undoable)', () => {
-      expect(store.canUndo()).toBe(true);
+    it('is undoable and redoable as one step, restoring dimensions and dropped cells', () => {
+      store.paintCell(2, 1);
+      store.endStroke();
+      store.resize(1, 1);
+      expect(store.grid()[0]).toHaveLength(1);
+
+      store.undo();
+      expect(store.width()).toBe(3);
+      expect(store.height()).toBe(2);
+      expect(store.grid()[1][2]).toBe(0); // the cell the shrink dropped is back
+
+      store.redo();
+      expect(store.width()).toBe(1);
+      expect(store.height()).toBe(1);
+    });
+
+    it('keeps earlier paint history undoable across a resize', () => {
       store.resize(4, 4);
+      store.undo(); // the resize
+      store.undo(); // the paint from beforeEach
+      expect(store.grid()[0][0]).toBe(EMPTY_CELL);
       expect(store.canUndo()).toBe(false);
+    });
+
+    it('is a no-op (no history step) when the size does not change', () => {
+      store.undo(); // drop the beforeEach paint step
+      store.resize(3, 2);
+      expect(store.canUndo()).toBe(false);
+    });
+  });
+
+  describe('fill tool', () => {
+    beforeEach(async () => {
+      api.get.mockReturnValueOnce(of(makePattern()));
+      await store.load('pattern-1');
+    });
+
+    it('flood-fills the connected region with the selected color as one undo step', () => {
+      // wall of color 1 down column 1 splits the 3x2 grid
+      store.setSelectedPaletteIndex(1);
+      store.paintCell(1, 0);
+      store.paintCell(1, 1);
+      store.endStroke();
+
+      store.setTool('fill');
+      store.setSelectedPaletteIndex(0);
+      store.applyTool(0, 0);
+
+      expect(Array.from(store.grid()[0])).toEqual([0, 1, EMPTY_CELL]);
+      expect(Array.from(store.grid()[1])).toEqual([0, 1, EMPTY_CELL]);
+      expect(store.dirty()).toBe(true);
+
+      store.undo();
+      expect(store.grid()[0][0]).toBe(EMPTY_CELL);
+      expect(store.grid()[0][1]).toBe(1); // the earlier stroke is untouched
+    });
+
+    it('does nothing with no color selected', () => {
+      store.setTool('fill');
+      store.applyTool(0, 0);
+      expect(store.dirty()).toBe(false);
+      expect(store.canUndo()).toBe(false);
+    });
+  });
+
+  describe('pick tool (eyedropper)', () => {
+    beforeEach(async () => {
+      api.get.mockReturnValueOnce(of(makePattern()));
+      await store.load('pattern-1');
+      store.setSelectedPaletteIndex(1);
+      store.paintCell(2, 1);
+      store.endStroke();
+      store.setSelectedPaletteIndex(0);
+    });
+
+    it('selects the color under the cell and switches back to paint', () => {
+      store.setTool('pick');
+      store.applyTool(2, 1);
+      expect(store.selectedPaletteIndex()).toBe(1);
+      expect(store.tool()).toBe('paint');
+    });
+
+    it('ignores empty cells', () => {
+      store.setTool('pick');
+      store.applyTool(0, 0);
+      expect(store.selectedPaletteIndex()).toBe(0);
+      expect(store.tool()).toBe('pick');
     });
   });
 
@@ -225,6 +308,26 @@ describe('EditorStore', () => {
       expect(entry.symbol).toBeTruthy();
       expect(store.palette()).toHaveLength(1);
       expect(store.selectedPaletteIndex()).toBe(0);
+    });
+
+    it('selects an existing DMC thread instead of adding a duplicate entry', async () => {
+      api.get.mockReturnValueOnce(of(makePattern()));
+      await store.load('pattern-1');
+      const dmc310 = {
+        code: '310',
+        name: 'Black',
+        hex: '#000000',
+        rgb: { r: 0, g: 0, b: 0 },
+        lab: { l: 0, a: 0, b: 0 },
+      };
+
+      const first = store.addColorToPalette(dmc310);
+      store.setSelectedPaletteIndex(0);
+      const second = store.addColorToPalette({ ...dmc310 });
+
+      expect(second.index).toBe(first.index);
+      expect(store.palette()).toHaveLength(3);
+      expect(store.selectedPaletteIndex()).toBe(first.index);
     });
   });
 
