@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import type { Pattern, Project } from '@stitchcraft/types';
+import type { Pattern, Project } from '@hobbygrid/types';
 
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
 import { ProjectsApiService } from '@app/data-access/projects-api.service';

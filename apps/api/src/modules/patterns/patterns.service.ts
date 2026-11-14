@@ -11,7 +11,7 @@ import {
   findGridProblem,
   findPartialStitchProblem,
   Pattern,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePatternDto } from './dto/create-pattern.dto';

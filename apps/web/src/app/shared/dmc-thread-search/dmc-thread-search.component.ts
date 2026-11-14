@@ -19,7 +19,7 @@ import {
   tap,
 } from 'rxjs';
 
-import { DmcColor } from '@stitchcraft/types';
+import { DmcColor } from '@hobbygrid/types';
 
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 

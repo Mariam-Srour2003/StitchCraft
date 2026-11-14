@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { backstitchLength, ExportResponse, isDmcColor } from '@stitchcraft/types';
+import { backstitchLength, ExportResponse, isDmcColor } from '@hobbygrid/types';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';

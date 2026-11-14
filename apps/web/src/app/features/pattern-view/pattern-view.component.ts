@@ -10,9 +10,9 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
-import { backstitchLengthByIndex, decodeGrid, partialThreadByIndex } from '@stitchcraft/types';
+import { estimateMaterial, materialColumnLabel } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
+import { backstitchLengthByIndex, decodeGrid, partialThreadByIndex } from '@hobbygrid/types';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import { SettingsStore } from '@app/core/settings/settings.store';

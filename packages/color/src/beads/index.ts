@@ -1,4 +1,4 @@
-import type { BeadCatalogue, DmcColor } from '@stitchcraft/types';
+import type { BeadCatalogue, DmcColor } from '@hobbygrid/types';
 
 import raw from './bead-catalogues.json';
 

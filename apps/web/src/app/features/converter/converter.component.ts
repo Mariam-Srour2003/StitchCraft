@@ -24,7 +24,7 @@ import {
   timer,
 } from 'rxjs';
 
-import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@stitchcraft/color';
+import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@hobbygrid/color';
 import {
   AdviceFix,
   AnalyzeImageParams,
@@ -34,7 +34,7 @@ import {
   PatternType,
   RelativeBox,
   VisionAdvice,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { encodeJpeg, loadImageFile } from '@app/core/browser/image-io';
 import { ConversionsApiService } from '@app/data-access/conversions-api.service';

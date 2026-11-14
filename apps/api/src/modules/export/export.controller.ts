@@ -1,6 +1,6 @@
 import { Controller, Param, Post, UseGuards } from '@nestjs/common';
 
-import { ExportResponse } from '@stitchcraft/types';
+import { ExportResponse } from '@hobbygrid/types';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';

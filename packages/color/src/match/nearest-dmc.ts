@@ -1,4 +1,4 @@
-import type { DmcColor, Lab, Rgb } from '@stitchcraft/types';
+import type { DmcColor, Lab, Rgb } from '@hobbygrid/types';
 
 import { ciede2000 } from '../difference/ciede2000';
 import { srgbToLab } from '../space/srgb-lab';

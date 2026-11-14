@@ -1,6 +1,6 @@
 import type { Palette as PrismaPalette } from '@prisma/client';
 
-import type { Palette, PaletteEntry } from '@stitchcraft/types';
+import type { Palette, PaletteEntry } from '@hobbygrid/types';
 
 export function toPaletteDto(palette: PrismaPalette): Palette {
   return {

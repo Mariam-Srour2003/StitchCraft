@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
 
-import type { AnalyzeImageParams } from '@stitchcraft/types';
+import type { AnalyzeImageParams } from '@hobbygrid/types';
 
 import type { ImageMeasurements } from './analyze-image';
 import { adviseFromMeasurements, analyzeImage, headAndShoulders } from './analyze-image';

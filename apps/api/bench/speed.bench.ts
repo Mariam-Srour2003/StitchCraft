@@ -11,7 +11,7 @@ import {
   labHistogram,
   nearestDmc,
   srgbToLab,
-} from '@stitchcraft/color';
+} from '@hobbygrid/color';
 
 import { buildGridFromPixels } from '../src/modules/imaging/build-grid-from-pixels';
 import { stitchPixels } from '../src/modules/imaging/stitch-pixels';

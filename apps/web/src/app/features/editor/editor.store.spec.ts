@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import type { Pattern } from '@stitchcraft/types';
-import { EMPTY_CELL, encodeGrid } from '@stitchcraft/types';
+import type { Pattern } from '@hobbygrid/types';
+import { EMPTY_CELL, encodeGrid } from '@hobbygrid/types';
 
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
 

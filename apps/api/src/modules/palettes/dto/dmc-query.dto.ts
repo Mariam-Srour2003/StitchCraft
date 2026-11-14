@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-import { DmcQueryDto as DmcQueryDtoShape } from '@stitchcraft/types';
+import { DmcQueryDto as DmcQueryDtoShape } from '@hobbygrid/types';
 
 export class DmcQueryDto implements DmcQueryDtoShape {
   @IsOptional()

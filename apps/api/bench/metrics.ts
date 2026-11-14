@@ -1,6 +1,6 @@
-import { ciede2000, srgbToLab } from '@stitchcraft/color';
-import type { Lab, Rgb } from '@stitchcraft/types';
-import { decodeGrid, EMPTY_CELL, type EncodedRow, type PaletteEntry } from '@stitchcraft/types';
+import { ciede2000, srgbToLab } from '@hobbygrid/color';
+import type { Lab, Rgb } from '@hobbygrid/types';
+import { decodeGrid, EMPTY_CELL, type EncodedRow, type PaletteEntry } from '@hobbygrid/types';
 
 export interface PatternMetrics {
   /** Colours actually used in the grid. */

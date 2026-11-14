@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import type { AdviceFix, AdviceSeverity, ImageAnalysis, VisionAdvice } from '@stitchcraft/types';
+import type { AdviceFix, AdviceSeverity, ImageAnalysis, VisionAdvice } from '@hobbygrid/types';
 
 import { Button } from '@app/shared/ui/button/button';
 

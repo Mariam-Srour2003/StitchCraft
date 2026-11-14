@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import type { Pattern } from '@stitchcraft/types';
-import { encodeGrid } from '@stitchcraft/types';
+import type { Pattern } from '@hobbygrid/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { PatternsApiService } from '@app/data-access/patterns-api.service';
 

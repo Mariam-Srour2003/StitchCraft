@@ -52,9 +52,9 @@ model Pattern {
   type      PatternType
   width     Int
   height    Int
-  /// PaletteEntry[] (see @stitchcraft/types) - stored as JSON, validated at the DTO layer
+  /// PaletteEntry[] (see @hobbygrid/types) - stored as JSON, validated at the DTO layer
   palette   Json
-  /// EncodedRow[] run-length-encoded grid rows (see @stitchcraft/types)
+  /// EncodedRow[] run-length-encoded grid rows (see @hobbygrid/types)
   grid      Json
   /// PatternMeta (fabricCount, drillSizeMm, createdFrom, ...)
   meta      Json
@@ -76,7 +76,7 @@ model Palette {
   ownerId   String
   kind      PaletteKind @default(custom)
   name      String
-  /// PaletteEntry[] with CustomColor entries (see @stitchcraft/types)
+  /// PaletteEntry[] with CustomColor entries (see @hobbygrid/types)
   entries   Json
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -99,7 +99,7 @@ model ConversionJob {
   userId         String
   status         ConversionJobStatus @default(queued)
   progress       Int                 @default(0)
-  /// ConversionParams (see @stitchcraft/types)
+  /// ConversionParams (see @hobbygrid/types)
   params         Json
   resultPatternId String?
   error          String?

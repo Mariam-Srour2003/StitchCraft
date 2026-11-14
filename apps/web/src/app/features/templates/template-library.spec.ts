@@ -1,4 +1,4 @@
-import { isDmcColor } from '@stitchcraft/types';
+import { isDmcColor } from '@hobbygrid/types';
 
 import { findTemplate, TEMPLATE_CATEGORIES, TEMPLATES } from './template-library';
 

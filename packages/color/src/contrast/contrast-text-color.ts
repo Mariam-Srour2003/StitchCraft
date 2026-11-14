@@ -1,4 +1,4 @@
-import type { Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@hobbygrid/types';
 
 /**
  * Picks readable black or white text for a glyph/label drawn on top of a

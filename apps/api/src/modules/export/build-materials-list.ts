@@ -1,12 +1,12 @@
-import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
+import { estimateMaterial, materialColumnLabel } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
 import {
   backstitchLengthByIndex,
   isDmcColor,
   partialCountByIndex,
   partialThreadByIndex,
   toCsv,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import { countPaletteUsage } from './count-palette-usage';
 
@@ -15,7 +15,7 @@ import { countPaletteUsage } from './count-palette-usage';
  * per color, sorted by count descending (buy the most-needed thread first).
  * Cross-stitch, diamond and fuse-bead patterns get a final "Skeins" /
  * "Drill bags" / "Bead packs" column
- * from the shared `estimateMaterial` model in `@stitchcraft/color`.
+ * from the shared `estimateMaterial` model in `@hobbygrid/color`.
  */
 export function buildMaterialsListCsv(pattern: Pattern): string {
   const counts = countPaletteUsage(pattern);

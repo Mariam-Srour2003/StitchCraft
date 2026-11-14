@@ -1,4 +1,4 @@
-import { encodeGrid } from '@stitchcraft/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { blankProgress, decodeProgress, encodeProgress } from './progress';
 

@@ -1,5 +1,5 @@
-import type { Rgb } from '@stitchcraft/types';
-import { decodeGrid } from '@stitchcraft/types';
+import type { Rgb } from '@hobbygrid/types';
+import { decodeGrid } from '@hobbygrid/types';
 
 import {
   buildGridFromPixels,

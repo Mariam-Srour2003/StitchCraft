@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { CreatePaletteDto, DmcColor, PaginatedResponse, Palette } from '@stitchcraft/types';
+import { CreatePaletteDto, DmcColor, PaginatedResponse, Palette } from '@hobbygrid/types';
 
 import { ApiClient } from '@app/core/api/api-client.service';
 

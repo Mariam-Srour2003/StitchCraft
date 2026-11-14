@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
-import { stitchesPerSkein } from '@stitchcraft/color';
+import { stitchesPerSkein } from '@hobbygrid/color';
 
 import { ConfirmService } from '@app/core/dialog/confirm.service';
 import {

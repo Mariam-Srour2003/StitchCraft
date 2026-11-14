@@ -6,7 +6,7 @@ test('sign in, create a project and pattern, paint it, save, and export', async 
 
   // --- Sign in (through the real form, not seeded tokens - covers the login UI too) ---
   await page.goto('/sign-in');
-  await page.getByLabel(/email/i).fill('e2e@stitchcraft.dev');
+  await page.getByLabel(/email/i).fill('e2e@hobbygrid.dev');
   await page.getByLabel(/password/i).fill('password123');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/projects$/);

@@ -8,8 +8,8 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
-    '^@stitchcraft/types$': '<rootDir>/../../packages/types/src/index.ts',
-    '^@stitchcraft/color$': '<rootDir>/../../packages/color/src/index.ts',
+    '^@hobbygrid/types$': '<rootDir>/../../packages/types/src/index.ts',
+    '^@hobbygrid/color$': '<rootDir>/../../packages/color/src/index.ts',
   },
   coverageDirectory: '../../coverage/apps/api',
 };

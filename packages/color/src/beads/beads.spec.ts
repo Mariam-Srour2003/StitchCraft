@@ -1,4 +1,4 @@
-import { catalogueLabel } from '@stitchcraft/types';
+import { catalogueLabel } from '@hobbygrid/types';
 
 import { srgbToLab } from '../space/srgb-lab';
 import { BEAD_CATALOGUES, beadColorsForConversion, findBeadCatalogue } from './index';

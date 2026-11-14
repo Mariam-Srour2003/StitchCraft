@@ -1,4 +1,4 @@
-import type { Backstitch } from '@stitchcraft/types';
+import type { Backstitch } from '@hobbygrid/types';
 
 import {
   clipLines,

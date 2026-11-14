@@ -1,4 +1,4 @@
-import type { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@hobbygrid/types';
 
 import { ciede2000 } from '../difference/ciede2000';
 

@@ -1,6 +1,6 @@
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
-import { RegisterDto as RegisterDtoShape } from '@stitchcraft/types';
+import { RegisterDto as RegisterDtoShape } from '@hobbygrid/types';
 
 export class RegisterDto implements RegisterDtoShape {
   @IsEmail()

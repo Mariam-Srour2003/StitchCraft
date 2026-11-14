@@ -1,14 +1,14 @@
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
-import { BEAD_CATALOGUE_IDS } from '@stitchcraft/color';
+import { BEAD_CATALOGUE_IDS } from '@hobbygrid/color';
 import {
   DITHER_MODES,
   DitherMode,
   MAX_PATTERN_DIMENSION,
   PATTERN_TYPE_VALUES,
   PatternType,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 /** Multipart fields for POST /conversions/analyze (the image is the `file` field). */
 export class AnalyzeImageDto {

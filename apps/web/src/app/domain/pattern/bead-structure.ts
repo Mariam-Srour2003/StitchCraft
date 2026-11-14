@@ -1,4 +1,4 @@
-import { EMPTY_CELL } from '@stitchcraft/types';
+import { EMPTY_CELL } from '@hobbygrid/types';
 
 export interface BeadStructure {
   /**

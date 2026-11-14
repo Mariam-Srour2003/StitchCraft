@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 
-import { decodeGrid } from '@stitchcraft/types';
+import { decodeGrid } from '@hobbygrid/types';
 
 import type { PrismaService } from '../../prisma/prisma.service';
 import { PatternsService } from './patterns.service';

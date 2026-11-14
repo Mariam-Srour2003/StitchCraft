@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import type { AdviceFix, ImageAnalysis } from '@stitchcraft/types';
+import type { AdviceFix, ImageAnalysis } from '@hobbygrid/types';
 
 import { PhotoAdvice } from './photo-advice';
 

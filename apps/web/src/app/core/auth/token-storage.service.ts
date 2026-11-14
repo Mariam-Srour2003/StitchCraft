@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 
-import { AuthTokens } from '@stitchcraft/types';
+import { AuthTokens } from '@hobbygrid/types';
 
-const ACCESS_TOKEN_KEY = 'stitchcraft.accessToken';
-const REFRESH_TOKEN_KEY = 'stitchcraft.refreshToken';
+const ACCESS_TOKEN_KEY = 'hobbygrid.accessToken';
+const REFRESH_TOKEN_KEY = 'hobbygrid.refreshToken';
 
 /** Isolates localStorage access so the rest of the app never touches it directly. */
 @Injectable({ providedIn: 'root' })

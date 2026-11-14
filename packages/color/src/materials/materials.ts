@@ -1,4 +1,4 @@
-import type { PatternType } from '@stitchcraft/types';
+import type { PatternType } from '@hobbygrid/types';
 
 /**
  * Shopping-quantity estimates: how many skeins of floss (cross-stitch) or bags

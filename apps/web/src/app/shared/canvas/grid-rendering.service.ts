@@ -8,7 +8,7 @@ import {
   PART_SEGMENT,
   PartialStitch,
   RegionMap,
-} from '@stitchcraft/types';
+} from '@hobbygrid/types';
 
 import {
   colorHexForCell,
@@ -19,7 +19,7 @@ import {
 } from './grid-render-math';
 
 export interface GridRenderParams {
-  /** Decoded grid rows; a cell value of -1 (EMPTY_CELL from @stitchcraft/types) means unpainted. */
+  /** Decoded grid rows; a cell value of -1 (EMPTY_CELL from @hobbygrid/types) means unpainted. */
   grid: readonly (Int16Array | number[])[];
   width: number;
   height: number;

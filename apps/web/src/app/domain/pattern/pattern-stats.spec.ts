@@ -1,5 +1,5 @@
-import type { Pattern } from '@stitchcraft/types';
-import { encodeGrid } from '@stitchcraft/types';
+import type { Pattern } from '@hobbygrid/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { hoursRemaining, patternStats } from './pattern-stats';
 

@@ -1,8 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { boardsNeeded } from '@stitchcraft/color';
-import { PatternType } from '@stitchcraft/types';
+import { boardsNeeded } from '@hobbygrid/color';
+import { PatternType } from '@hobbygrid/types';
 
 import { cellNoun } from '@app/domain/pattern/pattern-rules';
 

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import type { AnalyzeImageParams, VisionAdvice } from '@stitchcraft/types';
+import type { AnalyzeImageParams, VisionAdvice } from '@hobbygrid/types';
 
 import { AiProvider, VisionAdviceError } from './ai-provider';
 

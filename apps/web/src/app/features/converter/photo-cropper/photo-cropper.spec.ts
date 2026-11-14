@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import type { RelativeBox } from '@stitchcraft/types';
+import type { RelativeBox } from '@hobbygrid/types';
 
 import { PhotoCropper } from './photo-cropper';
 

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { catalogueLabel, PaletteEntry } from '@stitchcraft/types';
+import { catalogueLabel, PaletteEntry } from '@hobbygrid/types';
 
 export interface LegendRow {
   entry: PaletteEntry;

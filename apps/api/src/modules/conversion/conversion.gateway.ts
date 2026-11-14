@@ -8,7 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-import { ConversionProgressEvent } from '@stitchcraft/types';
+import { ConversionProgressEvent } from '@hobbygrid/types';
 
 /**
  * Progress push for an in-flight conversion job. Optional enhancement over

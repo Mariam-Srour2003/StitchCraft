@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 
-import type { Pattern, RegionMap } from '@stitchcraft/types';
-import { catalogueLabel, computeRegions, decodeGrid } from '@stitchcraft/types';
+import type { Pattern, RegionMap } from '@hobbygrid/types';
+import { catalogueLabel, computeRegions, decodeGrid } from '@hobbygrid/types';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;

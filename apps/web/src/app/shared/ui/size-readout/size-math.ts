@@ -1,4 +1,4 @@
-import type { PatternType } from '@stitchcraft/types';
+import type { PatternType } from '@hobbygrid/types';
 
 export interface FinishedSize {
   inches: { width: number; height: number };

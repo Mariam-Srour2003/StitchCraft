@@ -13,7 +13,7 @@ FROM deps AS build
 COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
-RUN pnpm --filter @stitchcraft/web run build -- --configuration production
+RUN pnpm --filter @hobbygrid/web run build -- --configuration production
 
 FROM nginx:1.27-alpine AS runtime
 COPY --from=build /workspace/dist/apps/web/browser /usr/share/nginx/html

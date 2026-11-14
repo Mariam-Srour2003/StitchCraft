@@ -24,8 +24,8 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@stitchcraft/types": ["packages/types/src/index.ts"],
-      "@stitchcraft/color": ["packages/color/src/index.ts"]
+      "@hobbygrid/types": ["packages/types/src/index.ts"],
+      "@hobbygrid/color": ["packages/color/src/index.ts"]
     }
   }
 }

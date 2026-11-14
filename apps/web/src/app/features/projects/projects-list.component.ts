@@ -3,8 +3,8 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@stitchcraft/color';
-import { Pattern, PatternType, Project } from '@stitchcraft/types';
+import { BEAD_CATALOGUES, DEFAULT_BEAD_CATALOGUE_ID } from '@hobbygrid/color';
+import { Pattern, PatternType, Project } from '@hobbygrid/types';
 
 import { SettingsStore } from '@app/core/settings/settings.store';
 import { PatternsApiService } from '@app/data-access/patterns-api.service';

@@ -3,9 +3,9 @@ import {
   beadPacksNeeded,
   drillBagsNeeded,
   skeinFraction,
-} from '@stitchcraft/color';
-import type { DmcColor, Pattern } from '@stitchcraft/types';
-import { backstitchLengthByIndex, isDmcColor, partialThreadByIndex } from '@stitchcraft/types';
+} from '@hobbygrid/color';
+import type { DmcColor, Pattern } from '@hobbygrid/types';
+import { backstitchLengthByIndex, isDmcColor, partialThreadByIndex } from '@hobbygrid/types';
 
 import { beadCatalogueFor } from '@app/domain/pattern/pattern-rules';
 import { patternStats } from '@app/domain/pattern/pattern-stats';

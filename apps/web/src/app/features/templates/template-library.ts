@@ -1,6 +1,6 @@
-import { assignSymbols, findDmcByCode } from '@stitchcraft/color';
-import type { PaletteEntry, PatternType } from '@stitchcraft/types';
-import { EMPTY_CELL } from '@stitchcraft/types';
+import { assignSymbols, findDmcByCode } from '@hobbygrid/color';
+import type { PaletteEntry, PatternType } from '@hobbygrid/types';
+import { EMPTY_CELL } from '@hobbygrid/types';
 
 import type { CellPosition } from '@app/domain/grid/cell';
 import { measureText, textPoints } from '@app/domain/grid/pixel-font';

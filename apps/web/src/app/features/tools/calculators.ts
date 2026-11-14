@@ -1,4 +1,4 @@
-import { drillBagsNeeded, skeinsNeeded, stitchesPerSkein } from '@stitchcraft/color';
+import { drillBagsNeeded, skeinsNeeded, stitchesPerSkein } from '@hobbygrid/color';
 
 const CM_PER_INCH = 2.54;
 

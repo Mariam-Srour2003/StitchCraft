@@ -1,4 +1,4 @@
-import type { Lab, Rgb } from '@stitchcraft/types';
+import type { Lab, Rgb } from '@hobbygrid/types';
 
 import { labToSrgb, srgbToLab } from '../space/srgb-lab';
 

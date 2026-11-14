@@ -1,5 +1,5 @@
-import type { EncodedRow, Pattern } from '@stitchcraft/types';
-import { countCellsByIndex } from '@stitchcraft/types';
+import type { EncodedRow, Pattern } from '@hobbygrid/types';
+import { countCellsByIndex } from '@hobbygrid/types';
 
 export interface PatternStats {
   /** Painted cells (stitches / drills / painted squares). */

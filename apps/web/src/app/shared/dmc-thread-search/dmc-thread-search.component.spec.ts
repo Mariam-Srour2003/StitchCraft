@@ -2,7 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
-import type { DmcColor, PaginatedResponse } from '@stitchcraft/types';
+import type { DmcColor, PaginatedResponse } from '@hobbygrid/types';
 
 import { PalettesApiService } from '@app/data-access/palettes-api.service';
 

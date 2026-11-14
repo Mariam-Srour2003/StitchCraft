@@ -1,5 +1,5 @@
 {
-  "name": "@stitchcraft/web",
+  "name": "@hobbygrid/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,8 +9,8 @@
     "lint": "ng lint"
   },
   "dependencies": {
-    "@stitchcraft/types": "workspace:*",
-    "@stitchcraft/color": "workspace:*",
+    "@hobbygrid/types": "workspace:*",
+    "@hobbygrid/color": "workspace:*",
     "@angular/animations": "^18.2.0",
     "@angular/common": "^18.2.0",
     "@angular/compiler": "^18.2.0",

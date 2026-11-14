@@ -1,8 +1,8 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { findBeadCatalogue } from '@stitchcraft/color';
-import type { BeadCatalogue, DmcColor } from '@stitchcraft/types';
+import { findBeadCatalogue } from '@hobbygrid/color';
+import type { BeadCatalogue, DmcColor } from '@hobbygrid/types';
 
 import { BeadColorSearchComponent } from './bead-color-search.component';
 

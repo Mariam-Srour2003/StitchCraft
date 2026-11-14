@@ -1,6 +1,6 @@
-import { findBeadCatalogue, findDmcByCode } from '@stitchcraft/color';
-import type { Pattern } from '@stitchcraft/types';
-import { encodeGrid } from '@stitchcraft/types';
+import { findBeadCatalogue, findDmcByCode } from '@hobbygrid/color';
+import type { Pattern } from '@hobbygrid/types';
+import { encodeGrid } from '@hobbygrid/types';
 
 import { buildShoppingList, shoppingListText } from './shopping-list';
 

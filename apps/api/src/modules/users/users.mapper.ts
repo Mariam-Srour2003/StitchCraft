@@ -1,6 +1,6 @@
 import type { User as PrismaUser } from '@prisma/client';
 
-import type { User } from '@stitchcraft/types';
+import type { User } from '@hobbygrid/types';
 
 export function toUserDto(user: PrismaUser): User {
   return {

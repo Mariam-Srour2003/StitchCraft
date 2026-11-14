@@ -2,7 +2,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import type { ExportResponse, Pattern } from '@stitchcraft/types';
+import type { ExportResponse, Pattern } from '@hobbygrid/types';
 
 import { ExportApiService } from '@app/data-access/export-api.service';
 import { PalettesApiService } from '@app/data-access/palettes-api.service';

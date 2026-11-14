@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import type { Pattern, Project } from '@stitchcraft/types';
+import type { Pattern, Project } from '@hobbygrid/types';
 
 import { PatternsApiService } from './patterns-api.service';
 import { ProjectsApiService } from './projects-api.service';

@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
-import type { ConversionJob, ImageAnalysis } from '@stitchcraft/types';
+import type { ConversionJob, ImageAnalysis } from '@hobbygrid/types';
 
 import { encodeJpeg, loadImageFile } from '@app/core/browser/image-io';
 import { ConversionsApiService } from '@app/data-access/conversions-api.service';

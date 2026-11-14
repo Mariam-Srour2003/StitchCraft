@@ -1,4 +1,4 @@
-import type { Rgb } from '@stitchcraft/types';
+import type { Rgb } from '@hobbygrid/types';
 
 import { srgbToLab } from '../space/srgb-lab';
 import { ditherToPalette } from './error-diffusion';

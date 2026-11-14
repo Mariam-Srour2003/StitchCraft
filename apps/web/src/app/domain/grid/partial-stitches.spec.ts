@@ -1,5 +1,5 @@
-import type { PartialStitch } from '@stitchcraft/types';
-import { findPartialStitchProblem, PART_SEGMENT } from '@stitchcraft/types';
+import type { PartialStitch } from '@hobbygrid/types';
+import { findPartialStitchProblem, PART_SEGMENT } from '@hobbygrid/types';
 
 import {
   clipPartials,

@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 
-import { ConversionJob, ImageAnalysis, VisionAdvice, VisionAdviceStatus } from '@stitchcraft/types';
+import { ConversionJob, ImageAnalysis, VisionAdvice, VisionAdviceStatus } from '@hobbygrid/types';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';

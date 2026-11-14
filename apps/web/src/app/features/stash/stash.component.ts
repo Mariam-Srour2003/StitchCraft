@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import type { DmcColor } from '@stitchcraft/types';
+import type { DmcColor } from '@hobbygrid/types';
 
 import { AuthStore } from '@app/core/auth/auth.store';
 import { downloadText } from '@app/core/browser/download';

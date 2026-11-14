@@ -1,6 +1,6 @@
-import { defaultBoardPegs, DEFAULT_BEAD_CATALOGUE_ID, findBeadCatalogue } from '@stitchcraft/color';
-import type { BeadCatalogue, PatternMeta, PatternType } from '@stitchcraft/types';
-import { PATTERN_TYPE_VALUES } from '@stitchcraft/types';
+import { defaultBoardPegs, DEFAULT_BEAD_CATALOGUE_ID, findBeadCatalogue } from '@hobbygrid/color';
+import type { BeadCatalogue, PatternMeta, PatternType } from '@hobbygrid/types';
+import { PATTERN_TYPE_VALUES } from '@hobbygrid/types';
 
 /**
  * Per-pattern-type rules, in one place. Every screen that needs "what does
