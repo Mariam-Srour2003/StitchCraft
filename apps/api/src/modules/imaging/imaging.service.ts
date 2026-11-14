@@ -2,11 +2,22 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import sharp from 'sharp';
 
-import { AnalyzeImageParams, ImageAnalysis, PatternType, VisionAdvice } from '@stitchcraft/types';
+import {
+  AnalyzeImageParams,
+  DitherMode,
+  ImageAnalysis,
+  PatternType,
+  VisionAdvice,
+} from '@stitchcraft/types';
 
 import { AI_PROVIDER, AiProvider } from './ai-provider';
 import { analyzeImage } from './analyze-image';
-import { buildGridFromPixels, BuildGridResult, minPaintAreaCells } from './build-grid-from-pixels';
+import {
+  buildGridFromPixels,
+  BuildGridResult,
+  effectiveDither,
+  minPaintAreaCells,
+} from './build-grid-from-pixels';
 import { stitchPixels } from './stitch-pixels';
 
 export interface ConvertImageOptions {
@@ -19,6 +30,8 @@ export interface ConvertImageOptions {
   enhance?: boolean;
   /** Remove confetti stitches and fold barely-used colours into close ones. */
   cleanup?: boolean;
+  /** Colour blending; ignored for paint by number, which needs solid areas. */
+  dither?: DitherMode;
   /** Paint by number also merges areas too small to paint when cleaning up. */
   targetType?: PatternType;
 }
@@ -45,6 +58,7 @@ export class ImagingService {
     const pixels = await stitchPixels(working, opts.width, opts.height, opts.enhance);
     return buildGridFromPixels(pixels, opts.width, opts.height, opts.colorCount, {
       cleanup: opts.cleanup,
+      dither: effectiveDither(opts.targetType, opts.dither),
       minRegionSize:
         opts.targetType === 'color_by_number'
           ? minPaintAreaCells(opts.width * opts.height)

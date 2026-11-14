@@ -1,6 +1,7 @@
 import {
   assignSymbols,
   createNearestColorMatcher,
+  ditherToPalette,
   DMC_COLORS,
   fillPalette,
   kMeansQuantize,
@@ -9,7 +10,14 @@ import {
   planRareColorMerge,
   srgbToLab,
 } from '@stitchcraft/color';
-import type { DmcColor, EncodedRow, PaletteEntry, Rgb } from '@stitchcraft/types';
+import type {
+  DitherMode,
+  DmcColor,
+  EncodedRow,
+  PaletteEntry,
+  PatternType,
+  Rgb,
+} from '@stitchcraft/types';
 import {
   countDecodedCells,
   EMPTY_CELL,
@@ -31,6 +39,19 @@ export interface BuildGridOptions {
    * neighbour - paint by number needs areas big enough to paint.
    */
   minRegionSize?: number;
+  /** Colour blending (error diffusion) when mapping pixels to threads. */
+  dither?: DitherMode;
+}
+
+/** Share of each stitch's colour miss passed on to its neighbours, per mode. */
+export const DITHER_STRENGTH: Record<DitherMode, number> = { none: 0, light: 0.5, full: 1 };
+
+/** Paint by number needs solid areas to paint, so it never blends colours. */
+export function effectiveDither(
+  targetType: PatternType | undefined,
+  dither: DitherMode | undefined,
+): DitherMode {
+  return targetType === 'color_by_number' ? 'none' : (dither ?? 'none');
 }
 
 export interface CleanupReport {
@@ -86,7 +107,8 @@ export function chooseThreads(pixels: readonly Rgb[], colorCount: number): DmcCo
 
 /**
  * The deterministic core of image conversion: choose threads (quantize ->
- * DMC-match -> dedupe -> top up) -> map pixels to threads ->
+ * DMC-match -> dedupe -> top up) -> map pixels to threads (optionally
+ * blended) ->
  * (cleanup) -> assign symbols -> build the grid. Pure (no
  * sharp/I-O), so it's unit-testable against synthetic pixel arrays instead of
  * real image files. `ImagingService.convertImageToGrid` wraps this with the
@@ -105,20 +127,24 @@ export function buildGridFromPixels(
 
   let colors = chooseThreads(pixels, colorCount);
 
-  // Every pixel goes to its nearest *thread*. (It used to go to its nearest
-  // k-means centre and inherit that centre's thread, which misplaces pixels
-  // whenever a centre sits between two threads.)
-  const nearestThread = createNearestColorMatcher(
-    colors.map((c) => c.lab),
-    srgbToLab,
-  );
+  // Every pixel goes to its nearest *thread* (or, with blending on, to the
+  // thread error diffusion picks). It used to go to its nearest k-means
+  // centre and inherit that centre's thread, which misplaces pixels whenever
+  // a centre sits between two threads.
+  const threadLabs = colors.map((c) => c.lab);
+  const strength = DITHER_STRENGTH[options.dither ?? 'none'];
   let rows: Int16Array[] = [];
-  for (let y = 0; y < height; y++) {
-    const row = new Int16Array(width);
-    for (let x = 0; x < width; x++) {
-      row[x] = nearestThread(pixels[y * width + x]);
+  if (strength > 0) {
+    rows = ditherToPalette(pixels, width, height, threadLabs, strength, srgbToLab);
+  } else {
+    const nearestThread = createNearestColorMatcher(threadLabs, srgbToLab);
+    for (let y = 0; y < height; y++) {
+      const row = new Int16Array(width);
+      for (let x = 0; x < width; x++) {
+        row[x] = nearestThread(pixels[y * width + x]);
+      }
+      rows.push(row);
     }
-    rows.push(row);
   }
 
   let cleanup: CleanupReport | undefined;

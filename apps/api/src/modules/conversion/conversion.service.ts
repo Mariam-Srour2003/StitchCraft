@@ -42,6 +42,7 @@ export class ConversionsService {
       useAiUpscale: dto.useAiUpscale,
       enhance: dto.enhance,
       cleanup: dto.cleanup,
+      dither: dto.dither,
     };
 
     const conversionJob = await this.prisma.conversionJob.create({

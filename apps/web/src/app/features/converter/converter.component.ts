@@ -27,6 +27,7 @@ import {
 import {
   AdviceFix,
   AnalyzeImageParams,
+  DitherMode,
   ImageAnalysis,
   MAX_PATTERN_DIMENSION,
   PatternType,
@@ -68,6 +69,17 @@ const TARGET_TYPE_OPTIONS: SegmentedToggleOption<PatternType>[] = [
   { value: 'color_by_number', label: 'Color by Number' },
   { value: 'diamond', label: 'Diamond' },
 ];
+
+const DITHER_OPTIONS: SegmentedToggleOption<DitherMode>[] = [
+  { value: 'none', label: 'Off' },
+  { value: 'light', label: 'Light' },
+  { value: 'full', label: 'Full' },
+];
+
+/** Blending suits crafts placed piece by piece; stitching wants solid areas. */
+function defaultDither(type: PatternType): DitherMode {
+  return type === 'diamond' ? 'light' : 'none';
+}
 
 type CropShape = 'free' | 'square' | 'landscape' | 'portrait';
 const CROP_SHAPE_OPTIONS: SegmentedToggleOption<CropShape>[] = [
@@ -134,6 +146,7 @@ export class ConverterComponent {
   private readonly analysisDebounceMs = inject(ANALYSIS_DEBOUNCE_MS);
 
   protected readonly targetTypeOptions = TARGET_TYPE_OPTIONS;
+  protected readonly ditherOptions = DITHER_OPTIONS;
   protected readonly cropShapeOptions = CROP_SHAPE_OPTIONS;
   protected readonly previewOptions = PREVIEW_OPTIONS;
   protected readonly maxDimension = MAX_PATTERN_DIMENSION;
@@ -156,6 +169,9 @@ export class ConverterComponent {
   protected readonly colorCount = signal(24);
   protected readonly enhance = signal(false);
   protected readonly cleanup = signal(true);
+  protected readonly dither = signal<DitherMode>('none');
+  /** Once the user picks a blending level, changing pattern type stops resetting it. */
+  private ditherChosen = false;
 
   protected readonly analysis = signal<ImageAnalysis | null>(null);
   protected readonly analysisState = signal<AdviceState>('idle');
@@ -340,6 +356,13 @@ export class ConverterComponent {
 
   setTargetType(type: PatternType): void {
     this.targetType.set(type);
+    if (!this.ditherChosen) this.dither.set(defaultDither(type));
+    this.requestAnalysis();
+  }
+
+  setDither(mode: DitherMode): void {
+    this.dither.set(mode);
+    this.ditherChosen = true;
     this.requestAnalysis();
   }
 
@@ -498,6 +521,7 @@ export class ConverterComponent {
       colorCount: this.colorCount(),
       enhance: this.enhance(),
       cleanup: this.cleanup(),
+      dither: this.dither(),
     };
   }
 

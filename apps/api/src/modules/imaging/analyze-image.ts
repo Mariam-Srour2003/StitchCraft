@@ -17,7 +17,7 @@ import {
   removeStrayStitches,
 } from '@stitchcraft/types';
 
-import { buildGridFromPixels, minPaintAreaCells } from './build-grid-from-pixels';
+import { buildGridFromPixels, effectiveDither, minPaintAreaCells } from './build-grid-from-pixels';
 import cascadeJson from './faces/frontalface-alt2.json';
 import type { Box, GrayImage, HaarCascade } from './faces/haar-cascade';
 import { detectMultiScale, toGray } from './faces/haar-cascade';
@@ -183,6 +183,7 @@ async function simulateConversion(
   const pixels = await stitchPixels(oriented, width, height, target.enhance);
   const result = buildGridFromPixels(pixels, width, height, target.colorCount, {
     cleanup: target.cleanup,
+    dither: effectiveDither(target.targetType, target.dither),
     // the trial grid can be smaller than the pattern; scale the area threshold with it
     minRegionSize:
       target.targetType === 'color_by_number'
@@ -441,7 +442,18 @@ export function adviseFromMeasurements(
   } else {
     const confettiLimit = target.targetType === 'diamond' ? 0.2 : 0.12;
     const percent = Math.round(m.confetti * 100);
-    if (m.confetti > confettiLimit / 2 && target.cleanup) {
+    if (effectiveDither(target.targetType, target.dither) !== 'none') {
+      // Blending scatters stitches on purpose; warning about it would only
+      // talk people out of the setting they just chose.
+      add({
+        code: 'blending',
+        severity: 'info',
+        title: 'Colour blending is on',
+        detail:
+          'Neighbouring threads are mixed so gradients look smooth from a distance. ' +
+          'Expect more single stitches than usual; turn blending off for solid areas that are quicker to stitch.',
+      });
+    } else if (m.confetti > confettiLimit / 2 && target.cleanup) {
       add({
         code: 'confetti-cleaned',
         severity: 'good',

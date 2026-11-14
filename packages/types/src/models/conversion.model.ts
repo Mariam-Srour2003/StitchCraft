@@ -2,6 +2,14 @@ import type { PatternType } from './pattern.model';
 
 export type ConversionJobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
+/**
+ * Colour blending: how much each stitch's colour miss is passed on to its
+ * neighbours (error diffusion). Off keeps solid areas; light and full blend
+ * threads so gradients don't band, at the cost of more scattered stitches.
+ */
+export type DitherMode = 'none' | 'light' | 'full';
+export const DITHER_MODES: readonly DitherMode[] = ['none', 'light', 'full'];
+
 export interface ConversionParams {
   sourceImageRef: string;
   targetType: PatternType;
@@ -15,6 +23,8 @@ export interface ConversionParams {
   enhance?: boolean;
   /** Tidy the result: remove lone "confetti" stitches, merge barely-used colours. */
   cleanup?: boolean;
+  /** Colour blending; 'none' when absent. Ignored for paint by number. */
+  dither?: DitherMode;
 }
 
 export interface ConversionJob {

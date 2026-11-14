@@ -64,5 +64,6 @@ function imageForm(file: Blob, fileName: string, params: AnalyzeImageParams): Fo
   formData.append('colorCount', String(params.colorCount));
   if (params.enhance !== undefined) formData.append('enhance', String(params.enhance));
   if (params.cleanup !== undefined) formData.append('cleanup', String(params.cleanup));
+  if (params.dither !== undefined) formData.append('dither', params.dither);
   return formData;
 }
