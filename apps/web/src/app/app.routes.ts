@@ -1,67 +1,71 @@
 import type { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { unsavedChangesGuard } from './features/editor/unsaved-changes.guard';
+
+import { authGuard } from '@app/core/auth/auth.guard';
+import { unsavedChangesGuard } from '@app/features/editor/unsaved-changes.guard';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     title: 'StitchCraft',
-    loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+    loadComponent: () => import('@app/features/home/home.component').then((m) => m.HomeComponent),
   },
   {
     path: 'sign-in',
     title: 'Sign in · StitchCraft',
-    loadComponent: () => import('./features/auth/sign-in.component').then((m) => m.SignInComponent),
+    loadComponent: () =>
+      import('@app/features/auth/sign-in.component').then((m) => m.SignInComponent),
   },
   {
     path: 'register',
     title: 'Create account · StitchCraft',
     loadComponent: () =>
-      import('./features/auth/register.component').then((m) => m.RegisterComponent),
+      import('@app/features/auth/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'projects',
     title: 'Projects · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/projects/projects-list.component').then((m) => m.ProjectsListComponent),
+      import('@app/features/projects/projects-list.component').then((m) => m.ProjectsListComponent),
   },
   {
     path: 'templates',
     title: 'Templates · StitchCraft',
     loadComponent: () =>
-      import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
+      import('@app/features/templates/templates.component').then((m) => m.TemplatesComponent),
   },
   {
     path: 'tools',
     title: 'Calculators · StitchCraft',
-    loadComponent: () => import('./features/tools/tools.component').then((m) => m.ToolsComponent),
+    loadComponent: () =>
+      import('@app/features/tools/tools.component').then((m) => m.ToolsComponent),
   },
   {
     path: 'threads',
     title: 'My threads · StitchCraft',
-    loadComponent: () => import('./features/stash/stash.component').then((m) => m.StashComponent),
+    loadComponent: () =>
+      import('@app/features/stash/stash.component').then((m) => m.StashComponent),
   },
   {
     path: 'shopping',
     title: 'Shopping list · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/shopping/shopping.component').then((m) => m.ShoppingComponent),
+      import('@app/features/shopping/shopping.component').then((m) => m.ShoppingComponent),
   },
   {
     path: 'palettes',
     title: 'DMC colors · StitchCraft',
     loadComponent: () =>
-      import('./features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
+      import('@app/features/palettes/dmc-browse.component').then((m) => m.DmcBrowseComponent),
   },
   {
     path: 'my-palettes',
     title: 'My palettes · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
+      import('@app/features/palettes/my-palettes.component').then((m) => m.MyPalettesComponent),
   },
   {
     path: 'editor/:id',
@@ -69,37 +73,39 @@ export const routes: Routes = [
     canActivate: [authGuard],
     canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
-      import('./features/editor/editor.component').then((m) => m.EditorComponent),
+      import('@app/features/editor/editor.component').then((m) => m.EditorComponent),
   },
   {
     path: 'converter/:projectId',
     title: 'Convert an image · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/converter/converter.component').then((m) => m.ConverterComponent),
+      import('@app/features/converter/converter.component').then((m) => m.ConverterComponent),
   },
   {
     path: 'patterns/:id',
     title: 'Pattern · StitchCraft',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/pattern-view/pattern-view.component').then((m) => m.PatternViewComponent),
+      import('@app/features/pattern-view/pattern-view.component').then(
+        (m) => m.PatternViewComponent,
+      ),
   },
   {
     path: 'help',
     title: 'Help · StitchCraft',
-    loadComponent: () => import('./features/help/help.component').then((m) => m.HelpComponent),
+    loadComponent: () => import('@app/features/help/help.component').then((m) => m.HelpComponent),
   },
   {
     path: 'settings',
     title: 'Settings · StitchCraft',
     loadComponent: () =>
-      import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+      import('@app/features/settings/settings.component').then((m) => m.SettingsComponent),
   },
   {
     path: '**',
     title: 'Not found · StitchCraft',
     loadComponent: () =>
-      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+      import('@app/features/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },
 ];

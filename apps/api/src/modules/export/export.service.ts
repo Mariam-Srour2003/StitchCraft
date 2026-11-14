@@ -1,6 +1,8 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ExportResponse, Pattern } from '@stitchcraft/types';
 import sharp from 'sharp';
+
+import { ExportResponse, Pattern } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { toPatternDto } from '../patterns/patterns.mapper';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
@@ -45,7 +47,8 @@ export class ExportService {
       include: { project: true },
     });
     if (!pattern) throw new NotFoundException('Pattern not found');
-    if (pattern.project.userId !== userId) throw new ForbiddenException('You do not have access to this pattern');
+    if (pattern.project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this pattern');
 
     return toPatternDto(pattern);
   }

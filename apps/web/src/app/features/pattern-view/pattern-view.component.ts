@@ -8,28 +8,34 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { estimateMaterial } from '@stitchcraft/color';
+import { firstValueFrom } from 'rxjs';
+
+import { estimateMaterial, materialColumnLabel } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
-import { firstValueFrom } from 'rxjs';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { GridCanvas } from '../../shared/canvas/grid-canvas';
-import type { RenderMode } from '../../shared/canvas/grid-render-math';
+
+import { ConfirmService } from '@app/core/dialog/confirm.service';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import type { RenderMode } from '@app/domain/pattern/pattern-rules';
 import {
+  cellNoun,
+  defaultRenderMode,
   PATTERN_TYPE_LABELS,
-  hoursRemaining,
-  patternStats,
-} from '../../shared/pattern/pattern-stats';
-import { Button } from '../../shared/ui/button/button';
-import { EmptyState } from '../../shared/ui/empty-state/empty-state';
-import { Legend, LegendRow } from '../../shared/ui/legend/legend';
+  physicalUnit,
+} from '@app/domain/pattern/pattern-rules';
+import { hoursRemaining, patternStats } from '@app/domain/pattern/pattern-stats';
+import { decodeProgress } from '@app/domain/pattern/progress';
+import { GridCanvas } from '@app/shared/canvas/grid-canvas';
+import { Button } from '@app/shared/ui/button/button';
+import { EmptyState } from '@app/shared/ui/empty-state/empty-state';
+import { Legend, LegendRow } from '@app/shared/ui/legend/legend';
 import {
   SegmentedToggle,
   SegmentedToggleOption,
-} from '../../shared/ui/segmented-toggle/segmented-toggle';
-import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
-import { Slider } from '../../shared/ui/slider/slider';
-import { PatternsApiService } from '../patterns/patterns-api.service';
+} from '@app/shared/ui/segmented-toggle/segmented-toggle';
+import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
+import { Slider } from '@app/shared/ui/slider/slider';
 
 const VIEW_MODES: SegmentedToggleOption<RenderMode>[] = [
   { value: 'symbol', label: 'Chart' },
@@ -66,11 +72,13 @@ export class PatternViewComponent {
   readonly id = input.required<string>();
 
   private readonly patternsApi = inject(PatternsApiService);
+  private readonly confirmer = inject(ConfirmService);
   private readonly settings = inject(SettingsStore);
   private readonly router = inject(Router);
 
   protected readonly viewModes = VIEW_MODES;
   protected readonly typeLabels = PATTERN_TYPE_LABELS;
+  protected readonly cellNoun = cellNoun;
 
   protected readonly pattern = signal<Pattern | null>(null);
   protected readonly loading = signal(true);
@@ -87,10 +95,8 @@ export class PatternViewComponent {
 
   protected readonly progress = computed(() => {
     const p = this.pattern();
-    if (!this.showProgress() || !p?.meta.progress || p.meta.progress.length !== p.height) {
-      return null;
-    }
-    return decodeGrid(p.meta.progress, p.width);
+    if (!this.showProgress() || !p?.meta.progress) return null;
+    return decodeProgress(p.meta.progress, p.width, p.height);
   });
 
   protected readonly stats = computed(() => {
@@ -105,15 +111,17 @@ export class PatternViewComponent {
 
   protected readonly unitSize = computed(() => {
     const p = this.pattern();
-    if (!p) return 14;
-    return p.type === 'diamond'
-      ? (p.meta.drillSizeMm ?? this.settings.drillSizeMm())
-      : (p.meta.fabricCount ?? this.settings.fabricCount());
+    return p
+      ? physicalUnit(p.type, p.meta, {
+          fabricCount: this.settings.fabricCount(),
+          drillSizeMm: this.settings.drillSizeMm(),
+        })
+      : this.settings.fabricCount();
   });
 
   protected readonly buyLabel = computed(() => {
-    const type = this.pattern()?.type;
-    return type === 'diamond' ? 'Drill bags' : type === 'cross_stitch' ? 'Skeins' : null;
+    const p = this.pattern();
+    return p ? materialColumnLabel(p.type) : null;
   });
 
   protected readonly legendRows = computed<LegendRow[]>(() => {
@@ -148,13 +156,7 @@ export class PatternViewComponent {
     try {
       const pattern = await firstValueFrom(this.patternsApi.get(id));
       this.pattern.set(pattern);
-      this.mode.set(
-        pattern.type === 'diamond'
-          ? 'diamond'
-          : pattern.type === 'color_by_number'
-            ? 'paint-by-number'
-            : 'symbol',
-      );
+      this.mode.set(defaultRenderMode(pattern.type, 'read'));
     } catch {
       this.notFound.set(true);
     } finally {
@@ -176,7 +178,7 @@ export class PatternViewComponent {
 
   async remove(): Promise<void> {
     const p = this.pattern();
-    if (!p || !confirm(`Delete "${p.name}"? This can't be undone.`)) return;
+    if (!p || !this.confirmer.confirm(`Delete "${p.name}"? This can't be undone.`)) return;
     this.busy.set(true);
     try {
       await firstValueFrom(this.patternsApi.remove(p.id));

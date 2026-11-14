@@ -2,7 +2,7 @@
 
 `dmc-colors.json` (454 entries: code, name, hex, rgb, precomputed Lab) is derived from:
 
-- **Source**: Adrian Jongenelen, *CrossStitchCreator*,
+- **Source**: Adrian Jongenelen, _CrossStitchCreator_,
   `CrossStitchCreator/Resources/DMC Cotton Floss converted to RGB Values.csv`
   https://github.com/adrianj/CrossStitchCreator
 - This is the same underlying dataset used by the widely-cited

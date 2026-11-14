@@ -1,12 +1,14 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { ConversionJob, ConversionParams } from '@stitchcraft/types';
 import { Queue } from 'bullmq';
 import { randomUUID } from 'crypto';
+
+import { ConversionJob, ConversionParams } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
-import { CONVERSIONS_QUEUE, ConversionJobData } from './conversion-job-data';
 import { toConversionJobDto } from './conversion.mapper';
+import { ConversionJobData,CONVERSIONS_QUEUE } from './conversion-job-data';
 import { CreateConversionDto } from './dto/create-conversion.dto';
 
 @Injectable()
@@ -24,7 +26,8 @@ export class ConversionsService {
   ): Promise<{ jobId: string }> {
     const project = await this.prisma.project.findUnique({ where: { id: dto.projectId } });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
 
     const sourceImageRef = `uploads/${userId}/${randomUUID()}-${file.originalname}`;
     await this.storage.put(sourceImageRef, file.buffer, file.mimetype);

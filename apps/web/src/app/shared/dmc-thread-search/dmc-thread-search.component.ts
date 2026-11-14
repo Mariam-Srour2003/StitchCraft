@@ -8,18 +8,20 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DmcColor } from '@stitchcraft/types';
 import {
-  Subject,
   catchError,
   debounceTime,
   distinctUntilChanged,
   map,
   of,
+  Subject,
   switchMap,
   tap,
 } from 'rxjs';
-import { PalettesApiService } from '../palettes/palettes-api.service';
+
+import { DmcColor } from '@stitchcraft/types';
+
+import { PalettesApiService } from '@app/data-access/palettes-api.service';
 
 export const DMC_SEARCH_DEBOUNCE_MS = 250;
 const RESULT_LIMIT = 24;

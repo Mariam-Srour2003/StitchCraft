@@ -1,5 +1,7 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+
 import { decodeGrid } from '@stitchcraft/types';
+
 import type { PrismaService } from '../../prisma/prisma.service';
 import { PatternsService } from './patterns.service';
 
@@ -198,6 +200,66 @@ describe('PatternsService', () => {
       });
       await expect(service.duplicate('user-1', 'pat-1')).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.pattern.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('update grid integrity', () => {
+    const existing = {
+      id: 'pat-1',
+      projectId: 'proj-1',
+      name: 'P',
+      type: 'cross_stitch',
+      width: 2,
+      height: 1,
+      palette: [{ index: 0, symbol: 'A', color: { hex: '#000000', rgb: { r: 0, g: 0, b: 0 } } }],
+      grid: [[[0, 2]]],
+      meta: { createdFrom: 'blank' },
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+      project: { id: 'proj-1', userId: 'user-1' },
+    };
+
+    beforeEach(() => {
+      prisma.pattern.findUnique.mockResolvedValue(existing);
+      prisma.pattern.update.mockImplementation(({ data }) =>
+        Promise.resolve({ ...existing, ...data }),
+      );
+    });
+
+    it('accepts a consistent grid', async () => {
+      await service.update('user-1', 'pat-1', { width: 3, grid: [[[0, 3]]] });
+      expect(prisma.pattern.update).toHaveBeenCalled();
+    });
+
+    it('rejects resizing without a grid that matches the new size', async () => {
+      await expect(service.update('user-1', 'pat-1', { width: 3 })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(prisma.pattern.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects a grid that uses a color not in the palette', async () => {
+      await expect(service.update('user-1', 'pat-1', { grid: [[[1, 2]]] })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('rejects removing a color the grid still uses', async () => {
+      await expect(service.update('user-1', 'pat-1', { palette: [] })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('rejects stitching progress of the wrong shape', async () => {
+      await expect(
+        service.update('user-1', 'pat-1', { meta: { progress: [[[1, 5]]] } }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('allows renames without re-validating anything', async () => {
+      prisma.pattern.findUnique.mockResolvedValueOnce({ ...existing, grid: 'legacy junk' });
+      await service.update('user-1', 'pat-1', { name: 'Renamed' });
+      expect(prisma.pattern.update).toHaveBeenCalled();
     });
   });
 });

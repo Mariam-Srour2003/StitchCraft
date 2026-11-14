@@ -1,4 +1,5 @@
 import type { Lab, Rgb } from '@stitchcraft/types';
+
 import { labToSrgb, srgbToLab } from '../space/srgb-lab';
 
 export interface KMeansOptions {

@@ -1,6 +1,8 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+
 import { PatternType } from '@stitchcraft/types';
+
 import { computeFinishedSize } from './size-math';
 
 @Component({

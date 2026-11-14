@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Rgb } from '@stitchcraft/types';
 import sharp from 'sharp';
+
+import { Rgb } from '@stitchcraft/types';
+
 import { AI_PROVIDER, AiProvider } from './ai-provider';
-import { BuildGridResult, buildGridFromPixels } from './build-grid-from-pixels';
+import { buildGridFromPixels,BuildGridResult } from './build-grid-from-pixels';
 
 export interface ConvertImageOptions {
   width: number;
@@ -16,7 +18,10 @@ export interface ConvertImageOptions {
 export class ImagingService {
   constructor(@Inject(AI_PROVIDER) private readonly aiProvider: AiProvider) {}
 
-  async convertImageToGrid(imageBuffer: Buffer, opts: ConvertImageOptions): Promise<BuildGridResult> {
+  async convertImageToGrid(
+    imageBuffer: Buffer,
+    opts: ConvertImageOptions,
+  ): Promise<BuildGridResult> {
     let working = imageBuffer;
 
     // Both AI steps degrade gracefully: if requested but no provider is

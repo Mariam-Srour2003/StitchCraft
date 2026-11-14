@@ -444,6 +444,29 @@ typed against `packages/types`, but do no real work yet.
     flagging drift on your machine. The Help page says plainly that these don't sync between
     devices yet.
 
+- **M10 — Review & refactor** _(done)_: a code review pass that fixed real bugs, layered the web
+  app and sped up the editor. See [ARCHITECTURE.md](./ARCHITECTURE.md) for the resulting structure.
+  - **Bugs found and fixed:** saving a detailed pattern could fail with 413 (Express's default
+    100 kB JSON limit; now 8 MB, sized to the worst valid pattern); pattern width/height had no
+    maximum on create/update (now 500, shared constant `MAX_PATTERN_DIMENSION`); the API stored
+    any grid it was sent, so a bad client save could leave rows of the wrong length or cells
+    pointing at deleted colors (now rejected by `findGridProblem`, which also checks stitching
+    progress).
+  - **Layers:** `domain/` (pure), `core/`, `data-access/`, `shared/`, `features/`, with the `@app/*`
+    alias. 14 cross-feature imports removed; ESLint now fails on feature-to-feature imports, `../`
+    imports, or Angular/RxJS inside `domain/` (verified by planting violations).
+  - **One home per rule:** per-type rules (`pattern-rules.ts`), `materialColumnLabel`, RLE cell
+    counting and CSV writing are shared instead of repeated in the editor, viewer, projects page,
+    templates and API. `ConfirmService` replaces scattered `window.confirm` calls.
+  - **Editor performance:** cached per-row tallies (`RowTally`), O(1) stroke bookkeeping, one grid
+    update per pointer move, bounded `UndoHistory`, and a pure `resolveShortcut`. Measured on a
+    500x500 pattern, a 2,000-move mirrored stroke with the legend read after every move went from
+    894 ms to 152 ms with identical results. `patternStats` counts directly on RLE runs.
+  - Tried and backed out: an import-sorting ESLint plugin. Adding it made this pnpm version
+    re-resolve peer dependencies so Angular's build would have used TypeScript 5.7 (unsupported by
+    Angular 18) despite the root pinning 5.5. Imports were sorted once and the convention is in
+    CONTRIBUTING.md instead; the lockfile is unchanged.
+
 M0 is the only milestone built in this turn. Checkpointing here before M1 per the brief.
 
 ---

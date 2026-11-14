@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import IORedis from 'ioredis';
+
 import { AuthModule } from './modules/auth/auth.module';
 import { ConversionModule } from './modules/conversion/conversion.module';
 import { ExportModule } from './modules/export/export.module';

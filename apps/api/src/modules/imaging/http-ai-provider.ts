@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { AiProvider } from './ai-provider';
 
 /**
@@ -36,7 +37,9 @@ export class HttpAiProvider implements AiProvider {
       // Should not happen if callers check isConfigured() first, but fail
       // closed (return the input unchanged) rather than throw, matching
       // NullAiProvider's graceful-degradation contract.
-      this.logger.warn(`postImage(${path}) called with no AI_SERVICE_URL configured; returning input unchanged`);
+      this.logger.warn(
+        `postImage(${path}) called with no AI_SERVICE_URL configured; returning input unchanged`,
+      );
       return image;
     }
 

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+
 import { DEFAULT_SETTINGS, SettingsStore } from './settings.store';
 
 describe('SettingsStore', () => {

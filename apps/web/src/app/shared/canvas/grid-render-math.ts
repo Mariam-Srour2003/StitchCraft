@@ -1,13 +1,9 @@
 import type { PaletteEntry } from '@stitchcraft/types';
 
-export type RenderMode =
-  | 'x-stitch'
-  | 'block'
-  | 'symbol'
-  | 'number'
-  | 'diamond'
-  /** White canvas, outlined regions, one number per region - like a real paint-by-number board. */
-  | 'paint-by-number';
+import type { CellPosition } from '@app/domain/grid/cell';
+import type { RenderMode } from '@app/domain/pattern/pattern-rules';
+
+export type { CellPosition, RenderMode };
 
 export interface GridTheme {
   /** Background painted behind an empty (unpainted) cell. */
@@ -55,11 +51,6 @@ export const DARK_GRID_THEME: GridTheme = {
   regionLine: '#3b3530',
   regionText: '#5a524b',
 };
-
-export interface CellPosition {
-  x: number;
-  y: number;
-}
 
 /** Grid lines are bold every 10th line (line index 0, 10, 20, ...), matching cross-stitch chart convention. */
 export const BOLD_LINE_INTERVAL = 10;

@@ -1,4 +1,12 @@
-import { decodeGrid, decodeRow, EMPTY_CELL, encodeGrid, encodeRow } from './grid';
+import {
+  countCellsByIndex,
+  decodeGrid,
+  decodeRow,
+  EMPTY_CELL,
+  encodeGrid,
+  encodeRow,
+  findGridProblem,
+} from './grid';
 
 describe('grid encoding', () => {
   it('encodes a uniform row as a single run', () => {
@@ -26,7 +34,13 @@ describe('grid encoding', () => {
 
   it('decodes a blank row to all-empty sentinel values', () => {
     const decoded = decodeRow([], 5);
-    expect(Array.from(decoded)).toEqual([EMPTY_CELL, EMPTY_CELL, EMPTY_CELL, EMPTY_CELL, EMPTY_CELL]);
+    expect(Array.from(decoded)).toEqual([
+      EMPTY_CELL,
+      EMPTY_CELL,
+      EMPTY_CELL,
+      EMPTY_CELL,
+      EMPTY_CELL,
+    ]);
   });
 
   it('decodeGrid decodes every row against a fixed width', () => {
@@ -47,5 +61,55 @@ describe('grid encoding', () => {
     for (const row of grid) {
       expect(row.length).toBe(1);
     }
+  });
+});
+
+describe('findGridProblem', () => {
+  const ok = [
+    [
+      [0, 2],
+      [null, 1],
+    ],
+    [[1, 3]],
+  ];
+
+  it('accepts a grid that matches its pattern', () => {
+    expect(findGridProblem(ok, 3, 2, 2)).toBeNull();
+  });
+
+  it('rejects the wrong number of rows', () => {
+    expect(findGridProblem(ok, 3, 3, 2)).toMatch(/2 rows, expected 3/);
+  });
+
+  it('rejects rows that do not cover the width', () => {
+    expect(findGridProblem([[[0, 2]]], 3, 1, 1)).toMatch(/covers 2 cells, expected 3/);
+  });
+
+  it('rejects palette indices that do not exist', () => {
+    expect(findGridProblem(ok, 3, 2, 1)).toMatch(/palette index 1/);
+  });
+
+  it('rejects malformed runs and lengths', () => {
+    expect(findGridProblem([[[0]]], 1, 1, 1)).toMatch(/malformed/);
+    expect(findGridProblem([[[0, 0]]], 0, 1, 1)).toMatch(/invalid run length/);
+    expect(findGridProblem('nope', 1, 1, 1)).toMatch(/array of rows/);
+  });
+});
+
+describe('countCellsByIndex', () => {
+  it('counts straight from runs, ignoring empties and unknown indices', () => {
+    expect(
+      countCellsByIndex(
+        [
+          [
+            [0, 2],
+            [null, 1],
+            [5, 1],
+          ],
+          [[1, 3]],
+        ],
+        2,
+      ),
+    ).toEqual([2, 3]);
   });
 });

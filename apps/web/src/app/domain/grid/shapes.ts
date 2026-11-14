@@ -1,4 +1,4 @@
-import type { CellPosition } from '../../shared/canvas/grid-render-math';
+import type { CellPosition } from './cell';
 
 /**
  * Pure cell rasterizers for the editor's shape tools and symmetry mode.

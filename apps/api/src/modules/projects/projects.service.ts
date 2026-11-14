@@ -1,5 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+
 import { Project } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -53,7 +55,8 @@ export class ProjectsService {
       include: { patterns: true },
     });
     if (!project) throw new NotFoundException('Project not found');
-    if (project.userId !== userId) throw new ForbiddenException('You do not have access to this project');
+    if (project.userId !== userId)
+      throw new ForbiddenException('You do not have access to this project');
     return project;
   }
 }

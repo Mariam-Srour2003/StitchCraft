@@ -1,4 +1,5 @@
 import type { PaletteEntry } from '@stitchcraft/types';
+
 import type { GridTheme } from './grid-render-math';
 import type { GridRenderParams } from './grid-rendering.service';
 import { GridRenderingService } from './grid-rendering.service';

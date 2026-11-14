@@ -1,4 +1,5 @@
 import type { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+
 import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 describe('unsavedChangesGuard', () => {

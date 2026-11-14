@@ -43,7 +43,9 @@
         }
 
         <sc-color-picker (colorAdded)="addColor($event)" />
-        <sc-button [disabled]="newEntries().length === 0" (pressed)="savePalette()">Save palette</sc-button>
+        <sc-button [disabled]="newEntries().length === 0" (pressed)="savePalette()"
+          >Save palette</sc-button
+        >
       </div>
     </sc-modal>
   }

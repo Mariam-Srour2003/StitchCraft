@@ -3,7 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AuthStore } from '../auth/auth.store';
+
+import { AuthStore } from '@app/core/auth/auth.store';
 
 /** On a 401 from any authenticated request, clear the session and send the user to sign in. */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {

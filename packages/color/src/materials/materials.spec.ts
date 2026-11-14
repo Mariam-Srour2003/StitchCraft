@@ -2,6 +2,7 @@ import {
   defaultStrandsForCount,
   drillBagsNeeded,
   estimateMaterial,
+  materialColumnLabel,
   skeinFraction,
   skeinsNeeded,
   stitchesPerSkein,
@@ -50,5 +51,11 @@ describe('materials', () => {
     const per = stitchesPerSkein(14, 2);
     expect(skeinFraction(per / 2, 14, 2)).toBeCloseTo(0.5);
     expect(skeinFraction(0, 14)).toBe(0);
+  });
+
+  it('labels the shopping column by pattern type', () => {
+    expect(materialColumnLabel('cross_stitch')).toBe('Skeins');
+    expect(materialColumnLabel('diamond')).toBe('Drill bags');
+    expect(materialColumnLabel('color_by_number')).toBeNull();
   });
 });

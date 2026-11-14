@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { User } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { toUserDto } from './users.mapper';
 

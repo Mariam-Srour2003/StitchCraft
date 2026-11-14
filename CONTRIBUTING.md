@@ -32,8 +32,16 @@ CI runs the same command on every PR.
   imported by both `apps/web` and `apps/api` — never duplicate a shape.
 - Color math (space conversion, difference, quantization, matching) lives in
   `packages/color` and stays framework-free so it is trivially unit-testable.
-- Respect Nx module boundaries (`pnpm nx graph` to visualize). A feature
-  should not import another feature's internals directly.
+- Respect Nx module boundaries (`pnpm nx graph` to visualize).
+- In `apps/web`, follow the five layers in [ARCHITECTURE.md](./ARCHITECTURE.md):
+  `domain/` (pure, no Angular), `core/`, `data-access/`, `shared/`,
+  `features/`. Lint enforces them: no feature imports another feature, no
+  `../` imports (use `@app/...`), and `domain/` stays framework-free.
+- Order imports: packages, `@stitchcraft/*`, `@app/*`, then `./local`,
+  with a blank line between groups.
+- Per-pattern-type rules go in `domain/pattern/pattern-rules.ts`, not inline
+  `type === 'diamond'` checks.
+- Ask before destructive actions with `ConfirmService`, not `window.confirm`.
 
 ## Running things locally
 

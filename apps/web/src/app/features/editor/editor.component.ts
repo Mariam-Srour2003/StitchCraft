@@ -1,44 +1,50 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  HostListener,
   computed,
   effect,
+  HostListener,
   inject,
   input,
   signal,
 } from '@angular/core';
-import { ExportResponse, isDmcColor } from '@stitchcraft/types';
 import { firstValueFrom } from 'rxjs';
-import { GridCanvas, GridCanvasTool } from '../../shared/canvas/grid-canvas';
+
+import { ExportResponse, isDmcColor } from '@stitchcraft/types';
+
+import { ConfirmService } from '@app/core/dialog/confirm.service';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { ExportApiService } from '@app/data-access/export-api.service';
+import { EditorAction, resolveShortcut, SHORTCUTS } from '@app/domain/editor/shortcuts';
+import type { EditorTool } from '@app/domain/editor/tools';
+import { measureText, SUPPORTED_CHARACTERS } from '@app/domain/grid/pixel-font';
+import { Symmetry } from '@app/domain/grid/shapes';
+import { cellNoun, physicalUnit } from '@app/domain/pattern/pattern-rules';
+import { GridCanvas, GridCanvasTool } from '@app/shared/canvas/grid-canvas';
 import {
   CellPosition,
   DARK_GRID_THEME,
   GridTheme,
   LIGHT_GRID_THEME,
   RenderMode,
-} from '../../shared/canvas/grid-render-math';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { Button } from '../../shared/ui/button/button';
-import { ColorPicker } from '../../shared/ui/color-picker/color-picker';
-import { IconButton } from '../../shared/ui/icon-button/icon-button';
-import { Legend } from '../../shared/ui/legend/legend';
-import { Modal } from '../../shared/ui/modal/modal';
-import { PaletteGrid } from '../../shared/ui/palette-grid/palette-grid';
-import { Progress } from '../../shared/ui/progress/progress';
+} from '@app/shared/canvas/grid-render-math';
+import { DmcThreadSearchComponent } from '@app/shared/dmc-thread-search/dmc-thread-search.component';
+import { Button } from '@app/shared/ui/button/button';
+import { ColorPicker } from '@app/shared/ui/color-picker/color-picker';
+import { IconButton } from '@app/shared/ui/icon-button/icon-button';
+import { Legend } from '@app/shared/ui/legend/legend';
+import { Modal } from '@app/shared/ui/modal/modal';
+import { PaletteGrid } from '@app/shared/ui/palette-grid/palette-grid';
+import { Progress } from '@app/shared/ui/progress/progress';
 import {
   SegmentedToggle,
   SegmentedToggleOption,
-} from '../../shared/ui/segmented-toggle/segmented-toggle';
-import { SizeReadout } from '../../shared/ui/size-readout/size-readout';
-import { Slider } from '../../shared/ui/slider/slider';
-import { Toolbar } from '../../shared/ui/toolbar/toolbar';
-import { DmcThreadSearchComponent } from './dmc-thread-search.component';
-import { EditorStore, EditorTool } from './editor.store';
-import { ExportApiService } from './export-api.service';
-import { SUPPORTED_CHARACTERS, measureText } from './pixel-font';
-import { Symmetry } from './shapes';
-import { SHORTCUTS } from './shortcuts';
+} from '@app/shared/ui/segmented-toggle/segmented-toggle';
+import { SizeReadout } from '@app/shared/ui/size-readout/size-readout';
+import { Slider } from '@app/shared/ui/slider/slider';
+import { Toolbar } from '@app/shared/ui/toolbar/toolbar';
+
+import { EditorStore } from './editor.store';
 
 const DRAW_TOOLS: SegmentedToggleOption<EditorTool>[] = [
   { value: 'paint', label: 'Paint' },
@@ -79,20 +85,6 @@ const WORK_MODE_OPTIONS: SegmentedToggleOption<WorkMode>[] = [
   { value: 'stitch', label: 'Stitch' },
 ];
 
-/** Single-key tool shortcuts (no modifier). */
-const TOOL_KEYS: Record<string, EditorTool> = {
-  b: 'paint',
-  e: 'erase',
-  g: 'fill',
-  i: 'pick',
-  t: 'text',
-  l: 'line',
-  r: 'rect',
-  o: 'ellipse',
-};
-
-const DEFAULT_FABRIC_COUNT = 14;
-const DEFAULT_DRILL_SIZE_MM = 2.8;
 const ZOOM_STEP = 25;
 
 @Component({
@@ -125,6 +117,7 @@ export class EditorComponent {
   readonly mode = input<string | undefined>(undefined);
 
   protected readonly store = inject(EditorStore);
+  private readonly confirmer = inject(ConfirmService);
   private readonly exportApi = inject(ExportApiService);
   private readonly settings = inject(SettingsStore);
 
@@ -145,12 +138,14 @@ export class EditorComponent {
   protected readonly workModeOptions = WORK_MODE_OPTIONS;
   protected readonly shortcuts = SHORTCUTS;
   /** The font's non-alphanumeric characters, listed as a hint under the lettering box. */
+  protected readonly cellNoun = cellNoun;
   protected readonly lettering = SUPPORTED_CHARACTERS.replace(/[A-Z0-9 ]/g, '');
 
   protected readonly unitSize = computed(() =>
-    this.store.type() === 'diamond'
-      ? (this.store.meta().drillSizeMm ?? DEFAULT_DRILL_SIZE_MM)
-      : (this.store.meta().fabricCount ?? DEFAULT_FABRIC_COUNT),
+    physicalUnit(this.store.type(), this.store.meta(), {
+      fabricCount: this.settings.fabricCount(),
+      drillSizeMm: this.settings.drillSizeMm(),
+    }),
   );
 
   protected readonly paletteDmcCodes = computed(() =>
@@ -234,12 +229,14 @@ export class EditorComponent {
     const index = this.store.selectedPaletteIndex();
     if (index === null) return;
     const count = this.store.legendRows()[index]?.count ?? 0;
-    if (count > 0 && !confirm(`Delete this color and erase its ${count} stitches?`)) return;
+    if (count > 0 && !this.confirmer.confirm(`Delete this color and erase its ${count} stitches?`))
+      return;
     this.store.deleteColor(index);
   }
 
   resetProgress(): void {
-    if (confirm('Clear all stitching progress for this pattern?')) this.store.resetProgress();
+    if (this.confirmer.confirm('Clear all stitching progress for this pattern?'))
+      this.store.resetProgress();
   }
 
   save(): void {
@@ -269,7 +266,10 @@ export class EditorComponent {
 
   /** Used by the route's canDeactivate guard. */
   canLeave(): boolean {
-    return !this.store.dirty() || confirm('You have unsaved changes. Leave without saving?');
+    return (
+      !this.store.dirty() ||
+      this.confirmer.confirm('You have unsaved changes. Leave without saving?')
+    );
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -280,41 +280,34 @@ export class EditorComponent {
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
     if (isTypingTarget(event.target)) return;
-    const mod = event.ctrlKey || event.metaKey;
-    const key = event.key.toLowerCase();
+    const action = resolveShortcut(event);
+    if (!action) return;
+    event.preventDefault();
+    this.run(action);
+  }
 
-    if (mod) {
-      if (key === 'z' && !event.shiftKey) {
-        this.store.undo();
-      } else if ((key === 'z' && event.shiftKey) || key === 'y') {
-        this.store.redo();
-      } else if (key === 's') {
-        this.save();
-      } else {
+  private run(action: EditorAction): void {
+    switch (action.type) {
+      case 'undo':
+        return this.store.undo();
+      case 'redo':
+        return this.store.redo();
+      case 'save':
+        return this.save();
+      case 'tool':
+        return this.selectTool(action.tool);
+      case 'toggle-highlight': {
+        const index = this.store.selectedPaletteIndex();
+        if (index !== null) this.store.toggleHighlight(index);
         return;
       }
-      event.preventDefault();
-      return;
+      case 'toggle-stitch-mode':
+        return this.store.setStitchMode(!this.store.stitchMode());
+      case 'zoom':
+        return this.store.setZoomPercent(this.store.zoomPercent() + action.direction * ZOOM_STEP);
+      case 'clear-highlight':
+        return this.store.clearHighlight();
     }
-    if (event.altKey) return;
-
-    if (TOOL_KEYS[key]) {
-      this.selectTool(TOOL_KEYS[key]);
-    } else if (key === 'h') {
-      const index = this.store.selectedPaletteIndex();
-      if (index !== null) this.store.toggleHighlight(index);
-    } else if (key === 'k') {
-      this.store.setStitchMode(!this.store.stitchMode());
-    } else if (key === '+' || key === '=') {
-      this.store.setZoomPercent(this.store.zoomPercent() + ZOOM_STEP);
-    } else if (key === '-' || key === '_') {
-      this.store.setZoomPercent(this.store.zoomPercent() - ZOOM_STEP);
-    } else if (key === 'escape') {
-      this.store.clearHighlight();
-    } else {
-      return;
-    }
-    event.preventDefault();
   }
 }
 

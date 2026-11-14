@@ -1,5 +1,12 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { encodeGrid, Pattern } from '@stitchcraft/types';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { encodeGrid, findGridProblem, Pattern } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePatternDto } from './dto/create-pattern.dto';
 import { UpdatePatternDto } from './dto/update-pattern.dto';
@@ -54,6 +61,7 @@ export class PatternsService {
 
   async update(userId: string, id: string, dto: UpdatePatternDto): Promise<Pattern> {
     const existing = await this.getOwned(userId, id);
+    this.assertConsistentGrid(existing, dto);
     const pattern = await this.prisma.pattern.update({
       where: { id },
       data: {
@@ -97,6 +105,40 @@ export class PatternsService {
   async remove(userId: string, id: string): Promise<void> {
     await this.getOwned(userId, id);
     await this.prisma.pattern.delete({ where: { id } });
+  }
+
+  /**
+   * Rejects saves that would leave the stored grid disagreeing with the
+   * pattern's dimensions or palette - e.g. a resize without a new grid, a
+   * row of the wrong length, or a cell pointing at a deleted color. Without
+   * this, one bad client save corrupts a pattern for every later reader
+   * (editor, exports, shopping lists).
+   */
+  private assertConsistentGrid(
+    existing: { width: number; height: number; grid: unknown; palette: unknown },
+    dto: UpdatePatternDto,
+  ): void {
+    const width = dto.width ?? existing.width;
+    const height = dto.height ?? existing.height;
+
+    const touchesGrid =
+      dto.grid !== undefined ||
+      dto.width !== undefined ||
+      dto.height !== undefined ||
+      dto.palette !== undefined;
+    if (touchesGrid) {
+      const grid = dto.grid ?? existing.grid;
+      const paletteLength = (dto.palette ?? (existing.palette as unknown[]) ?? []).length;
+      const problem = findGridProblem(grid, width, height, paletteLength);
+      if (problem) throw new BadRequestException(`Invalid pattern grid: ${problem}`);
+    }
+
+    const progress = (dto.meta as { progress?: unknown } | undefined)?.progress;
+    if (progress !== undefined) {
+      // Progress cells are 1 (done) or empty, so validate against a 2-entry "palette".
+      const problem = findGridProblem(progress, width, height, 2);
+      if (problem) throw new BadRequestException(`Invalid stitching progress: ${problem}`);
+    }
   }
 
   private async getOwned(userId: string, id: string) {

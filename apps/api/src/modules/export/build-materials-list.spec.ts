@@ -1,5 +1,6 @@
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
+
 import { buildMaterialsListCsv } from './build-materials-list';
 
 function makePattern(overrides: Partial<Pattern> = {}): Pattern {

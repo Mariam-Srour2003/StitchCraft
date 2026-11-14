@@ -1,7 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { AuthStore } from '../../core/auth/auth.store';
-import { StashStore, compareDmcCodes, parseThreadList } from './stash.store';
+
+import { AuthStore } from '@app/core/auth/auth.store';
+
+import { compareDmcCodes, parseThreadList, StashStore } from './stash.store';
 
 describe('parseThreadList', () => {
   it('reads codes with optional quantities in several formats', () => {

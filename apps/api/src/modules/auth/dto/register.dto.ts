@@ -1,4 +1,5 @@
 import { IsEmail, IsString, MinLength } from 'class-validator';
+
 import { RegisterDto as RegisterDtoShape } from '@stitchcraft/types';
 
 export class RegisterDto implements RegisterDtoShape {

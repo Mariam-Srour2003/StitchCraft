@@ -1,8 +1,9 @@
 import type { Pattern as PrismaPattern } from '@prisma/client';
+
 import type {
   EncodedRow,
-  Pattern,
   PaletteEntry,
+  Pattern,
   PatternMeta,
   PatternType,
 } from '@stitchcraft/types';

@@ -1,5 +1,6 @@
 import type { Rgb } from '@stitchcraft/types';
 import { decodeGrid } from '@stitchcraft/types';
+
 import { buildGridFromPixels } from './build-grid-from-pixels';
 
 function solidBlock(color: Rgb, count: number): Rgb[] {

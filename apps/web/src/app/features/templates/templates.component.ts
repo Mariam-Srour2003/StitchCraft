@@ -1,23 +1,26 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
 import type { Project } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
-import { firstValueFrom } from 'rxjs';
-import { AuthStore } from '../../core/auth/auth.store';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { PATTERN_TYPE_LABELS } from '../../shared/pattern/pattern-stats';
-import { PatternThumbnail } from '../../shared/pattern/pattern-thumbnail';
-import { Button } from '../../shared/ui/button/button';
-import { Modal } from '../../shared/ui/modal/modal';
-import { PatternsApiService } from '../patterns/patterns-api.service';
-import { ProjectsApiService } from '../projects/projects-api.service';
+
+import { AuthStore } from '@app/core/auth/auth.store';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { PatternsApiService } from '@app/data-access/patterns-api.service';
+import { ProjectsApiService } from '@app/data-access/projects-api.service';
+import { PATTERN_TYPE_LABELS, sizingMeta } from '@app/domain/pattern/pattern-rules';
+import { PatternThumbnail } from '@app/shared/pattern/pattern-thumbnail';
+import { Button } from '@app/shared/ui/button/button';
+import { Modal } from '@app/shared/ui/modal/modal';
+
 import {
   PatternTemplate,
-  TEMPLATES,
   TEMPLATE_CATEGORIES,
   TemplateCategory,
   TemplateDesign,
+  TEMPLATES,
 } from './template-library';
 
 interface TemplateCard {
@@ -101,10 +104,10 @@ export class TemplatesComponent {
         projectId = project.id;
       }
       const { template, design } = card;
-      const meta =
-        template.type === 'diamond'
-          ? { drillSizeMm: this.settings.drillSizeMm() }
-          : { fabricCount: this.settings.fabricCount() };
+      const meta = sizingMeta(template.type, {
+        fabricCount: this.settings.fabricCount(),
+        drillSizeMm: this.settings.drillSizeMm(),
+      });
       const pattern = await firstValueFrom(
         this.patternsApi.create({
           projectId,

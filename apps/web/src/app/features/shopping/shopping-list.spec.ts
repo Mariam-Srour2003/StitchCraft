@@ -1,6 +1,7 @@
 import { findDmcByCode } from '@stitchcraft/color';
 import type { Pattern } from '@stitchcraft/types';
 import { encodeGrid } from '@stitchcraft/types';
+
 import { buildShoppingList, shoppingListText } from './shopping-list';
 
 const black = findDmcByCode('310')!;

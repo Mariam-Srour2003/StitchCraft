@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+
 import { isDmcColor, PaletteEntry } from '@stitchcraft/types';
 
 export interface LegendRow {

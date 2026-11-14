@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
+
 import { PaletteEntry } from '@stitchcraft/types';
+
+import { computeRegions, isRegionEdge, RegionMap } from '@app/domain/grid/regions';
+
 import {
   colorHexForCell,
   glyphForMode,
@@ -7,7 +11,6 @@ import {
   isBoldGridLine,
   RenderMode,
 } from './grid-render-math';
-import { RegionMap, computeRegions, isRegionEdge } from './regions';
 
 export interface GridRenderParams {
   /** Decoded grid rows; a cell value of -1 (EMPTY_CELL from @stitchcraft/types) means unpainted. */

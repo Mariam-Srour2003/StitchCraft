@@ -1,4 +1,5 @@
 import type { PaletteEntry } from '@stitchcraft/types';
+
 import {
   cellSizeForZoom,
   colorHexForCell,

@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { SettingsStore } from '../../core/settings/settings.store';
-import { PATTERN_TYPE_LABELS, patternStats } from '../../shared/pattern/pattern-stats';
-import { downloadText } from '../../shared/pattern/download';
-import { Button } from '../../shared/ui/button/button';
-import { LibraryPattern, PatternLibraryService } from '../patterns/pattern-library.service';
-import { StashStore } from '../stash/stash.store';
-import { ShoppingLine, buildShoppingList, shoppingListText } from './shopping-list';
+
+import { downloadText } from '@app/core/browser/download';
+import { SettingsStore } from '@app/core/settings/settings.store';
+import { LibraryPattern, PatternLibraryService } from '@app/data-access/pattern-library.service';
+import { StashStore } from '@app/data-access/stash.store';
+import { PATTERN_TYPE_LABELS } from '@app/domain/pattern/pattern-rules';
+import { patternStats } from '@app/domain/pattern/pattern-stats';
+import { Button } from '@app/shared/ui/button/button';
+
+import { buildShoppingList, ShoppingLine, shoppingListText } from './shopping-list';
 
 @Component({
   selector: 'sc-shopping',

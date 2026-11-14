@@ -1,7 +1,9 @@
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+
 import type { PaletteEntry } from '@stitchcraft/types';
+
 import { PaletteSwatch } from './palette-swatch';
 
 describe('PaletteSwatch', () => {

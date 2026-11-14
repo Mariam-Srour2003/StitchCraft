@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+
 import { contrastTextColor } from '@stitchcraft/color';
 import { isDmcColor, PaletteEntry } from '@stitchcraft/types';
 

@@ -1,12 +1,14 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
-import { ConversionParams } from '@stitchcraft/types';
 import { Job } from 'bullmq';
+
+import { ConversionParams } from '@stitchcraft/types';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { ImagingService } from '../imaging/imaging.service';
 import { STORAGE_ADAPTER, StorageAdapter } from '../storage/storage-adapter';
-import { CONVERSIONS_QUEUE, ConversionJobData, ConversionJobResult } from './conversion-job-data';
 import { ConversionsGateway } from './conversion.gateway';
+import { ConversionJobData, ConversionJobResult,CONVERSIONS_QUEUE } from './conversion-job-data';
 
 @Processor(CONVERSIONS_QUEUE)
 export class ConversionsProcessor extends WorkerHost {
@@ -23,7 +25,9 @@ export class ConversionsProcessor extends WorkerHost {
 
   async process(job: Job<ConversionJobData, ConversionJobResult>): Promise<ConversionJobResult> {
     const { conversionJobId, projectId, patternName } = job.data;
-    const conversionJob = await this.prisma.conversionJob.findUniqueOrThrow({ where: { id: conversionJobId } });
+    const conversionJob = await this.prisma.conversionJob.findUniqueOrThrow({
+      where: { id: conversionJobId },
+    });
     const params = conversionJob.params as unknown as ConversionParams;
 
     await job.updateProgress(10);
@@ -72,7 +76,10 @@ export class ConversionsProcessor extends WorkerHost {
   @OnWorkerEvent('progress')
   async onProgress(job: Job<ConversionJobData>, progress: number | object): Promise<void> {
     const value = typeof progress === 'number' ? progress : 0;
-    await this.prisma.conversionJob.update({ where: { id: job.data.conversionJobId }, data: { progress: value } });
+    await this.prisma.conversionJob.update({
+      where: { id: job.data.conversionJobId },
+      data: { progress: value },
+    });
     this.gateway.emit(job.data.conversionJobId, {
       jobId: job.data.conversionJobId,
       status: 'processing',
